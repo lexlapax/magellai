@@ -5,6 +5,7 @@ package configdir
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -31,13 +32,13 @@ func TestGetPaths(t *testing.T) {
 	if !filepath.IsAbs(paths.Base) {
 		t.Error("Base path is not absolute")
 	}
-	if !filepath.HasPrefix(paths.Sessions, paths.Base) {
+	if !strings.HasPrefix(paths.Sessions, paths.Base) {
 		t.Error("Sessions path is not under base path")
 	}
-	if !filepath.HasPrefix(paths.Plugins, paths.Base) {
+	if !strings.HasPrefix(paths.Plugins, paths.Base) {
 		t.Error("Plugins path is not under base path")
 	}
-	if !filepath.HasPrefix(paths.Logs, paths.Base) {
+	if !strings.HasPrefix(paths.Logs, paths.Base) {
 		t.Error("Logs path is not under base path")
 	}
 }
@@ -169,8 +170,14 @@ func TestProjectConfigFile(t *testing.T) {
 
 	// Test finding config from project root
 	originalDir, _ := os.Getwd()
-	os.Chdir(projectDir)
-	defer os.Chdir(originalDir)
+	if err := os.Chdir(projectDir); err != nil {
+		t.Fatalf("Failed to change to project directory: %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Errorf("Failed to change back to original directory: %v", err)
+		}
+	}()
 
 	configPath, err := ProjectConfigFile()
 	if err != nil {
@@ -184,7 +191,9 @@ func TestProjectConfigFile(t *testing.T) {
 	}
 
 	// Test finding config from subdirectory
-	os.Chdir(subDir)
+	if err := os.Chdir(subDir); err != nil {
+		t.Fatalf("Failed to change to subdirectory: %v", err)
+	}
 	configPath, err = ProjectConfigFile()
 	if err != nil {
 		t.Fatalf("ProjectConfigFile() error = %v", err)
@@ -195,7 +204,9 @@ func TestProjectConfigFile(t *testing.T) {
 	}
 
 	// Test when no project config exists
-	os.Chdir(tmpDir)
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("Failed to change to temp directory: %v", err)
+	}
 	configPath, err = ProjectConfigFile()
 	if err != nil {
 		t.Fatalf("ProjectConfigFile() error = %v", err)

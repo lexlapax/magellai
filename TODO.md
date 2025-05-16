@@ -44,12 +44,12 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Model capability system with ModelInfo struct and capability flags (text, audio, video, image, file) 
 
 ### 1.5 Provider Implementations
-- [ ] Create provider adapters using go-llms
-  - [ ] OpenAI adapter using go-llms provider.OpenAI
-  - [ ] Anthropic adapter using go-llms provider.Anthropic
-  - [ ] Gemini adapter using go-llms provider.Gemini
-  - [ ] Mock provider for testing
-  - [ ] Unit tests for each provider
+- [x] Create provider adapters using go-llms
+  - [x] OpenAI adapter using go-llms provider.OpenAI
+  - [x] Anthropic adapter using go-llms provider.Anthropic
+  - [x] Gemini adapter using go-llms provider.Gemini
+  - [x] Mock provider for testing
+  - [x] Unit tests for each provider
 
 ### 1.6 High-Level Ask Function
 - [ ] Implement `Ask()` function in `pkg/magellai.go`
