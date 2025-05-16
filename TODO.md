@@ -124,20 +124,24 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] `model` - Switch between LLM models,
     - [x] `model` should take argument of the form `<provider>/<modelname`>
     - [x] this automatically switches `provider` - Switch between providers
-  - [ ] `config` - Configuration management
+  - [x] `config` - Configuration management
+    - [x] Comprehensive subcommands (list, get, set, validate, export, import)
+    - [x] Profile management (create, switch, delete, export)
+    - [x] Full unit test coverage
+    - [x] Fixed all linting errors (error checks)
   - [ ] `profile` - Profile management
   - [ ] `alias` - Alias management
   - [ ] `help` - Context-aware help
 - [ ] Create command execution framework
 - [ ] Add command validation and error handling
-- [x] Unit tests for each command (model command complete)
+- [x] Unit tests for each command (model and config commands complete)
 
 ## Phase 3: CLI with Cobra, urfave/cli etc(choose one) (Week 3)
 
 ### 3.1 CLI Structure Setup
 - [ ] Research best framework, since we have our own command structure - 
-    - [ ] Cobra, kong, urfave/cli, Kingpin, go-flags, docopt,  
-    - [ ] criteria - less dependencies, flexible, does not impose hard to get around conventions, easy to test and read.
+    - [ ] Cobra, kong + kongplete, urfave/cli, Kingpin, go-flags, docopt,  
+    - [ ] criteria - less dependencies, flexible, does not impose hard to get around conventions, easy to test and read, completions support
 - [ ] Install library dependency
 - [ ] Create main.go in `cmd/magellai/`
 - [ ] Define root command with global flags
