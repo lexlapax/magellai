@@ -1,0 +1,127 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Go build files
+magellai
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Configuration files with secrets
+*.key
+*.pem
+*.crt
+
+# Application specific
+~/.config/magellai/
+.magellai/
+
+# Logs
+*.log
+logs/
+
+# Cache files
+.cache/
+*.tmp
+
+# Build artifacts
+build/
+release/
+
+# Test coverage
+coverage.html
+coverage.out
+
+# Debug files
+debug
+
+# Goreleaser dist
+dist/
+
+# Application data (optional, uncomment if needed)
+# data/
+# sessions/
+
+# Plugin builds
+plugins/*/bin/
+
+# Temporary files
+tmp/
+
+# Profiling data
+*.prof
+
+# Documentation build
+docs/_build/
+
+# Node modules (if using for documentation tools)
+node_modules/
+
+# Python virtual environment (if using for scripts)
+venv/
+__pycache__/
+*.pyc
+
+# Archives
+*.tar.gz
+*.zip
+
+# Generated files
+*.generated.go
+
+# Security audit
+*.audit
+
+# Local development
+.local/
+
+# Private keys and certificates
+*.key
+*.pem
+*.cert
+*.csr
+
+# Benchmarks
+bench.*
+
+# Local configuration overrides
+*.local.yaml
+*.local.json
+
+# Snapshot testing
+__snapshots__/
+
+# Air (live reload) files
+tmp/
