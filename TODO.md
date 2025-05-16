@@ -119,8 +119,8 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [x] Create command discovery and registration mechanism
 - [x] Implement help system that works across CLI and REPL
 
-### 2.5 Core Commands Implementation
-- [ ] Implement shared commands in `pkg/command/core/`:
+### 2.5 Core Commands Implementation ✅
+- [x] Implement shared commands in `pkg/command/core/`:
   - [x] `model` - Switch between LLM models,
     - [x] `model` should take argument of the form `<provider>/<modelname`>
     - [x] this automatically switches `provider` - Switch between providers
@@ -136,11 +136,20 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [x] List all available profiles
     - [x] Full unit test coverage with lifecycle tests
     - [x] Fixed test ordering issues for map comparisons
-  - [ ] `alias` - Alias management
-  - [ ] `help` - Context-aware help
+  - [x] `alias` - Alias management
+    - [x] Add, remove, list, show, clear aliases
+    - [x] Support for both CLI and REPL aliases
+    - [x] Scope management (cli/repl/all)
+    - [x] Export/import functionality
+    - [x] Full unit test coverage
+  - [x] `help` - Context-aware help
+    - [x] Context-aware display for CLI vs REPL
+    - [x] Command categorization
+    - [x] Alias resolution
+    - [x] Comprehensive unit tests
 - [ ] Create command execution framework
 - [ ] Add command validation and error handling
-- [x] Unit tests for each command (model, config, and profile commands complete)
+- [x] Unit tests for each command (model, config, profile, alias, and help commands complete)
 
 ## Phase 3: CLI with Cobra, urfave/cli etc(choose one) (Week 3)
 

@@ -10,14 +10,14 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 2.5 Near Completion)
+## Current Status (Phase 2.5 Complete)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
 ✅ Phase 2.2: Configuration Schema - Complete  
 ✅ Phase 2.3: Configuration Utilities - Complete (mostly)
 ✅ Phase 2.4: Unified Command System - Complete
-🚧 Phase 2.5: Core Commands Implementation - Almost Complete
+✅ Phase 2.5: Core Commands Implementation - Complete
 
 ### Completed Features:
 - Project structure and build system
@@ -42,7 +42,7 @@ The project follows a library-first design where the core intelligence (LLM prov
 - Config command implementation with comprehensive subcommands
 - Profile command implementation with complete lifecycle management
 
-### Phase 2.5 Progress:
+### Phase 2.5 Completed:
 ✅ Model command implementation
   - List all available models
   - Show model information (capabilities, parameters)
@@ -64,14 +64,32 @@ The project follows a library-first design where the core intelligence (LLM prov
   - Full unit test coverage with lifecycle tests
   - Fixed test ordering issues for map comparisons
 
-### Remaining in Phase 2.5:
-- [ ] Alias command implementation
-- [ ] Help command enhancements
-- [ ] Create command execution framework
-- [ ] Add command validation and error handling
+✅ Alias command implementation
+  - Add, remove, list, show, clear aliases
+  - Support for CLI and REPL scopes
+  - Export/import functionality
+  - Comprehensive unit tests
 
-### Next: Complete Phase 2.5 - Final Core Commands
-Complete implementation of alias and help commands, then establish the command execution framework.
+✅ Help command enhancements
+  - Context-aware help for CLI vs REPL
+  - Command categorization by interface
+  - Alias resolution in help display
+  - Formatted command lists with categories
+  - Error suggestions for command not found
+  - Full unit test coverage
+  - Consolidated all help functionality into core package
+
+### Additional Improvements:
+- Cleaned up help implementation by removing old help.go file
+- Consolidated all help tests into a single help_test.go file
+- Removed all backup and intermediary files
+- Fixed all linting errors
+
+### Next: Phase 3 - CLI Implementation
+With Phase 2.5 now complete, the next steps are:
+- [ ] Create command execution framework (final item from Phase 2.5)
+- [ ] Add command validation and error handling (final item from Phase 2.5)
+- [ ] Begin Phase 3: CLI implementation with a chosen framework (Cobra, urfave/cli, etc.)
 
 ## Architecture
 
@@ -308,6 +326,21 @@ The library is available as:
   - List all available profiles
   - Export/import profile configurations
   - Profile-specific settings management
+- Alias command for command alias management
+  - Add, remove, list, show, and clear aliases
+  - Support for both CLI and REPL scopes
+  - Scope-based filtering (all/cli/repl)
+  - Export aliases to JSON format
+  - Works with configuration system for persistence
+- Enhanced Help command with context awareness
+  - Context-aware display for CLI vs REPL interfaces
+  - Command categorization by interface availability
+  - Alias resolution for finding aliased commands
+  - Formatted command lists with proper categorization
+  - Error suggestions for mistyped commands
+  - Integration with the command registry and config system
+  - Consolidated implementation (removed old help.go)
+  - Single unified test file for all help functionality
 
 ## Workflow Conventions
 
