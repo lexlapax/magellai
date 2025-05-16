@@ -27,12 +27,12 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] `~/.config/magellai/plugins/` for plugin installations
 
 ### 1.3 Core Data Models and go-llms Integration
-- [ ] Create wrapper types in `pkg/llm/types.go` that adapt go-llms types
-  - [ ] `Request` struct wrapping go-llms domain.Message
-  - [ ] `Response` struct wrapping go-llms domain.Response
-  - [ ] `PromptParams` mapping to go-llms domain.Option
-  - [ ] `Attachment` struct for multimodal content
-  - [ ] Define constants for providers and models
+- [x] Create wrapper types in `pkg/llm/types.go` that adapt go-llms types
+  - [x] `Request` struct wrapping go-llms domain.Message
+  - [x] `Response` struct wrapping go-llms domain.Response
+  - [x] `PromptParams` mapping to go-llms domain.Option
+  - [x] `Attachment` struct for multimodal content
+  - [x] Define constants for providers and models
 
 ### 1.4 LLM Provider Adapter
 - [ ] Create `pkg/llm/provider.go` adapter interface for go-llms
@@ -41,7 +41,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Adapt Stream/StreamMessage methods
   - [ ] Provider factory for OpenAI, Anthropic, Gemini
   - [ ] Configuration helpers for API keys
-  - [ ] Default static list of `provider/model` that's the format to use 
+  - [x] Model capability system with ModelInfo struct and capability flags (text, audio, video, image, file) 
 
 ### 1.5 Provider Implementations
 - [ ] Create provider adapters using go-llms
