@@ -359,14 +359,14 @@ func TestMultimodalMessageRoundtrip(t *testing.T) {
 // TODO: Fix this test after ModelCapabilities refactoring
 func TestModelInfo(t *testing.T) {
 	model := ModelInfo{
-		Provider:     "openai",
-		Model:        "gpt-4-vision",
+		Provider: "openai",
+		Model:    "gpt-4-vision",
 		Capabilities: ModelCapabilities{
 			Text:  true,
 			Image: true,
 		},
-		MaxTokens:    128000,
-		Description:  "GPT-4 with vision capabilities",
+		MaxTokens:   128000,
+		Description: "GPT-4 with vision capabilities",
 	}
 
 	// Test capability check

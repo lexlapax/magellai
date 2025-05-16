@@ -112,7 +112,7 @@ func TestModelCommand_Execute(t *testing.T) {
 			},
 		},
 		{
-			name: "show model info",
+			name:        "show model info",
 			setupConfig: func(cfg *config.Config) {},
 			exec: &command.ExecutionContext{
 				Args: []string{"info", "openai/gpt-4"},
@@ -132,7 +132,7 @@ func TestModelCommand_Execute(t *testing.T) {
 			},
 		},
 		{
-			name: "show model info - missing argument",
+			name:        "show model info - missing argument",
 			setupConfig: func(cfg *config.Config) {},
 			exec: &command.ExecutionContext{
 				Args: []string{"info"},
@@ -143,7 +143,7 @@ func TestModelCommand_Execute(t *testing.T) {
 			expectedError: true,
 		},
 		{
-			name: "show model info - invalid model",
+			name:        "show model info - invalid model",
 			setupConfig: func(cfg *config.Config) {},
 			exec: &command.ExecutionContext{
 				Args: []string{"info", "invalid/model"},
@@ -173,7 +173,7 @@ func TestModelCommand_Execute(t *testing.T) {
 			},
 		},
 		{
-			name: "select model - invalid format",
+			name:        "select model - invalid format",
 			setupConfig: func(cfg *config.Config) {},
 			exec: &command.ExecutionContext{
 				Args: []string{"invalid-format"},
@@ -184,7 +184,7 @@ func TestModelCommand_Execute(t *testing.T) {
 			expectedError: true,
 		},
 		{
-			name: "select model - non-existent",
+			name:        "select model - non-existent",
 			setupConfig: func(cfg *config.Config) {},
 			exec: &command.ExecutionContext{
 				Args: []string{"provider/nonexistent"},
@@ -231,7 +231,7 @@ func TestModelCommand_Execute(t *testing.T) {
 			},
 		},
 		{
-			name: "json output - list models",
+			name:        "json output - list models",
 			setupConfig: func(cfg *config.Config) {},
 			exec: &command.ExecutionContext{
 				Args: []string{"list"},
@@ -248,7 +248,7 @@ func TestModelCommand_Execute(t *testing.T) {
 			},
 		},
 		{
-			name: "unknown subcommand",
+			name:        "unknown subcommand",
 			setupConfig: func(cfg *config.Config) {},
 			exec: &command.ExecutionContext{
 				Args: []string{"unknown"},

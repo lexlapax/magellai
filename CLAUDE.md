@@ -10,14 +10,14 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 2.5 In Progress)
+## Current Status (Phase 2.5 Near Completion)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
 ✅ Phase 2.2: Configuration Schema - Complete  
 ✅ Phase 2.3: Configuration Utilities - Complete (mostly)
 ✅ Phase 2.4: Unified Command System - Complete
-🚧 Phase 2.5: Core Commands Implementation - In Progress
+🚧 Phase 2.5: Core Commands Implementation - Almost Complete
 
 ### Completed Features:
 - Project structure and build system
@@ -39,6 +39,8 @@ The project follows a library-first design where the core intelligence (LLM prov
 - Unified help system for all interfaces
 - Full test coverage for config package (21.6%) and command package (49.0%)
 - Model command implementation with list, info, and select functionality
+- Config command implementation with comprehensive subcommands
+- Profile command implementation with complete lifecycle management
 
 ### Phase 2.5 Progress:
 ✅ Model command implementation
@@ -48,14 +50,28 @@ The project follows a library-first design where the core intelligence (LLM prov
   - Automatic provider switching when model changes
   - Comprehensive unit tests
 
-### Remaining in Phase 2.5:
-- Config command implementation
-- Profile command implementation
-- Alias command implementation
-- Help command enhancements
+✅ Config command implementation
+  - Comprehensive subcommands (list, get, set, validate, export, import)
+  - Profile management (create, switch, delete, export)
+  - Full unit test coverage
+  - Fixed all linting errors (error checks)
 
-### Next: Continue Phase 2.5 - Remaining Core Commands
-Complete implementation of config, profile, alias, and help commands using our unified command system.
+✅ Profile command implementation
+  - Complete lifecycle management (create, switch, update, copy, delete)
+  - Profile export/import functionality
+  - Show current and specific profile details
+  - List all available profiles
+  - Full unit test coverage with lifecycle tests
+  - Fixed test ordering issues for map comparisons
+
+### Remaining in Phase 2.5:
+- [ ] Alias command implementation
+- [ ] Help command enhancements
+- [ ] Create command execution framework
+- [ ] Add command validation and error handling
+
+### Next: Complete Phase 2.5 - Final Core Commands
+Complete implementation of alias and help commands, then establish the command execution framework.
 
 ## Architecture
 
@@ -161,7 +177,7 @@ go vet ./...
 - Ensure library remains flag-free and testable
 
 ### Plugin Development
-- Follow naming convention: `magellai-<type>-<name>`
+- Follow naming convention: `magellai-<type>-<n>`
 - Implement JSON-RPC protocol for communication
 - Register tools/agents/flows in appropriate registries
 
@@ -274,6 +290,24 @@ The library is available as:
 - Model-specific settings and parameter validation
 - Configuration export/import functionality
 - Utility functions for provider/model string parsing
+
+### pkg/command/core
+- Model command for LLM model management
+  - List available models with provider filtering
+  - Show model information including capabilities
+  - Select and switch models using provider/modelname format
+  - Automatic provider switching when model changes
+- Config command for configuration management
+  - Comprehensive subcommands (list, get, set, validate, export, import)
+  - Profile management integrated into config command
+  - Support for multiple output formats (text, JSON, YAML)
+  - Full configuration lifecycle management
+- Profile command for profile lifecycle management
+  - Create, switch, update, copy, and delete profiles
+  - Show current and specific profile details
+  - List all available profiles
+  - Export/import profile configurations
+  - Profile-specific settings management
 
 ## Workflow Conventions
 

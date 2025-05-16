@@ -171,10 +171,10 @@ func (c *ModelCommand) listModels(ctx context.Context, exec *command.ExecutionCo
 	// Text output
 	output := strings.Builder{}
 	output.WriteString("Available Models:\n\n")
-	
+
 	currentProvider := ""
 	currentModel := c.config.GetDefaultModel()
-	
+
 	for _, model := range filteredModels {
 		if model.Provider != currentProvider {
 			if currentProvider != "" {
@@ -183,13 +183,13 @@ func (c *ModelCommand) listModels(ctx context.Context, exec *command.ExecutionCo
 			output.WriteString(fmt.Sprintf("%s:\n", capitalizeProviderName(model.Provider)))
 			currentProvider = model.Provider
 		}
-		
+
 		modelName := fmt.Sprintf("%s/%s", model.Provider, model.Model)
 		indicator := "  "
 		if modelName == currentModel {
 			indicator = "* "
 		}
-		
+
 		caps := []string{}
 		if model.Capabilities.Text {
 			caps = append(caps, "text")
@@ -206,7 +206,7 @@ func (c *ModelCommand) listModels(ctx context.Context, exec *command.ExecutionCo
 		if model.Capabilities.File {
 			caps = append(caps, "file")
 		}
-		
+
 		output.WriteString(fmt.Sprintf("%s%s [%s]\n", indicator, model.Model, strings.Join(caps, ", ")))
 	}
 
@@ -221,10 +221,10 @@ func (c *ModelCommand) showModelInfo(ctx context.Context, exec *command.Executio
 	}
 
 	modelName := exec.Args[1]
-	
+
 	// Parse provider/model format
 	provider, model := llm.ParseModelString(modelName)
-	
+
 	// Check if it's in the expected format
 	if !strings.Contains(modelName, "/") {
 		return fmt.Errorf("invalid model format: %s (expected provider/model)", modelName)
@@ -249,7 +249,7 @@ func (c *ModelCommand) showModelInfo(ctx context.Context, exec *command.Executio
 	output.WriteString(fmt.Sprintf("Display Name: %s\n", modelInfo.DisplayName))
 	output.WriteString(fmt.Sprintf("Description: %s\n", modelInfo.Description))
 	output.WriteString("\nCapabilities:\n")
-	
+
 	if modelInfo.Capabilities.Text {
 		output.WriteString("  - Text processing\n")
 	}
@@ -265,10 +265,10 @@ func (c *ModelCommand) showModelInfo(ctx context.Context, exec *command.Executio
 	if modelInfo.Capabilities.File {
 		output.WriteString("  - File processing\n")
 	}
-	
+
 	output.WriteString(fmt.Sprintf("\nMax Tokens: %d\n", modelInfo.MaxTokens))
 	output.WriteString(fmt.Sprintf("Context Window: %d\n", modelInfo.ContextWindow))
-	
+
 	if modelInfo.DefaultTemperature > 0 {
 		output.WriteString(fmt.Sprintf("Default Temperature: %.2f\n", modelInfo.DefaultTemperature))
 	}
@@ -280,10 +280,10 @@ func (c *ModelCommand) showModelInfo(ctx context.Context, exec *command.Executio
 // selectModel switches to a specified model
 func (c *ModelCommand) selectModel(ctx context.Context, exec *command.ExecutionContext) error {
 	modelName := exec.Args[0]
-	
+
 	// Parse provider/model format
 	provider, model := llm.ParseModelString(modelName)
-	
+
 	// Check if it's in the expected format
 	if !strings.Contains(modelName, "/") {
 		return fmt.Errorf("invalid model format: %s (expected provider/model)", modelName)
@@ -299,7 +299,7 @@ func (c *ModelCommand) selectModel(ctx context.Context, exec *command.ExecutionC
 	if err := c.config.SetDefaultProvider(provider); err != nil {
 		return fmt.Errorf("failed to set provider: %w", err)
 	}
-	
+
 	if err := c.config.SetDefaultModel(modelName); err != nil {
 		return fmt.Errorf("failed to set model: %w", err)
 	}
@@ -321,7 +321,7 @@ func (c *ModelCommand) selectModel(ctx context.Context, exec *command.ExecutionC
 // showCurrentModel displays the currently selected model
 func (c *ModelCommand) showCurrentModel(ctx context.Context, exec *command.ExecutionContext) error {
 	currentModel := c.config.GetDefaultModel()
-	
+
 	if currentModel == "" {
 		exec.Data["output"] = "No model selected"
 		return nil

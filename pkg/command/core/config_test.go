@@ -40,7 +40,7 @@ func TestConfigCommand_Execute(t *testing.T) {
 			outputFormat:   "json",
 			expectedOutput: `"provider": "openai"`,
 		},
-		
+
 		// List command
 		{
 			name:           "list all config",
@@ -53,7 +53,7 @@ func TestConfigCommand_Execute(t *testing.T) {
 			flags:          map[string]interface{}{"format": "json"},
 			expectedOutput: "{",
 		},
-		
+
 		// Get command
 		{
 			name: "get existing key",
@@ -73,7 +73,7 @@ func TestConfigCommand_Execute(t *testing.T) {
 			args:          []string{"get"},
 			expectedError: "missing argument - key required",
 		},
-		
+
 		// Set command
 		{
 			name:           "set provider",
@@ -95,14 +95,14 @@ func TestConfigCommand_Execute(t *testing.T) {
 			args:          []string{"set", "key"},
 			expectedError: "missing argument - key and value required",
 		},
-		
+
 		// Validate command
 		{
 			name:           "validate valid config",
 			args:           []string{"validate"},
 			expectedOutput: "Configuration is valid",
 		},
-		
+
 		// Export command
 		{
 			name:           "export config",
@@ -115,26 +115,26 @@ func TestConfigCommand_Execute(t *testing.T) {
 			flags:          map[string]interface{}{"format": "json"},
 			expectedOutput: "{",
 		},
-		
+
 		// Import command
 		{
 			name:          "import without filename",
 			args:          []string{"import"},
 			expectedError: "missing argument - filename required",
 		},
-		
+
 		// Profile commands
 		{
-			name:           "list profiles",
-			args:           []string{"profiles"},
+			name: "list profiles",
+			args: []string{"profiles"},
 			setupConfig: func(c *config.Config) {
 				require.NoError(t, c.SetValue("profiles.default", map[string]interface{}{}))
 			},
 			expectedOutput: "default (current)",
 		},
 		{
-			name:           "list profiles subcommand",
-			args:           []string{"profiles", "list"},
+			name: "list profiles subcommand",
+			args: []string{"profiles", "list"},
 			setupConfig: func(c *config.Config) {
 				require.NoError(t, c.SetValue("profiles.default", map[string]interface{}{}))
 			},
@@ -151,8 +151,8 @@ func TestConfigCommand_Execute(t *testing.T) {
 			expectedError: "missing argument - name required",
 		},
 		{
-			name:           "switch profile",
-			args:           []string{"profiles", "switch", "default"},
+			name: "switch profile",
+			args: []string{"profiles", "switch", "default"},
 			setupConfig: func(c *config.Config) {
 				require.NoError(t, c.SetValue("profiles.default", map[string]interface{}{}))
 			},
@@ -189,7 +189,7 @@ func TestConfigCommand_Execute(t *testing.T) {
 			args:          []string{"profiles", "export"},
 			expectedError: "missing argument - name required",
 		},
-		
+
 		// Invalid commands
 		{
 			name:          "invalid subcommand",
@@ -258,7 +258,7 @@ func TestConfigCommand_Metadata(t *testing.T) {
 	assert.Contains(t, meta.LongDescription, "export")
 	assert.Contains(t, meta.LongDescription, "import")
 	assert.Contains(t, meta.LongDescription, "profiles")
-	
+
 	// Check flags
 	assert.Len(t, meta.Flags, 1)
 	formatFlag := meta.Flags[0]
@@ -328,7 +328,7 @@ func TestConfigCommand_ProfileOperations(t *testing.T) {
 	require.NoError(t, err)
 	output := exec.Data["output"].(string)
 	t.Logf("Profile list output: %s", output)
-	
+
 	// For now, let's just check that the list works without specific content
 	assert.NotEmpty(t, output)
 
@@ -453,7 +453,7 @@ func TestConfigCommand_ImportExport(t *testing.T) {
 	}
 	err := cmd.Execute(ctx, exec)
 	require.NoError(t, err)
-	
+
 	exportedData := exec.Data["output"].(string)
 	assert.Contains(t, exportedData, "anthropic")
 	assert.Contains(t, exportedData, "claude-3")
@@ -473,14 +473,14 @@ func createTestConfig(t *testing.T) *config.Config {
 	// Initialize config for testing
 	err := config.Init()
 	require.NoError(t, err)
-	
+
 	// Load defaults
 	err = config.Manager.Load(nil)
 	require.NoError(t, err)
-	
+
 	// Set some defaults
 	require.NoError(t, config.Manager.SetDefaultProvider("openai"))
 	require.NoError(t, config.Manager.SetDefaultModel("gpt-3.5-turbo"))
-	
+
 	return config.Manager
 }

@@ -143,7 +143,7 @@ func (c *ConfigCommand) showCurrentConfig(ctx context.Context, exec *command.Exe
 // listConfig lists all configuration settings
 func (c *ConfigCommand) listConfig(ctx context.Context, exec *command.ExecutionContext) error {
 	allSettings := c.config.All()
-	
+
 	outputFormat, _ := exec.Flags["format"].(string)
 	if outputFormat == "" {
 		outputFormat = "text"
@@ -161,7 +161,7 @@ func (c *ConfigCommand) getConfig(ctx context.Context, exec *command.ExecutionCo
 	} else if key == "model" {
 		key = "model.default"
 	}
-	
+
 	value := c.config.Get(key)
 	if value == nil {
 		return fmt.Errorf("key not found: %s", key)
@@ -181,7 +181,7 @@ func (c *ConfigCommand) setConfig(ctx context.Context, exec *command.ExecutionCo
 		exec.Data["output"] = fmt.Sprintf("Provider set to: %s", value)
 		return nil
 	}
-	
+
 	if key == "model" {
 		// Parse model string and set both provider and model if needed
 		providerStr, modelStr := llm.ParseModelString(value)
@@ -211,7 +211,7 @@ func (c *ConfigCommand) validateConfig(ctx context.Context, exec *command.Execut
 	if err != nil {
 		return fmt.Errorf("configuration validation failed: %w", err)
 	}
-	
+
 	exec.Data["output"] = "Configuration is valid"
 	return nil
 }
@@ -293,7 +293,7 @@ func (c *ConfigCommand) listProfiles(ctx context.Context, exec *command.Executio
 	// Get all profiles from the configuration
 	allConfig := c.config.All()
 	profiles := make([]string, 0)
-	
+
 	// Look for keys that start with "profiles."
 	for key := range allConfig {
 		if strings.HasPrefix(key, "profiles.") {
@@ -316,17 +316,17 @@ func (c *ConfigCommand) listProfiles(ctx context.Context, exec *command.Executio
 			}
 		}
 	}
-	
+
 	// If no profiles exist but we're looking for default, include it
 	if len(profiles) == 0 {
 		profiles = append(profiles, "default")
 	}
-	
+
 	current := c.config.GetString("profile.current")
 	if current == "" {
 		current = "default"
 	}
-	
+
 	// Sort profiles for consistent output
 	sort.Strings(profiles)
 
@@ -370,7 +370,7 @@ func (c *ConfigCommand) createProfile(ctx context.Context, exec *command.Executi
 	if c.config.Exists(key) {
 		return fmt.Errorf("profile '%s' already exists", name)
 	}
-	
+
 	// Create an empty profile
 	err := c.config.SetValue(key, map[string]interface{}{})
 	if err != nil {
@@ -387,7 +387,7 @@ func (c *ConfigCommand) deleteProfile(ctx context.Context, exec *command.Executi
 	if !c.config.Exists(key) {
 		return fmt.Errorf("profile '%s' not found", name)
 	}
-	
+
 	// TODO: Config package needs a way to delete keys
 	// For now, we'll return an error
 	return fmt.Errorf("profile deletion not implemented")
@@ -404,7 +404,7 @@ func (c *ConfigCommand) exportProfile(ctx context.Context, exec *command.Executi
 	if err != nil {
 		return fmt.Errorf("failed to export profile: %w", err)
 	}
-	
+
 	var config []byte
 	if outputFormat == "json" {
 		config, err = json.MarshalIndent(profile, "", "  ")
@@ -413,11 +413,11 @@ func (c *ConfigCommand) exportProfile(ctx context.Context, exec *command.Executi
 		// For now, convert to JSON
 		config, err = json.MarshalIndent(profile, "", "  ")
 	}
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to marshal profile: %w", err)
 	}
-	
+
 	exec.Data["output"] = string(config)
 	return nil
 }
@@ -467,7 +467,7 @@ func formatSettingsText(output *strings.Builder, settings interface{}, indent st
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
-		
+
 		for _, k := range keys {
 			output.WriteString(fmt.Sprintf("%s%s:", indent, k))
 			if nested, ok := v[k].(map[string]interface{}); ok {
@@ -485,7 +485,7 @@ func formatSettingsText(output *strings.Builder, settings interface{}, indent st
 // formatValue recursively formats values in YAML-like style
 func formatValue(output *strings.Builder, value interface{}, indent int) {
 	indentStr := strings.Repeat("  ", indent)
-	
+
 	switch v := value.(type) {
 	case map[string]interface{}:
 		if indent > 0 {

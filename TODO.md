@@ -129,12 +129,18 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [x] Profile management (create, switch, delete, export)
     - [x] Full unit test coverage
     - [x] Fixed all linting errors (error checks)
-  - [ ] `profile` - Profile management
+  - [x] `profile` - Profile management
+    - [x] Complete lifecycle management (create, switch, update, copy, delete)
+    - [x] Profile export/import functionality
+    - [x] Show current and specific profile details
+    - [x] List all available profiles
+    - [x] Full unit test coverage with lifecycle tests
+    - [x] Fixed test ordering issues for map comparisons
   - [ ] `alias` - Alias management
   - [ ] `help` - Context-aware help
 - [ ] Create command execution framework
 - [ ] Add command validation and error handling
-- [x] Unit tests for each command (model and config commands complete)
+- [x] Unit tests for each command (model, config, and profile commands complete)
 
 ## Phase 3: CLI with Cobra, urfave/cli etc(choose one) (Week 3)
 

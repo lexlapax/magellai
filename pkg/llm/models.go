@@ -32,9 +32,9 @@ type ModelInfo struct {
 // GetAvailableModels returns a list of available models across all providers
 func GetAvailableModels() []ModelInfo {
 	models := []ModelInfo{}
-	
+
 	// OpenAI models
-	models = append(models, 
+	models = append(models,
 		ModelInfo{
 			Provider:      ProviderOpenAI,
 			Model:         "gpt-4",
@@ -213,14 +213,12 @@ func GetAvailableModels() []ModelInfo {
 // GetModelInfo returns information about a specific model
 func GetModelInfo(provider, model string) (ModelInfo, error) {
 	models := GetAvailableModels()
-	
+
 	for _, m := range models {
 		if strings.EqualFold(m.Provider, provider) && strings.EqualFold(m.Model, model) {
 			return m, nil
 		}
 	}
-	
+
 	return ModelInfo{}, fmt.Errorf("model not found: %s/%s", provider, model)
 }
-
-

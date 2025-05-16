@@ -12,24 +12,24 @@ import (
 
 func TestGetAvailableModels(t *testing.T) {
 	models := GetAvailableModels()
-	
+
 	// Check we have models from all providers
 	providers := make(map[string]bool)
 	for _, model := range models {
 		providers[model.Provider] = true
 	}
-	
+
 	assert.True(t, providers[ProviderOpenAI], "Should have OpenAI models")
 	assert.True(t, providers[ProviderAnthropic], "Should have Anthropic models")
 	assert.True(t, providers[ProviderGemini], "Should have Gemini models")
-	
+
 	// Check some known models exist
 	found := make(map[string]bool)
 	for _, model := range models {
 		key := model.Provider + "/" + model.Model
 		found[key] = true
 	}
-	
+
 	assert.True(t, found["openai/gpt-4"], "Should have GPT-4")
 	assert.True(t, found["anthropic/claude-3-opus"], "Should have Claude 3 Opus")
 	assert.True(t, found["gemini/pro"], "Should have Gemini Pro")
@@ -118,7 +118,7 @@ func TestGetModelInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			info, err := GetModelInfo(tt.provider, tt.model)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {
@@ -130,5 +130,3 @@ func TestGetModelInfo(t *testing.T) {
 		})
 	}
 }
-
-

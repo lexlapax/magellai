@@ -28,7 +28,6 @@ const (
 	CapabilityFile  ModelCapability = "file"
 )
 
-
 // Request wraps go-llms domain.Message for Magellai usage
 type Request struct {
 	Messages     []Message     `json:"messages"`
