@@ -197,6 +197,9 @@ aliases:
   - [ ] `/config show` - Display current config
   - [ ] `/config set <key> <value>` - Set config value
   - [ ] `/profile <name>` - Switch profile
+  - [ ] `/alias list` - list aliases
+  - [ ] `/alias add <name> <command>` - create a new alias
+  - [ ] `/alias remove <name>` = remove an alias
 
 ## Phase 3: CLI with Cobra (Week 3)
 
