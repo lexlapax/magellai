@@ -104,15 +104,8 @@ func capitalizeProviderName(provider string) string {
 // listModels lists available models
 func (c *ModelCommand) listModels(ctx context.Context, exec *command.ExecutionContext) error {
 	// Get filter options
-	providerFilter := ""
-	if val, ok := exec.Flags["provider"]; ok {
-		providerFilter = val.(string)
-	}
-
-	capabilitiesFilter := ""
-	if val, ok := exec.Flags["capabilities"]; ok {
-		capabilitiesFilter = val.(string)
-	}
+	providerFilter := exec.Flags.GetString("provider")
+	capabilitiesFilter := exec.Flags.GetString("capabilities")
 
 	// Get available models from providers
 	models := llm.GetAvailableModels()

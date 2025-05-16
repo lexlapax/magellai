@@ -1,6 +1,9 @@
 // ABOUTME: Integration tests for the main CLI application
 // ABOUTME: Tests actual command execution and behavior
 
+//go:build integration
+// +build integration
+
 package main
 
 import (
@@ -44,34 +47,34 @@ func TestIntegration_VersionCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// This test would normally use exec.Command to run the built binary
 			// For unit testing, we'll test the integration of components
-			
+
 			// Create a CLI parser
 			var cli CLI
 			parser := kong.Must(&cli)
-			
+
 			var stdout, stderr bytes.Buffer
-			
+
 			// Initialize logger
 			require.NoError(t, logging.Initialize(logging.LogConfig{
 				Level:      "error",
 				Format:     "text",
 				OutputPath: "stderr",
 			}))
-			
+
 			// Initialize config
 			require.NoError(t, config.Init())
-			
+
 			// Create registry and register commands
 			registry := command.NewRegistry()
-			
+
 			// Register version command
 			versionCmd := core.NewVersionCommand("dev", "none", "unknown")
 			require.NoError(t, registry.Register(versionCmd))
-			
+
 			// Parse arguments
 			ctx, err := parser.Parse(tt.args)
 			require.NoError(t, err)
-			
+
 			// Create context
 			testCtx := &Context{
 				Context:  ctx,
@@ -82,11 +85,11 @@ func TestIntegration_VersionCommand(t *testing.T) {
 				Stderr:   &stderr,
 				Ctx:      context.Background(),
 			}
-			
+
 			// Run command
 			err = ctx.Run(testCtx)
 			require.NoError(t, err)
-			
+
 			// Check output
 			output := stdout.String()
 			if tt.expectedJSON {
@@ -107,7 +110,7 @@ func TestIntegration_BasicE2E(t *testing.T) {
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err)
 	assert.Contains(t, string(output), "magellai version")
-	
+
 	// Test help
 	cmd = exec.Command("go", "run", "./cmd/magellai", "--help")
 	cmd.Dir = "../.."
@@ -122,7 +125,7 @@ func TestMain_E2E(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping E2E test in short mode")
 	}
-	
+
 	// Build the binary
 	cmd := exec.Command("go", "build", "-o", "test-magellai", "./cmd/magellai")
 	cmd.Dir = "../.."
@@ -131,7 +134,7 @@ func TestMain_E2E(t *testing.T) {
 	defer func() {
 		_ = exec.Command("rm", "test-magellai").Run()
 	}()
-	
+
 	tests := []struct {
 		name           string
 		args           []string
@@ -159,14 +162,14 @@ func TestMain_E2E(t *testing.T) {
 			expectedError: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := exec.Command("./test-magellai", tt.args...)
 			cmd.Dir = "../.."
-			
+
 			output, err := cmd.CombinedOutput()
-			
+
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -185,13 +188,13 @@ func TestCLI_CommandRegistration(t *testing.T) {
 		Format:     "text",
 		OutputPath: "stderr",
 	}))
-	
+
 	require.NoError(t, config.Init())
 	cfg := config.Manager
-	
+
 	// Create registry
 	registry := command.NewRegistry()
-	
+
 	// Register all core commands (mirrors main.go)
 	commands := []command.Interface{
 		core.NewConfigCommand(cfg),
@@ -201,13 +204,13 @@ func TestCLI_CommandRegistration(t *testing.T) {
 		core.NewHelpCommand(registry, cfg),
 		core.NewVersionCommand("dev", "none", "unknown"),
 	}
-	
+
 	for _, cmd := range commands {
 		meta := cmd.Metadata()
 		t.Run(meta.Name, func(t *testing.T) {
 			err := registry.Register(cmd)
 			assert.NoError(t, err, "Failed to register %s command", meta.Name)
-			
+
 			// Verify command is registered
 			registered, err := registry.Get(meta.Name)
 			assert.NoError(t, err)
@@ -215,18 +218,13 @@ func TestCLI_CommandRegistration(t *testing.T) {
 			assert.Equal(t, meta.Name, registered.Metadata().Name)
 		})
 	}
-	
+
 	// Verify stub commands can be registered
 	t.Run("stub commands", func(t *testing.T) {
 		err := RegisterStubCommands(registry)
 		assert.NoError(t, err)
-		
-		// Check ask command
-		ask, err := registry.Get("ask")
-		assert.NoError(t, err)
-		assert.NotNil(t, ask)
-		
-		// Check chat command
+
+		// Check chat command (ask is no longer a stub)
 		chat, err := registry.Get("chat")
 		assert.NoError(t, err)
 		assert.NotNil(t, chat)

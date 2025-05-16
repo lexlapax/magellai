@@ -348,7 +348,7 @@ func TestProfileCommand_Execute(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			exec := &command.ExecutionContext{
 				Args:   tt.args,
-				Flags:  tt.flags,
+				Flags:  command.NewFlags(tt.flags),
 				Stdout: &stdout,
 				Stderr: &stderr,
 				Data:   make(map[string]interface{}),
@@ -441,11 +441,11 @@ func TestProfileCommand_CompleteLifecycle(t *testing.T) {
 	// 1. Create a profile
 	exec := &command.ExecutionContext{
 		Args: []string{"create", "test"},
-		Flags: map[string]interface{}{
+		Flags: command.NewFlags(map[string]interface{}{
 			"provider":    "anthropic",
 			"model":       "claude-3",
 			"description": "Test profile",
-		},
+		}),
 		Data: make(map[string]interface{}),
 	}
 	err := cmd.Execute(ctx, exec)
@@ -454,8 +454,9 @@ func TestProfileCommand_CompleteLifecycle(t *testing.T) {
 
 	// 2. List profiles
 	exec = &command.ExecutionContext{
-		Args: []string{"list"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"list"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -464,8 +465,9 @@ func TestProfileCommand_CompleteLifecycle(t *testing.T) {
 
 	// 3. Switch to the new profile
 	exec = &command.ExecutionContext{
-		Args: []string{"switch", "test"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"switch", "test"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -473,8 +475,9 @@ func TestProfileCommand_CompleteLifecycle(t *testing.T) {
 
 	// 4. Update the profile
 	exec = &command.ExecutionContext{
-		Args: []string{"update", "test", "temperature=0.8", "max_tokens=3000"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"update", "test", "temperature=0.8", "max_tokens=3000"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -482,8 +485,9 @@ func TestProfileCommand_CompleteLifecycle(t *testing.T) {
 
 	// 5. Show the profile details
 	exec = &command.ExecutionContext{
-		Args: []string{"show", "test"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"show", "test"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -495,8 +499,9 @@ func TestProfileCommand_CompleteLifecycle(t *testing.T) {
 
 	// 6. Copy the profile
 	exec = &command.ExecutionContext{
-		Args: []string{"copy", "test", "test-backup"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"copy", "test", "test-backup"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -505,7 +510,7 @@ func TestProfileCommand_CompleteLifecycle(t *testing.T) {
 	// 7. Export the profile
 	exec = &command.ExecutionContext{
 		Args:  []string{"export", "test"},
-		Flags: map[string]interface{}{"format": "json"},
+		Flags: command.NewFlags(map[string]interface{}{"format": "json"}),
 		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)

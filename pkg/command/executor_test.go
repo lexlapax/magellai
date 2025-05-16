@@ -259,7 +259,7 @@ func TestFlagValidation(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			exec := &command.ExecutionContext{
-				Flags: tc.flags,
+				Flags: command.NewFlags(tc.flags),
 				Data:  make(map[string]interface{}),
 			}
 
@@ -294,7 +294,7 @@ func TestParseAndExecute(t *testing.T) {
 		},
 		func(ctx context.Context, exec *command.ExecutionContext) error {
 			text := strings.Join(exec.Args, " ")
-			if upper, ok := exec.Flags["upper"].(bool); ok && upper {
+			if upper := exec.Flags.GetBool("upper"); upper {
 				text = strings.ToUpper(text)
 			}
 			fmt.Fprint(exec.Stdout, text)
@@ -459,7 +459,7 @@ func TestExecuteWithArgs(t *testing.T) {
 		},
 		func(ctx context.Context, exec *command.ExecutionContext) error {
 			assert.Equal(t, []string{"arg1", "arg2"}, exec.Args)
-			assert.Equal(t, "value", exec.Flags["key"])
+			assert.Equal(t, "value", exec.Flags.GetString("key"))
 			return nil
 		},
 	)

@@ -392,7 +392,7 @@ func (a *AliasCommand) getAllAliases(prefix string) map[string]string {
 
 // getScope gets the scope from flags
 func (a *AliasCommand) getScope(exec *command.ExecutionContext) string {
-	if scope, ok := exec.Flags["scope"].(string); ok && scope != "" {
+	if scope := exec.Flags.GetString("scope"); scope != "" {
 		return scope
 	}
 	return "all"
@@ -400,7 +400,7 @@ func (a *AliasCommand) getScope(exec *command.ExecutionContext) string {
 
 // getOutputFormat gets the output format from flags or data
 func (a *AliasCommand) getOutputFormat(exec *command.ExecutionContext) string {
-	if format, ok := exec.Flags["format"].(string); ok && format != "" {
+	if format := exec.Flags.GetString("format"); format != "" {
 		return format
 	}
 	if format, ok := exec.Data["outputFormat"].(string); ok && format != "" {

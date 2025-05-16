@@ -47,20 +47,10 @@ func NewHelpCommand(registry *command.Registry, config *config.Config) *HelpComm
 // Execute displays help information
 func (h *HelpCommand) Execute(ctx context.Context, exec *command.ExecutionContext) error {
 	// Check if we need to show all commands
-	showAll := false
-	if v, ok := exec.Flags["all"]; ok {
-		if b, ok := v.(bool); ok {
-			showAll = b
-		}
-	}
+	showAll := exec.Flags.GetBool("all")
 
 	// Check if we need to show aliases
-	showAliases := true
-	if v, ok := exec.Flags["no-aliases"]; ok {
-		if b, ok := v.(bool); ok {
-			showAliases = !b
-		}
-	}
+	showAliases := !exec.Flags.GetBool("no-aliases")
 
 	// Update formatter settings
 	if formatter, ok := h.formatter.(*ContextAwareHelpFormatter); ok {

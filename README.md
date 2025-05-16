@@ -77,8 +77,14 @@ See [Configuration Guide](docs/user-guide/README.md) for detailed information.
 ## Development
 
 ```bash
-# Run tests
+# Run unit tests (fast)
 make test
+
+# Run integration tests
+make test-integration
+
+# Run all tests
+make test-all
 
 # Run linter
 make lint
@@ -86,7 +92,7 @@ make lint
 # Format code
 make fmt
 
-# Run all pre-commit checks
+# Run all pre-commit checks (includes unit tests)
 make pre-commit
 ```
 

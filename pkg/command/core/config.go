@@ -144,7 +144,7 @@ func (c *ConfigCommand) showCurrentConfig(ctx context.Context, exec *command.Exe
 func (c *ConfigCommand) listConfig(ctx context.Context, exec *command.ExecutionContext) error {
 	allSettings := c.config.All()
 
-	outputFormat, _ := exec.Flags["format"].(string)
+	outputFormat := exec.Flags.GetString("format")
 	if outputFormat == "" {
 		outputFormat = "text"
 	}
@@ -218,7 +218,7 @@ func (c *ConfigCommand) validateConfig(ctx context.Context, exec *command.Execut
 
 // exportConfig exports the configuration
 func (c *ConfigCommand) exportConfig(ctx context.Context, exec *command.ExecutionContext) error {
-	outputFormat, _ := exec.Flags["format"].(string)
+	outputFormat := exec.Flags.GetString("format")
 	if outputFormat == "" {
 		outputFormat = "yaml"
 	}
@@ -395,7 +395,7 @@ func (c *ConfigCommand) deleteProfile(ctx context.Context, exec *command.Executi
 
 // exportProfile exports a specific profile
 func (c *ConfigCommand) exportProfile(ctx context.Context, exec *command.ExecutionContext, name string) error {
-	outputFormat, _ := exec.Flags["format"].(string)
+	outputFormat := exec.Flags.GetString("format")
 	if outputFormat == "" {
 		outputFormat = "yaml"
 	}

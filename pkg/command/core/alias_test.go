@@ -260,7 +260,7 @@ func TestAliasCommand_Execute(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			exec := &command.ExecutionContext{
 				Args:   tt.args,
-				Flags:  tt.flags,
+				Flags:  command.NewFlags(tt.flags),
 				Stdout: &stdout,
 				Stderr: &stderr,
 				Data:   make(map[string]interface{}),
@@ -364,8 +364,9 @@ func TestAliasCommand_EmptyAliases(t *testing.T) {
 
 	// List should show no aliases
 	exec := &command.ExecutionContext{
-		Args: []string{"list"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"list"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -379,16 +380,18 @@ func TestAliasCommand_CompleteLifecycle(t *testing.T) {
 
 	// 1. Add some aliases
 	exec := &command.ExecutionContext{
-		Args: []string{"add", "gpt4", "model", "gpt-4"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"add", "gpt4", "model", "gpt-4"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err := cmd.Execute(ctx, exec)
 	require.NoError(t, err)
 	assert.Contains(t, exec.Data["output"], "Alias 'gpt4' created")
 
 	exec = &command.ExecutionContext{
-		Args: []string{"add", "claude", "model", "anthropic/claude-3"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"add", "claude", "model", "anthropic/claude-3"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -396,7 +399,7 @@ func TestAliasCommand_CompleteLifecycle(t *testing.T) {
 	// 2. Add a REPL alias
 	exec = &command.ExecutionContext{
 		Args:  []string{"add", "h", "help"},
-		Flags: map[string]interface{}{"scope": "repl"},
+		Flags: command.NewFlags(map[string]interface{}{"scope": "repl"}),
 		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
@@ -404,8 +407,9 @@ func TestAliasCommand_CompleteLifecycle(t *testing.T) {
 
 	// 3. List all aliases
 	exec = &command.ExecutionContext{
-		Args: []string{"list"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"list"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -416,8 +420,9 @@ func TestAliasCommand_CompleteLifecycle(t *testing.T) {
 
 	// 4. Show a specific alias
 	exec = &command.ExecutionContext{
-		Args: []string{"show", "gpt4"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"show", "gpt4"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -425,8 +430,9 @@ func TestAliasCommand_CompleteLifecycle(t *testing.T) {
 
 	// 5. Export aliases
 	exec = &command.ExecutionContext{
-		Args: []string{"export"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"export"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -436,8 +442,9 @@ func TestAliasCommand_CompleteLifecycle(t *testing.T) {
 
 	// 6. Remove an alias
 	exec = &command.ExecutionContext{
-		Args: []string{"remove", "claude"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"remove", "claude"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -446,7 +453,7 @@ func TestAliasCommand_CompleteLifecycle(t *testing.T) {
 	// 7. Clear REPL aliases
 	exec = &command.ExecutionContext{
 		Args:  []string{"clear"},
-		Flags: map[string]interface{}{"scope": "repl"},
+		Flags: command.NewFlags(map[string]interface{}{"scope": "repl"}),
 		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
@@ -455,8 +462,9 @@ func TestAliasCommand_CompleteLifecycle(t *testing.T) {
 
 	// 8. Verify final state
 	exec = &command.ExecutionContext{
-		Args: []string{"list"},
-		Data: make(map[string]interface{}),
+		Args:  []string{"list"},
+		Flags: command.NewFlags(nil),
+		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
 	require.NoError(t, err)
@@ -487,7 +495,7 @@ func TestAliasCommand_ScopeHandling(t *testing.T) {
 	// Add CLI alias
 	exec := &command.ExecutionContext{
 		Args:  []string{"add", "gpt4", "model", "gpt-4"},
-		Flags: map[string]interface{}{"scope": "cli"},
+		Flags: command.NewFlags(map[string]interface{}{"scope": "cli"}),
 		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
@@ -496,7 +504,7 @@ func TestAliasCommand_ScopeHandling(t *testing.T) {
 	// Add REPL alias with same name but different command
 	exec = &command.ExecutionContext{
 		Args:  []string{"add", "gpt4", "model", "gpt-4-turbo"},
-		Flags: map[string]interface{}{"scope": "repl"},
+		Flags: command.NewFlags(map[string]interface{}{"scope": "repl"}),
 		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
@@ -505,7 +513,7 @@ func TestAliasCommand_ScopeHandling(t *testing.T) {
 	// List CLI aliases only - should contain the CLI alias we added
 	exec = &command.ExecutionContext{
 		Args:  []string{"list"},
-		Flags: map[string]interface{}{"scope": "cli"},
+		Flags: command.NewFlags(map[string]interface{}{"scope": "cli"}),
 		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
@@ -519,7 +527,7 @@ func TestAliasCommand_ScopeHandling(t *testing.T) {
 	// List REPL aliases only
 	exec = &command.ExecutionContext{
 		Args:  []string{"list"},
-		Flags: map[string]interface{}{"scope": "repl"},
+		Flags: command.NewFlags(map[string]interface{}{"scope": "repl"}),
 		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)

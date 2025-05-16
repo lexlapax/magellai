@@ -34,13 +34,13 @@ func (v *Validator) ValidateArgs(args []string) error {
 }
 
 // ValidateFlags validates command flags
-func (v *Validator) ValidateFlags(flags map[string]interface{}) error {
+func (v *Validator) ValidateFlags(flags *Flags) error {
 	meta := v.cmd.Metadata()
 
 	// Check required flags
 	for _, flag := range meta.Flags {
 		if flag.Required {
-			if _, exists := flags[flag.Name]; !exists {
+			if !flags.Has(flag.Name) {
 				return fmt.Errorf("%w: %s", ErrMissingRequiredFlag, flag.Name)
 			}
 		}
@@ -48,7 +48,8 @@ func (v *Validator) ValidateFlags(flags map[string]interface{}) error {
 
 	// Validate flag types
 	for _, flag := range meta.Flags {
-		if value, exists := flags[flag.Name]; exists {
+		if flags.Has(flag.Name) {
+			value := flags.Get(flag.Name)
 			if err := validateFlagValue(flag, value); err != nil {
 				return fmt.Errorf("%w for flag '%s': %v", ErrInvalidFlagValue, flag.Name, err)
 			}

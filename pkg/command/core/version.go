@@ -41,11 +41,11 @@ func (c *VersionCommand) Execute(ctx context.Context, exec *command.ExecutionCon
 	}
 
 	// Check for JSON output format
-	format := ""
-	if f, ok := exec.Flags["format"].(string); ok {
-		format = f
-	} else if f, ok := exec.Data["outputFormat"].(string); ok {
-		format = f
+	format := exec.Flags.GetString("format")
+	if format == "" {
+		if f, ok := exec.Data["outputFormat"].(string); ok {
+			format = f
+		}
 	}
 
 	if format == "json" {

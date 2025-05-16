@@ -1,6 +1,6 @@
 # ABOUTME: Makefile for building, testing, and managing the Magellai project
 # ABOUTME: Provides commands for building, testing, linting, and documentation
-.PHONY: all build test test-race test-coverage clean install fmt lint vet help docker-build docker-test release-build release docs
+.PHONY: all build test test-integration test-all test-race test-coverage clean install fmt lint vet help docker-build docker-test release-build release docs
 
 # Build variables
 BINARY_NAME=magellai
@@ -37,10 +37,20 @@ install: build
 	@echo "Installing $(BINARY_NAME)..."
 	$(GO_INSTALL) $(LDFLAGS) ./cmd/magellai
 
-## test: Run all tests
+## test: Run unit tests only
 test:
-	@echo "Running tests..."
-	$(GO_TEST) ./...
+	@echo "Running unit tests..."
+	$(GO_TEST) -short ./...
+
+## test-integration: Run integration tests only
+test-integration:
+	@echo "Running integration tests..."
+	$(GO_TEST) -tags=integration ./...
+
+## test-all: Run all tests (unit and integration)
+test-all:
+	@echo "Running all tests..."
+	$(GO_TEST) -tags=integration ./...
 
 ## test-race: Run tests with race detection
 test-race:
@@ -140,7 +150,7 @@ tools:
 	@echo "Installing goimports..."
 	@go install golang.org/x/tools/cmd/goimports@latest
 
-## pre-commit: Run pre-commit checks
+## pre-commit: Run pre-commit checks (uses unit tests only for speed)
 pre-commit: fmt vet lint test
 
 ## docker-build: Build Docker image
@@ -151,7 +161,7 @@ docker-build:
 ## docker-test: Run tests in Docker
 docker-test:
 	@echo "Running tests in Docker..."
-	docker run --rm $(BINARY_NAME):$(VERSION) make test
+	docker run --rm $(BINARY_NAME):$(VERSION) make test-all
 
 ## help: Show this help
 help:

@@ -26,7 +26,7 @@ type ExecutionContext struct {
 	Args []string
 
 	// Command flags (key-value pairs)
-	Flags map[string]interface{}
+	Flags *Flags
 
 	// Input/Output streams
 	Stdin  io.Reader

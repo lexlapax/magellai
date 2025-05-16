@@ -43,7 +43,7 @@ func TestCLI_VersionFlag(t *testing.T) {
 			cmd := exec.Command("go", "run", "./cmd/magellai")
 			cmd.Args = append(cmd.Args, tt.args...)
 			cmd.Dir = "../.."
-			
+
 			output, err := cmd.CombinedOutput()
 			require.NoError(t, err)
 			assert.Contains(t, string(output), tt.expected)
@@ -79,11 +79,11 @@ func TestCLI_VersionCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var cli CLI
 			parser := kong.Must(&cli)
-			
+
 			// Mock the Run method
 			ctx, err := parser.Parse(tt.args)
 			require.NoError(t, err)
-			
+
 			// Get command and check if it's version
 			switch ctx.Command() {
 			case "version":
@@ -128,9 +128,9 @@ func TestCLI_ParseArgs(t *testing.T) {
 			wantCommand: "ask <prompt>",
 		},
 		{
-			name:        "invalid command",
-			args:        []string{"invalid"},
-			wantErr:     true,
+			name:    "invalid command",
+			args:    []string{"invalid"},
+			wantErr: true,
 		},
 	}
 
@@ -138,14 +138,14 @@ func TestCLI_ParseArgs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var cli CLI
 			parser := kong.Must(&cli)
-			
+
 			ctx, err := parser.Parse(tt.args)
-			
+
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantCommand, ctx.Command())
 		})
@@ -214,10 +214,10 @@ func TestCLI_GlobalFlags(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var cli CLI
 			parser := kong.Must(&cli)
-			
+
 			_, err := parser.Parse(tt.args)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, tt.wantFlags.verbosity, cli.Verbosity)
 			assert.Equal(t, tt.wantFlags.output, cli.Output)
 			assert.Equal(t, tt.wantFlags.configFile, cli.ConfigFile)
@@ -259,7 +259,7 @@ func TestCLI_AskCommand(t *testing.T) {
 		},
 		{
 			name: "ask with all flags",
-			args: []string{"ask", "-m", "claude", "-s", "-t", "0.7", "-a", "doc.pdf", "complex prompt"},
+			args: []string{"ask", "-m", "claude", "--stream", "-t", "0.7", "-a", "doc.pdf", "complex prompt"},
 			want: AskCmd{
 				Prompt:      "complex prompt",
 				Model:       "claude",
@@ -279,14 +279,14 @@ func TestCLI_AskCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var cli CLI
 			parser := kong.Must(&cli)
-			
+
 			ctx, err := parser.Parse(tt.args)
-			
+
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			assert.Equal(t, "ask <prompt>", ctx.Command())
 			assert.Equal(t, tt.want, cli.Ask)
@@ -333,14 +333,14 @@ func TestCLI_ChatCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var cli CLI
 			parser := kong.Must(&cli)
-			
+
 			ctx, err := parser.Parse(tt.args)
-			
+
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			assert.Equal(t, "chat", ctx.Command())
 			assert.Equal(t, tt.want, cli.Chat)
@@ -386,17 +386,16 @@ func TestCLI_ConfigCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var cli CLI
 			parser := kong.Must(&cli)
-			
+
 			ctx, err := parser.Parse(tt.args)
-			
+
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, ctx.Command())
 		})
 	}
 }
-

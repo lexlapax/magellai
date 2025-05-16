@@ -55,7 +55,7 @@ func (v *VersionCmd) Run(ctx *Context) error {
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
-		Flags:   make(map[string]interface{}),
+		Flags:   command.NewFlags(nil),
 		Data:    make(map[string]interface{}),
 	}
 
@@ -63,11 +63,11 @@ func (v *VersionCmd) Run(ctx *Context) error {
 	switch v := ctx.Model.Target.Interface().(type) {
 	case CLI:
 		if v.Output != "text" {
-			exec.Flags["format"] = v.Output
+			exec.Flags.Set("format", v.Output)
 		}
 	case *CLI:
 		if v.Output != "text" {
-			exec.Flags["format"] = v.Output
+			exec.Flags.Set("format", v.Output)
 		}
 	}
 
@@ -86,11 +86,14 @@ func (v *VersionCmd) Run(ctx *Context) error {
 
 // AskCmd handles the ask command
 type AskCmd struct {
-	Prompt      string   `arg:"" required:"" help:"The prompt to send to the LLM"`
-	Model       string   `short:"m" help:"Model to use (provider/model format)"`
-	Attach      []string `short:"a" help:"Files to attach to the prompt"`
-	Stream      bool     `short:"s" help:"Enable streaming response"`
-	Temperature float64  `short:"t" help:"Temperature for the model"`
+	Prompt         string   `arg:"" required:"" help:"The prompt to send to the LLM"`
+	Model          string   `short:"m" help:"Model to use (provider/model format)"`
+	Attach         []string `short:"a" help:"Files to attach to the prompt"`
+	Stream         bool     `help:"Enable streaming response"`
+	Temperature    float64  `short:"t" help:"Temperature for the model"`
+	MaxTokens      int      `name:"max-tokens" help:"Maximum tokens in response"`
+	System         string   `short:"s" help:"System prompt"`
+	ResponseFormat string   `name:"format" help:"Response format (text, json, markdown)"`
 }
 
 // Run executes the ask command
@@ -98,7 +101,7 @@ func (a *AskCmd) Run(ctx *Context) error {
 	// Convert Kong command to our command system
 	exec := &command.ExecutionContext{
 		Args:    []string{a.Prompt},
-		Flags:   make(map[string]interface{}),
+		Flags:   command.NewFlags(nil),
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
@@ -106,16 +109,29 @@ func (a *AskCmd) Run(ctx *Context) error {
 
 	// Map flags
 	if a.Model != "" {
-		exec.Flags["model"] = a.Model
+		exec.Flags.Set("model", a.Model)
 	}
 	if len(a.Attach) > 0 {
-		exec.Flags["attach"] = a.Attach
+		exec.Flags.Set("attach", a.Attach)
 	}
 	if a.Stream {
-		exec.Flags["stream"] = a.Stream
+		exec.Flags.Set("stream", a.Stream)
 	}
 	if a.Temperature != 0 {
-		exec.Flags["temperature"] = a.Temperature
+		exec.Flags.Set("temperature", a.Temperature)
+	}
+	if a.MaxTokens != 0 {
+		exec.Flags.Set("max-tokens", a.MaxTokens)
+	}
+	if a.System != "" {
+		exec.Flags.Set("system", a.System)
+	}
+	if a.ResponseFormat != "" {
+		exec.Flags.Set("format", a.ResponseFormat)
+	}
+	// Use global output flag
+	if ctx.CLI != nil && ctx.CLI.Output != "" {
+		exec.Flags.Set("output", ctx.CLI.Output)
 	}
 
 	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "ask", exec)
@@ -133,7 +149,7 @@ func (c *ChatCmd) Run(ctx *Context) error {
 	// Convert Kong command to our command system
 	exec := &command.ExecutionContext{
 		Args:    []string{},
-		Flags:   make(map[string]interface{}),
+		Flags:   command.NewFlags(nil),
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
@@ -141,13 +157,13 @@ func (c *ChatCmd) Run(ctx *Context) error {
 
 	// Map flags
 	if c.Resume != "" {
-		exec.Flags["resume"] = c.Resume
+		exec.Flags.Set("resume", c.Resume)
 	}
 	if c.Model != "" {
-		exec.Flags["model"] = c.Model
+		exec.Flags.Set("model", c.Model)
 	}
 	if len(c.Attach) > 0 {
-		exec.Flags["attach"] = c.Attach
+		exec.Flags.Set("attach", c.Attach)
 	}
 
 	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "chat", exec)
@@ -167,7 +183,7 @@ type ConfigListCmd struct{}
 func (c *ConfigListCmd) Run(ctx *Context) error {
 	exec := &command.ExecutionContext{
 		Args:    []string{"list"},
-		Flags:   make(map[string]interface{}),
+		Flags:   command.NewFlags(nil),
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
@@ -183,7 +199,7 @@ type ConfigGetCmd struct {
 func (c *ConfigGetCmd) Run(ctx *Context) error {
 	exec := &command.ExecutionContext{
 		Args:    []string{"get", c.Key},
-		Flags:   make(map[string]interface{}),
+		Flags:   command.NewFlags(nil),
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
@@ -200,7 +216,7 @@ type ConfigSetCmd struct {
 func (c *ConfigSetCmd) Run(ctx *Context) error {
 	exec := &command.ExecutionContext{
 		Args:    []string{"set", c.Key, c.Value},
-		Flags:   make(map[string]interface{}),
+		Flags:   command.NewFlags(nil),
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
@@ -214,7 +230,7 @@ type ConfigValidateCmd struct{}
 func (c *ConfigValidateCmd) Run(ctx *Context) error {
 	exec := &command.ExecutionContext{
 		Args:    []string{"validate"},
-		Flags:   make(map[string]interface{}),
+		Flags:   command.NewFlags(nil),
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
@@ -231,6 +247,7 @@ type Context struct {
 	Stdout   io.Writer
 	Stderr   io.Writer
 	Ctx      context.Context
+	CLI      *CLI // Reference to global CLI options
 }
 
 func main() {
@@ -353,6 +370,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	askCmd := core.NewAskCommand(cfg)
+	if err := registry.Register(askCmd); err != nil {
+		logger.Error("failed to register ask command", "error", err)
+		os.Exit(1)
+	}
+
 	// Register stub commands (temporary implementations)
 	if err := RegisterStubCommands(registry); err != nil {
 		logger.Error("failed to register stub commands", "error", err)
@@ -368,6 +391,7 @@ func main() {
 		Stdout:   os.Stdout,
 		Stderr:   os.Stderr,
 		Ctx:      context.Background(),
+		CLI:      &cli,
 	}
 
 	// Handle completions

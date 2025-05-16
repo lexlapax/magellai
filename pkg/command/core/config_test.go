@@ -217,7 +217,7 @@ func TestConfigCommand_Execute(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			exec := &command.ExecutionContext{
 				Args:   tt.args,
-				Flags:  tt.flags,
+				Flags:  command.NewFlags(tt.flags),
 				Stdout: &stdout,
 				Stderr: &stderr,
 				Data:   make(map[string]interface{}),
@@ -356,7 +356,7 @@ func TestConfigCommand_ProfileOperations(t *testing.T) {
 	// Export profile
 	exec = &command.ExecutionContext{
 		Args:  []string{"profiles", "export", "test"},
-		Flags: map[string]interface{}{"format": "json"},
+		Flags: command.NewFlags(map[string]interface{}{"format": "json"}),
 		Data:  make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
@@ -448,7 +448,7 @@ func TestConfigCommand_ImportExport(t *testing.T) {
 	// Export config
 	exec := &command.ExecutionContext{
 		Args:  []string{"export"},
-		Flags: map[string]interface{}{"format": "json"},
+		Flags: command.NewFlags(map[string]interface{}{"format": "json"}),
 		Data:  make(map[string]interface{}),
 	}
 	err := cmd.Execute(ctx, exec)

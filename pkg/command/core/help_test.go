@@ -71,7 +71,7 @@ func TestHelpCommand_Basic(t *testing.T) {
 
 	exec := &command.ExecutionContext{
 		Args:   []string{},
-		Flags:  map[string]interface{}{},
+		Flags:  command.NewFlags(map[string]interface{}{}),
 		Stdout: stdout,
 		Stderr: stderr,
 	}
@@ -123,7 +123,7 @@ func TestHelpCommand_SpecificCommand(t *testing.T) {
 
 	exec := &command.ExecutionContext{
 		Args:   []string{"test"},
-		Flags:  map[string]interface{}{},
+		Flags:  command.NewFlags(map[string]interface{}{}),
 		Stdout: stdout,
 		Stderr: stderr,
 	}
@@ -201,7 +201,7 @@ func TestHelpCommand_ContextAwareness(t *testing.T) {
 			stdout := &bytes.Buffer{}
 			exec := &command.ExecutionContext{
 				Args:   []string{},
-				Flags:  map[string]interface{}{},
+				Flags:  command.NewFlags(map[string]interface{}{}),
 				Stdout: stdout,
 				Stderr: &bytes.Buffer{},
 			}
@@ -241,7 +241,7 @@ func TestHelpCommand_CommandNotFound(t *testing.T) {
 
 	exec := &command.ExecutionContext{
 		Args:   []string{"nonexistent"},
-		Flags:  map[string]interface{}{},
+		Flags:  command.NewFlags(map[string]interface{}{}),
 		Stdout: stdout,
 		Stderr: stderr,
 	}
@@ -317,7 +317,7 @@ func TestHelpCommand_Flags(t *testing.T) {
 			stdout := &bytes.Buffer{}
 			exec := &command.ExecutionContext{
 				Args:   []string{},
-				Flags:  tt.flags,
+				Flags:  command.NewFlags(tt.flags),
 				Stdout: stdout,
 				Stderr: &bytes.Buffer{},
 			}
@@ -458,7 +458,7 @@ func TestHelpCommand_AliasResolution(t *testing.T) {
 
 	exec := &command.ExecutionContext{
 		Args:   []string{"t"},
-		Flags:  map[string]interface{}{},
+		Flags:  command.NewFlags(map[string]interface{}{}),
 		Stdout: stdout,
 		Stderr: stderr,
 	}

@@ -305,10 +305,10 @@ func (p *ProfileCommand) createProfile(ctx context.Context, exec *command.Execut
 	}
 
 	// Get base settings from flags
-	description, _ := exec.Flags["description"].(string)
-	provider, _ := exec.Flags["provider"].(string)
-	model, _ := exec.Flags["model"].(string)
-	copyFrom, _ := exec.Flags["copy-from"].(string)
+	description := exec.Flags.GetString("description")
+	provider := exec.Flags.GetString("provider")
+	model := exec.Flags.GetString("model")
+	copyFrom := exec.Flags.GetString("copy-from")
 
 	var profileData map[string]interface{}
 
@@ -533,7 +533,7 @@ func (p *ProfileCommand) importProfile(ctx context.Context, exec *command.Execut
 
 // getOutputFormat gets the output format from flags or data
 func (p *ProfileCommand) getOutputFormat(exec *command.ExecutionContext) string {
-	if format, ok := exec.Flags["format"].(string); ok && format != "" {
+	if format := exec.Flags.GetString("format"); format != "" {
 		return format
 	}
 	if format, ok := exec.Data["outputFormat"].(string); ok && format != "" {

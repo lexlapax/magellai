@@ -80,12 +80,12 @@ func TestVersionCommand_Execute(t *testing.T) {
 			ctx := context.Background()
 
 			exec := &command.ExecutionContext{
-				Flags: tt.flags,
+				Flags: command.NewFlags(tt.flags),
 				Data:  tt.data,
 			}
 
 			if exec.Flags == nil {
-				exec.Flags = make(map[string]interface{})
+				exec.Flags = command.NewFlags(nil)
 			}
 			if exec.Data == nil {
 				exec.Data = make(map[string]interface{})

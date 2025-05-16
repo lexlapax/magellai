@@ -51,7 +51,8 @@ func TestModelCommand_Execute(t *testing.T) {
 				_ = cfg.SetDefaultModel("openai/gpt-4")
 			},
 			exec: &command.ExecutionContext{
-				Args: []string{"list"},
+				Args:  []string{"list"},
+				Flags: command.NewFlags(nil),
 				Data: map[string]interface{}{
 					"outputFormat": OutputFormatText,
 				},
@@ -76,9 +77,9 @@ func TestModelCommand_Execute(t *testing.T) {
 				Data: map[string]interface{}{
 					"outputFormat": OutputFormatText,
 				},
-				Flags: map[string]interface{}{
+				Flags: command.NewFlags(map[string]interface{}{
 					"provider": "openai",
-				},
+				}),
 			},
 			expectedError: false,
 			checkOutput: func(t *testing.T, output interface{}) {
@@ -99,9 +100,9 @@ func TestModelCommand_Execute(t *testing.T) {
 				Data: map[string]interface{}{
 					"outputFormat": OutputFormatText,
 				},
-				Flags: map[string]interface{}{
+				Flags: command.NewFlags(map[string]interface{}{
 					"capabilities": "text,image",
-				},
+				}),
 			},
 			expectedError: false,
 			checkOutput: func(t *testing.T, output interface{}) {
@@ -234,7 +235,8 @@ func TestModelCommand_Execute(t *testing.T) {
 			name:        "json output - list models",
 			setupConfig: func(cfg *config.Config) {},
 			exec: &command.ExecutionContext{
-				Args: []string{"list"},
+				Args:  []string{"list"},
+				Flags: command.NewFlags(nil),
 				Data: map[string]interface{}{
 					"outputFormat": OutputFormatJSON,
 				},

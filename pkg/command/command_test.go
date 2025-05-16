@@ -149,22 +149,22 @@ func TestValidation(t *testing.T) {
 	validator := NewValidator(cmd)
 
 	// Test missing required flag
-	flags := map[string]interface{}{
+	flags := NewFlags(map[string]interface{}{
 		"optional": 42,
-	}
+	})
 
 	if err := validator.ValidateFlags(flags); err == nil {
 		t.Error("Expected error for missing required flag")
 	}
 
 	// Test with required flag
-	flags["required"] = "value"
+	flags.Set("required", "value")
 	if err := validator.ValidateFlags(flags); err != nil {
 		t.Errorf("Validation failed with required flag: %v", err)
 	}
 
 	// Test invalid flag type
-	flags["optional"] = "not-an-int"
+	flags.Set("optional", "not-an-int")
 	if err := validator.ValidateFlags(flags); err == nil {
 		t.Error("Expected error for invalid flag type")
 	}

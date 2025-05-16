@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 3.1 Complete)
+## Current Status (Phase 3.2 Complete)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
@@ -20,6 +20,7 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 2.5: Core Commands Implementation - Complete
 ✅ Phase 2.6: Models Static Inventory - Complete
 ✅ Phase 3.1: CLI Structure Setup - Complete
+✅ Phase 3.2: Ask Command Implementation - Complete
 
 ### Completed Features:
 - Project structure and build system
@@ -143,13 +144,35 @@ The project follows a library-first design where the core intelligence (LLM prov
   - Fixed test issues with exec.Command approach
   - Achieved full test coverage for error handling
 
-### Next: Phase 3.2 - Ask Command Implementation
-Now that the CLI structure is complete, the next step is to implement the actual ask command:
-- [ ] Implement real ask command functionality
-- [ ] Handle multimodal attachments
-- [ ] Support streaming responses
-- [ ] Integrate with provider selection logic
-- [ ] Add progress indicators for streaming
+### Phase 3.2 Completed:
+✅ Ask command implementation
+  - Full ask command implementation in pkg/command/core/ask.go
+  - Support for multimodal attachments (files, images, etc.)
+  - Streaming response support with proper output handling
+  - Provider selection based on model format (provider/model)
+  - Integration with Kong CLI framework
+  - Complete flag support:
+    - --model/-m for model selection
+    - --attach/-a for file attachments (repeatable)
+    - --stream for streaming responses
+    - --temperature/-t for temperature control
+    - --max-tokens for response length
+    - --system/-s for system prompts
+    - --format for response format hints
+    - --output for output format (global flag)
+  - Full test coverage for ask command functionality
+  - Proper error handling and validation
+  - Deleted old pkg/magellai.go and pkg/magellai_test.go (initial ask implementations)
+  - Fixed all test failures related to Flags type changes
+  - Ensured all ExecutionContext instances have Flags field initialized
+
+### Next: Phase 3.3 - Chat Command Implementation
+Now that the ask command is complete, the next step is to implement the chat command:
+- [ ] Implement chat subcommand
+- [ ] Launch REPL mode
+- [ ] Profile selection
+- [ ] Session resume support
+- [ ] Initial attachments support
 
 ## Architecture
 
@@ -194,8 +217,14 @@ go install ./cmd/magellai
 
 ### Testing
 ```bash
-# Run all tests
-go test ./...
+# Run unit tests only (fast)
+make test
+
+# Run integration tests only
+make test-integration
+
+# Run all tests (unit and integration)
+make test-all
 
 # Run tests with coverage
 go test -cover ./...

@@ -173,7 +173,7 @@ func (e *CommandExecutor) validateCommand(cmd Interface, exec *ExecutionContext)
 	// Validate required flags
 	for _, flag := range meta.Flags {
 		if flag.Required {
-			if _, exists := exec.Flags[flag.Name]; !exists {
+			if !exec.Flags.Has(flag.Name) {
 				return &ValidationError{
 					Command: meta.Name,
 					Flag:    flag.Name,
@@ -186,7 +186,8 @@ func (e *CommandExecutor) validateCommand(cmd Interface, exec *ExecutionContext)
 
 	// Validate flag types
 	for _, flag := range meta.Flags {
-		if value, exists := exec.Flags[flag.Name]; exists {
+		if exec.Flags.Has(flag.Name) {
+			value := exec.Flags.Get(flag.Name)
 			if err := validateFlagType(flag, value); err != nil {
 				return &ValidationError{
 					Command: meta.Name,
@@ -264,7 +265,7 @@ func validateFlagType(flag Flag, value interface{}) error {
 func (e *CommandExecutor) ExecuteWithArgs(ctx context.Context, name string, args []string, flags map[string]interface{}) error {
 	exec := &ExecutionContext{
 		Args:  args,
-		Flags: flags,
+		Flags: NewFlags(flags),
 		Data:  make(map[string]interface{}),
 	}
 	return e.Execute(ctx, name, exec)
@@ -294,7 +295,7 @@ func (e *CommandExecutor) ParseAndExecute(ctx context.Context, args []string) er
 	// Create execution context
 	exec := &ExecutionContext{
 		Args:  parsedArgs,
-		Flags: parsedFlags,
+		Flags: NewFlags(parsedFlags),
 		Data:  make(map[string]interface{}),
 	}
 
