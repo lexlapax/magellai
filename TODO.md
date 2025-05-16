@@ -147,9 +147,29 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [x] Command categorization
     - [x] Alias resolution
     - [x] Comprehensive unit tests
-- [ ] Create command execution framework
-- [ ] Add command validation and error handling
+    - [x] Consolidated help functionality into core/help.go
+    - [x] Removed old help files and tests
+- [x] Create command execution framework
+  - [x] Command executor with validation and error handling
+  - [x] Pre/post execution hooks
+  - [x] Argument and flag parsing with type validation
+  - [x] Comprehensive unit tests
+- [x] Add command validation and error handling
+  - [x] Flag type validation
+  - [x] Required flag checking
+  - [x] Custom validation error types
+  - [x] Contextual error messages
 - [x] Unit tests for each command (model, config, profile, alias, and help commands complete)
+
+### 2.6 Models static inventory file `models.json`
+- [ ] A statically created `models.json` in root directory - this will/can be used for help and other things later
+  - [ ] version no (semantic versioning), and date as file metadata on top
+  - [ ] list of models by provider
+  - [ ] each model has name, description, url for model documentation/modelcard and a capability list, and last updated in models.json and other metadata
+    - [ ] capability list should be something like text and sub capability like read/consume, write/generate - possible capabilities are text, file, image, audio, video
+- [ ] a utility to go to the provider websites, parse and create the models.json file
+  - [ ] this could potentially be deferred and done as an inbuilt agent or workflow after we complete the workflow tasks below
+
 
 ## Phase 3: CLI with Cobra, urfave/cli etc(choose one) (Week 3)
 
@@ -164,7 +184,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [ ] Setup global flag parsing:
   - [ ] `--verbosity/-v` - Log verbosity level
   - [ ] `--output/-o` - Output format [text|json|markdown]
-  - [ ] `--config/-c` - Config file to use
+  - [ ] `--configfile/-c` - Config file to use (different from `config` command)
   - [ ] `--profile` - Configuration profile
   - [ ] `--no-color` - Disable color output
   - [ ] `--version` - Show version info
@@ -263,7 +283,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] `:attach-list` - List attachments
   - [ ] `:stream`
   - [ ] `:format` - response formats hints
-  - [ ] `:config load|show` - load config or show path, different from /config
+  - [ ] `:configfile load|show` - load config or show path, different from /config
   - [ ] `/save [name]` - Save session
   - [ ] `/load <id>` - Load session
   - [ ] `/reset` - Clear conversation
