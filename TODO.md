@@ -35,12 +35,12 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Define constants for providers and models
 
 ### 1.4 LLM Provider Adapter
-- [ ] Create `pkg/llm/provider.go` adapter interface for go-llms
-  - [ ] Wrap go-llms domain.Provider interface
-  - [ ] Adapt Generate/GenerateMessage methods
-  - [ ] Adapt Stream/StreamMessage methods
-  - [ ] Provider factory for OpenAI, Anthropic, Gemini
-  - [ ] Configuration helpers for API keys
+- [x] Create `pkg/llm/provider.go` adapter interface for go-llms
+  - [x] Wrap go-llms domain.Provider interface
+  - [x] Adapt Generate/GenerateMessage methods
+  - [x] Adapt Stream/StreamMessage methods
+  - [x] Provider factory for OpenAI, Anthropic, Gemini
+  - [x] Configuration helpers for API keys
   - [x] Model capability system with ModelInfo struct and capability flags (text, audio, video, image, file) 
 
 ### 1.5 Provider Implementations
