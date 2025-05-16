@@ -54,6 +54,13 @@ magellai ask --stream "Tell me a story"
 - [API Reference](docs/api/README.md)
 - [Architecture Overview](docs/technical/architecture.md)
 
+### Planning & Design
+
+- [CLI UX Research with ChatGPT O3](docs/planning/cli-ux-research-chatgpt-o3.md)
+- [Configuration Precedence](docs/planning/configuration-precedence.md)
+- [Philosophy of CLI Design](docs/planning/philosophy-cmdline.md)
+- [UX-Driven Implementation](docs/planning/ux-driven-implementation.md)
+
 ## Configuration
 
 Configuration files are loaded in the following order (later sources override earlier ones):

@@ -34,7 +34,9 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Complete error handling  
 ✅ Full test coverage for Ask functionality  
 
-Next: Phase 2.1 - Conversation Management
+Next: Phase 2 - Configuration and Command Foundation
+
+Starting with Phase 2.1: Configuration Management with Koanf
 
 ## Architecture
 
@@ -187,7 +189,7 @@ cat data.json | magellai extract summary
 The project uses:
 - **go-llms v0.2.1**: LLM provider integration (OpenAI, Anthropic, Gemini)
 - **Cobra**: For CLI command structure
-- **Viper**: For configuration management
+- **Koanf v2**: For configuration management (replacing Viper)
 - **Standard Go libraries**: For core functionality
 
 ### go-llms Integration

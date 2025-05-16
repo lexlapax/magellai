@@ -62,18 +62,9 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Support for streaming responses
   - [x] Support for multimodal attachments (AskWithAttachments)
 
-## Phase 2: Conversation API & REPL (Week 2)
+## Phase 2: Configuration and Command Foundation (Week 2)
 
-### 2.1 Conversation Management
-- [ ] Create `pkg/conversation/conversation.go`
-  - [ ] `Conversation` struct wrapping go-llms messages
-  - [ ] Use go-llms domain.Message for history
-  - [ ] `NewConversation()` constructor
-  - [ ] `Send()` method using go-llms GenerateMessage
-  - [ ] Context management with go-llms message roles
-  - [ ] Streaming support via go-llms StreamMessage
-
-### 2.2 Configuration Management with Koanf
+### 2.1 Configuration Management with Koanf
 - [ ] Install koanf dependency (`go get github.com/knadh/koanf/v2`)
 - [ ] Create `pkg/config/config.go` with koanf integration
   - [ ] Multi-layer configuration support:
@@ -89,7 +80,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Configuration watchers for live reload
   - [ ] Configuration merging strategies
 
-### 2.3 Configuration Schema
+### 2.2 Configuration Schema
 - [ ] Define configuration structure in `pkg/config/schema.go`
   - [ ] Provider configurations (API keys, endpoints)
   - [ ] Model settings using `provider/model` format
@@ -102,59 +93,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Aliases for common commands
   - [ ] Model parsing utilities (split provider/model strings)
 
-### 2.4 Configuration Example
-Configuration structure using koanf (YAML format):
-```yaml
-default:
-  model: openai/gpt-4  # provider/model format
-  temperature: 0.7
-  max_tokens: 2048
-  stream: false
-
-providers:
-  openai:
-    api_key: ${OPENAI_API_KEY}
-    base_url: https://api.openai.com/v1
-    models:
-      - gpt-4
-      - gpt-3.5-turbo
-  anthropic:
-    api_key: ${ANTHROPIC_API_KEY}
-    base_url: https://api.anthropic.com
-    models:
-      - claude-3-opus
-      - claude-3-sonnet
-  gemini:
-    api_key: ${GEMINI_API_KEY}
-    models:
-      - gemini-pro
-
-output:
-  format: text  # text, json, markdown
-  color: auto   # auto, always, never
-  
-logging:
-  level: info   # debug, info, warn, error
-  file: ~/.config/magellai/magellai.log
-
-storage:
-  sessions: ~/.config/magellai/sessions
-  plugins: ~/.config/magellai/plugins
-
-profiles:
-  work:
-    model: anthropic/claude-3-opus
-    temperature: 0.3
-  creative:
-    model: openai/gpt-4
-    temperature: 0.9
-
-aliases:
-  gpt4: "ask --model openai/gpt-4"
-  claude: "ask --model anthropic/claude-3-opus"
-```
-
-### 2.5 Configuration Utilities
+### 2.3 Configuration Utilities
 - [ ] Implement configuration helpers in `pkg/config/utils.go`
   - [ ] GetString/GetInt/GetBool methods
   - [ ] SetValue with validation
@@ -165,41 +104,33 @@ aliases:
   - [ ] Secret handling (API keys)
   - [ ] Configuration debugging tools
 
-### 2.6 Session Storage
-- [ ] Implement session persistence in `pkg/session/`
-  - [ ] session storage abstraction for multiple formats
-  - [ ] JSON-based storage format
-  - [ ] Save/Load conversation methods
-  - [ ] Session listing and searching
-  - [ ] File-based storage in `~/.config/magellai/sessions/`
-  - [ ] Auto-save functionality
-  - [ ] Unit tests for storage operations
+### 2.4 Unified Command System
+- [ ] Create directory structure for unified command management `pkg/command`
+- [ ] Design command registry system to be central
+  - [ ] Command interface for all commands (CLI and REPL)
+  - [ ] Command metadata (name, description, flags, availability)
+  - [ ] Command execution context
+  - [ ] Command validation and error handling
+- [ ] Define command categories:
+  - [ ] CLI-only commands (e.g., `ask`, `chat`)
+  - [ ] REPL-only commands (e.g., `/reset`, `/exit`)
+  - [ ] Shared commands (e.g., `model`, `config`)
+  - [ ] Flag-to-command mapping for REPL (e.g., `--stream` becomes `/stream`)
+- [ ] Create command discovery and registration mechanism
+- [ ] Implement help system that works across CLI and REPL
 
-### 2.7 REPL Implementation
-- [ ] Create `pkg/repl/repl.go`
-  - [ ] Interactive loop with prompt handling
-  - [ ] Slash command parser
-  - [ ] Command registry for REPL commands
-  - [ ] Multi-line input support
-  - [ ] ANSI color output when TTY
-  - [ ] Non-interactive mode detection
-
-### 2.8 Core REPL Commands
-- [ ] Implement essential REPL commands:
-  - [ ] `/help` - Show available commands
-  - [ ] `/model <provider/name>` - Switch model
-  - [ ] `/save [name]` - Save session
-  - [ ] `/load <id>` - Load session
-  - [ ] `/reset` - Clear conversation
-  - [ ] `/exit` - Exit REPL
-  - [ ] `/attach <file>` - Add attachment
-  - [ ] `/stream on|off` - Toggle streaming
-  - [ ] `/config show` - Display current config
-  - [ ] `/config set <key> <value>` - Set config value
-  - [ ] `/profile <name>` - Switch profile
-  - [ ] `/alias list` - list aliases
-  - [ ] `/alias add <name> <command>` - create a new alias
-  - [ ] `/alias remove <name>` = remove an alias
+### 2.5 Core Commands Implementation
+- [ ] Implement shared commands in `pkg/command/core/`:
+  - [ ] `model` - Switch between LLM models,
+    - [ ] `model` should take argument of the form `<provider>/<modelname`>
+    - [ ] this automatically switches `provider` - Switch between providers
+  - [ ] `config` - Configuration management
+  - [ ] `profile` - Profile management
+  - [ ] `alias` - Alias management
+  - [ ] `help` - Context-aware help
+- [ ] Create command execution framework
+- [ ] Add command validation and error handling
+- [ ] Unit tests for each command
 
 ## Phase 3: CLI with Cobra (Week 3)
 
@@ -226,6 +157,7 @@ aliases:
     - [ ] `--stream` - Enable streaming
     - [ ] `--format` - Response format hints
   - [ ] Pipeline support (stdin/stdout)
+  - [ ] Integrate with unified command system
 
 ### 3.3 Chat Command
 - [ ] Implement `chat` subcommand
@@ -233,6 +165,7 @@ aliases:
   - [ ] Profile selection
   - [ ] Session resume support (`--resume <id>`)
   - [ ] Initial attachments support
+  - [ ] Pass control to REPL implementation
 
 ### 3.4 Configuration Commands (using koanf)
 - [ ] Implement config subcommands:
@@ -257,23 +190,97 @@ aliases:
   - [ ] `history export <id> [--format=json]` - Export session
   - [ ] `history search <term>` - Search sessions
 
-## Phase 4: Plugin System (Week 4)
+## Phase 4: Conversation, Session Storage & REPL (Week 4)
 
-### 4.1 Plugin Architecture
+### 4.1 Conversation Management
+- [ ] Create `pkg/conversation/conversation.go`
+  - [ ] `Conversation` struct wrapping go-llms messages
+  - [ ] Use go-llms domain.Message for history
+  - [ ] `NewConversation()` constructor
+  - [ ] `Send()` method using go-llms GenerateMessage
+  - [ ] Context management with go-llms message roles
+  - [ ] Streaming support via go-llms StreamMessage
+  - [ ] Conversation state persistence
+  - [ ] Token counting and management
+
+### 4.2 Session Storage
+- [ ] Implement session persistence in `pkg/session/`
+  - [ ] Session storage abstraction for multiple formats
+  - [ ] JSON-based storage format
+  - [ ] Save/Load conversation methods
+  - [ ] Session listing and searching
+  - [ ] File-based storage in `~/.config/magellai/sessions/`
+  - [ ] Auto-save functionality
+  - [ ] Session metadata (timestamps, model used, token counts)
+  - [ ] Unit tests for storage operations
+
+### 4.3 REPL Implementation
+- [ ] Create `pkg/repl/repl.go`
+  - [ ] Interactive loop with prompt handling
+  - [ ] Integrate with unified command system
+  - [ ] Command mode (/) vs conversation mode
+  - [ ] Multi-line input support
+  - [ ] ANSI color output when TTY
+  - [ ] Non-interactive mode detection
+  - [ ] History support (arrow keys)
+  - [ ] Tab completion for commands
+
+### 4.4 Core REPL Commands
+- [ ] Implement essential REPL commands:
+  - [ ] `/help` - Show available commands
+  - [ ] `:model <provider/name>` - Switch model
+  - [ ] `:stream on|off` - Toggle streaming
+  - [ ] `:verbosity int` - set verbosity
+  - [ ] `:output <format>`
+  - [ ] `:temperature`
+  - [ ] `:max_tokens`
+  - [ ] `:profile`
+  - [ ] `:version`
+  - [ ] `:attach <file>`
+    - [ ] `:attach-remove <file>` - Remove attachment
+    - [ ] `:attach-list` - List attachments
+  - [ ] `:stream`
+  - [ ] `:format` - response formats hints
+  - [ ] `:config load|show` - load config or show path, different from /config
+  - [ ] `/save [name]` - Save session
+  - [ ] `/load <id>` - Load session
+  - [ ] `/reset` - Clear conversation
+  - [ ] `/exit` - Exit REPL /quit is equivalent to /exit, so is ^D
+  - [ ] `/attach <file>` - Add attachment
+  - [ ] `/config show` - Display current config
+  - [ ] `/config set <key> <value>` - Set config value
+  - [ ] `/profile <name>` - Switch profile
+  - [ ] `/alias list` - list aliases
+  - [ ] `/alias add <name> <command>` - create a new alias
+  - [ ] `/alias remove <name>` - remove an alias
+
+
+
+### 4.5 REPL Integration
+- [ ] Connect REPL to conversation management
+- [ ] Integrate with session storage for persistence
+- [ ] Hook up command execution to unified command system
+- [ ] Add context management across commands
+- [ ] Implement streaming display in REPL
+- [ ] Add error recovery and graceful degradation
+
+## Phase 5: Plugin System (Week 5)
+
+### 5.1 Plugin Architecture
 - [ ] Design plugin interface in `pkg/plugin/`
   - [ ] Plugin metadata structure
   - [ ] Plugin lifecycle management
   - [ ] Plugin registry
   - [ ] Discovery mechanisms
 
-### 4.2 Binary Plugin Support
+### 5.2 Binary Plugin Support
 - [ ] Implement binary plugin scanner
   - [ ] PATH scanning for `magellai-*` binaries
   - [ ] `~/.config/magellai/plugins/` directory support
   - [ ] Plugin metadata parsing
   - [ ] Name conflict resolution
 
-### 4.3 Plugin Communication
+### 5.3 Plugin Communication
 - [ ] Define JSON-RPC protocol
   - [ ] Request/Response message format
   - [ ] Streaming event protocol
@@ -281,7 +288,7 @@ aliases:
   - [ ] Environment variable passing
   - [ ] Plugin capabilities negotiation
 
-### 4.4 Plugin Execution
+### 5.4 Plugin Execution
 - [ ] Create plugin runner
   - [ ] Process spawning with stdin/stdout
   - [ ] JSON marshaling/unmarshaling
@@ -289,7 +296,7 @@ aliases:
   - [ ] Resource cleanup
   - [ ] Error recovery
 
-### 4.5 Scripting Engine Interface
+### 5.5 Scripting Engine Interface
 - [ ] Design scripting engine interface
   - [ ] Common interface for multiple engines
   - [ ] Tool creation support
@@ -297,7 +304,7 @@ aliases:
   - [ ] Workflow creation support
   - [ ] Error handling
 
-### 4.6 Gopher-lua Integration
+### 5.6 Gopher-lua Integration
 - [ ] Implement Gopher-lua scripting support
   - [ ] Lua runtime initialization
   - [ ] Go function bindings
@@ -306,7 +313,7 @@ aliases:
   - [ ] Workflow creation API
   - [ ] Example Lua scripts
 
-### 4.7 Sample Calculator Plugin
+### 5.7 Sample Calculator Plugin
 - [ ] Create `plugins/calculator/`
   - [ ] Math expression parser
   - [ ] JSON-RPC implementation
@@ -314,7 +321,7 @@ aliases:
   - [ ] Documentation
   - [ ] Integration tests
 
-### 4.8 Plugin Management Commands
+### 5.8 Plugin Management Commands
 - [ ] Implement plugin commands:
   - [ ] `plugin list` - List installed plugins
   - [ ] `plugin install <source>` - Install plugin
@@ -322,9 +329,9 @@ aliases:
   - [ ] `plugin update [name]` - Update plugin(s)
   - [ ] `plugin info <name>` - Show plugin details
 
-## Phase 5: Tools, Agents & Workflows (Week 5)
+## Phase 6: Tools, Agents & Workflows (Week 6)
 
-### 5.1 Tool Framework
+### 6.1 Tool Framework
 - [ ] Create `pkg/tool/registry.go`
   - [ ] Wrap go-llms toolcall interface
   - [ ] Tool registration and discovery
@@ -332,14 +339,14 @@ aliases:
   - [ ] Plugin tool integration
   - [ ] Tool validation
 
-### 5.2 Tool Commands
+### 6.2 Tool Commands
 - [ ] Implement tool commands:
   - [ ] `tool list` - List available tools
   - [ ] `tool run <name> [args]` - Execute tool
   - [ ] `tool info <name>` - Show tool details
   - [ ] `tool test <name>` - Test tool
 
-### 5.3 Agent Framework
+### 6.3 Agent Framework
 - [ ] Implement `pkg/agent/agent.go`
   - [ ] Use go-llms workflow.Agent as base
   - [ ] Extend go-llms llmutil.Agent wrapper
@@ -348,7 +355,7 @@ aliases:
   - [ ] Context persistence
   - [ ] Agent templates
 
-### 5.4 Workflow Engine
+### 6.4 Workflow Engine
 - [ ] Create `pkg/workflow/engine.go`
   - [ ] Wrap go-llms workflow.Workflow
   - [ ] YAML workflow parser
@@ -358,7 +365,7 @@ aliases:
   - [ ] Progress tracking
   - [ ] Workflow templates
 
-### 5.5 Agent & Workflow Commands
+### 6.5 Agent & Workflow Commands
 - [ ] Implement agent/workflow commands:
   - [ ] `agent list` - List available agents
   - [ ] `agent run <name> [args]` - Execute agent
@@ -369,7 +376,7 @@ aliases:
   - [ ] `workflow visualize <name>` - Show workflow graph
   - [ ] `workflow export <name>` - Export workflow
 
-### 5.6 Built-in Agents
+### 6.6 Built-in Agents
 - [ ] Implement example agents:
   - [ ] Researcher agent - Web search and synthesis
   - [ ] Summarizer agent - Content summarization
@@ -377,9 +384,9 @@ aliases:
   - [ ] Q&A agent - Question answering
   - [ ] Integration tests for each
 
-## Phase 6: Polish & Documentation (Week 6)
+## Phase 7: Polish & Documentation (Week 7)
 
-### 6.1 Shell Completion
+### 7.1 Shell Completion
 - [ ] Generate completion scripts:
   - [ ] Bash completion
   - [ ] Zsh completion
@@ -389,7 +396,7 @@ aliases:
 - [ ] Installation instructions
 - [ ] Test on different shells
 
-### 6.2 Advanced Configuration
+### 7.2 Advanced Configuration
 - [ ] Implement configuration features:
   - [ ] Profile inheritance
   - [ ] Environment variable overrides
@@ -398,7 +405,7 @@ aliases:
   - [ ] Migration between versions
   - [ ] Config templates
 
-### 6.3 Provider Enhancements
+### 7.3 Provider Enhancements
 - [ ] Enhance provider support:
   - [ ] Ollama integration for local models
   - [ ] OpenRouter support
@@ -407,7 +414,7 @@ aliases:
   - [ ] Rate limiting
   - [ ] Cost tracking
 
-### 6.4 Documentation
+### 7.4 Documentation
 - [ ] Write comprehensive docs:
   - [ ] Getting Started guide
   - [ ] CLI reference (auto-generated)
@@ -418,7 +425,7 @@ aliases:
   - [ ] Examples and tutorials
   - [ ] Troubleshooting guide
 
-### 6.5 Testing & CI/CD
+### 7.5 Testing & CI/CD
 - [ ] Complete test coverage:
   - [ ] Unit tests (>80% coverage)
   - [ ] Integration tests for CLI
@@ -433,7 +440,7 @@ aliases:
   - [ ] Release automation
   - [ ] Cross-platform builds
 
-### 6.6 Performance & Optimization
+### 7.6 Performance & Optimization
 - [ ] Performance improvements:
   - [ ] Response caching
   - [ ] Connection pooling
@@ -442,9 +449,9 @@ aliases:
   - [ ] Startup time optimization
   - [ ] Profile and benchmark
 
-## Phase 7: Advanced Features (Post-MVP)
+## Phase 8: Advanced Features (Post-MVP)
 
-### 7.1 Additional Scripting Engines
+### 8.1 Additional Scripting Engines
 - [ ] Goja (JavaScript) support
   - [ ] Runtime integration
   - [ ] API bindings
@@ -454,7 +461,7 @@ aliases:
   - [ ] API bindings
   - [ ] Example scripts
 
-### 7.2 Go Plugin Support
+### 8.2 Go Plugin Support
 - [ ] Native Go plugin interface
   - [ ] Plugin loading mechanism
   - [ ] API stability guarantees
@@ -462,7 +469,7 @@ aliases:
   - [ ] Migration guide from binary plugins
   - [ ] Security considerations
 
-### 7.3 Web Interface
+### 8.3 Web Interface
 - [ ] HTTP API server
   - [ ] RESTful endpoints
   - [ ] WebSocket support for streaming
@@ -474,7 +481,7 @@ aliases:
   - [ ] Plugin management
   - [ ] Session history
 
-### 7.4 Advanced REPL Features
+### 8.4 Advanced REPL Features
 - [ ] Enhanced REPL capabilities:
   - [ ] Syntax highlighting
   - [ ] Command history search
@@ -483,7 +490,7 @@ aliases:
   - [ ] Auto-suggestions
   - [ ] Rich media rendering
 
-### 7.5 Enterprise Features
+### 8.5 Enterprise Features
 - [ ] Enterprise enhancements:
   - [ ] SAML/OIDC authentication
   - [ ] Audit logging
@@ -510,6 +517,13 @@ aliases:
 - Document all public APIs
 - Follow Go best practices and idioms
 - Use consistent error handling patterns
+
+### Library-First Approach
+- Keep all core logic in the library (`pkg/`)
+- Front-ends (CLI/REPL) should only handle I/O and flag parsing
+- Ensure library remains flag-free and testable
+- Design APIs that can be consumed by multiple front-ends
+- Maintain clean separation between library and UI code
 
 ### Commit Guidelines
 - One feature per commit
