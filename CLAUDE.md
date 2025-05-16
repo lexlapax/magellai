@@ -34,9 +34,7 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Complete error handling  
 ✅ Full test coverage for Ask functionality  
 
-Next: Phase 2 - Configuration and Command Foundation
-
-Starting with Phase 2.1: Configuration Management with Koanf
+Next: Phase 2.2 - Configuration Schema (Already implemented during 2.1)
 
 ## Architecture
 
@@ -244,6 +242,17 @@ The library is available as:
 - Model capability detection based on provider/model
 - Error handling and validation
 - Comprehensive option builder pattern
+
+### pkg/config
+- Multi-layer configuration management using Koanf v2
+- Support for configuration precedence (defaults, system, user, project, env, CLI flags)
+- Profile system for different use cases
+- Type-safe configuration access methods
+- Configuration validation with detailed error reporting
+- Configuration schema with provider-specific settings
+- Model-specific settings and parameter validation
+- Configuration export/import functionality
+- Utility functions for provider/model string parsing
 
 ## Workflow Conventions
 

@@ -65,43 +65,43 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ## Phase 2: Configuration and Command Foundation (Week 2)
 
 ### 2.1 Configuration Management with Koanf
-- [ ] Install koanf dependency (`go get github.com/knadh/koanf/v2`)
-- [ ] Create `pkg/config/config.go` with koanf integration
-  - [ ] Multi-layer configuration support:
-    - [ ] Default values (embedded)
-    - [ ] System config (`/etc/magellai/config.yaml`)
-    - [ ] User config (`~/.config/magellai/config.yaml`)
-    - [ ] Project config (`.magellai.yaml` - search upward)
-    - [ ] Environment variables (`MAGELLAI_*`)
-    - [ ] Command-line flags (highest precedence)
-  - [ ] Profile system implementation
-  - [ ] Configuration validation
-  - [ ] Type-safe configuration access
-  - [ ] Configuration watchers for live reload
-  - [ ] Configuration merging strategies
+- [x] Install koanf dependency (`go get github.com/knadh/koanf/v2`)
+- [x] Create `pkg/config/config.go` with koanf integration
+  - [x] Multi-layer configuration support:
+    - [x] Default values (embedded)
+    - [x] System config (`/etc/magellai/config.yaml`)
+    - [x] User config (`~/.config/magellai/config.yaml`)
+    - [x] Project config (`.magellai.yaml` - search upward)
+    - [x] Environment variables (`MAGELLAI_*`)
+    - [x] Command-line flags (highest precedence)
+  - [x] Profile system implementation
+  - [x] Configuration validation
+  - [x] Type-safe configuration access
+  - [x] Configuration watchers for live reload
+  - [x] Configuration merging strategies
 
 ### 2.2 Configuration Schema
-- [ ] Define configuration structure in `pkg/config/schema.go`
-  - [ ] Provider configurations (API keys, endpoints)
-  - [ ] Model settings using `provider/model` format
-  - [ ] Model-specific settings (temperature, max tokens)
-  - [ ] Output preferences (format, colors)
-  - [ ] Session storage settings
-  - [ ] Plugin directories
-  - [ ] Logging configuration
-  - [ ] Profile definitions
-  - [ ] Aliases for common commands
-  - [ ] Model parsing utilities (split provider/model strings)
+- [x] Define configuration structure in `pkg/config/schema.go`
+  - [x] Provider configurations (API keys, endpoints)
+  - [x] Model settings using `provider/model` format
+  - [x] Model-specific settings (temperature, max tokens)
+  - [x] Output preferences (format, colors)
+  - [x] Session storage settings
+  - [x] Plugin directories
+  - [x] Logging configuration
+  - [x] Profile definitions
+  - [x] Aliases for common commands
+  - [x] Model parsing utilities (split provider/model strings)
 
 ### 2.3 Configuration Utilities
-- [ ] Implement configuration helpers in `pkg/config/utils.go`
-  - [ ] GetString/GetInt/GetBool methods
-  - [ ] SetValue with validation
-  - [ ] Profile switching logic
-  - [ ] Configuration export/import
+- [x] Implement configuration helpers in `pkg/config/utils.go`
+  - [x] GetString/GetInt/GetBool methods
+  - [x] SetValue with validation
+  - [x] Profile switching logic
+  - [x] Configuration export/import
   - [ ] Migration from old config formats
-  - [ ] Environment variable mapping
-  - [ ] Secret handling (API keys)
+  - [x] Environment variable mapping
+  - [x] Secret handling (API keys)
   - [ ] Configuration debugging tools
 
 ### 2.4 Unified Command System
