@@ -10,6 +10,19 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
+## Current Status (Phase 1.2 Complete)
+
+✅ Project structure set up  
+✅ Makefile with build/test/lint targets  
+✅ MIT license  
+✅ Basic README.md  
+✅ Logging infrastructure using slog  
+✅ Configuration directory management  
+✅ All tests passing  
+✅ Placeholder main.go for build verification  
+
+Next: Phase 1.3 - Core Data Models and go-llms Integration
+
 ## Architecture
 
 ### Core Library Structure
@@ -182,6 +195,20 @@ Key interfaces from go-llms:
 The library is available as:
 - Go module dependency: `github.com/lexlapax/go-llms v0.2.1`
 - Source reference: `./go-llms/` (git submodule)
+
+## Implemented Modules
+
+### internal/logging
+- Flexible logging wrapper around slog
+- Supports JSON and text output formats
+- Configurable log levels and output destinations
+- Helper functions for common logging patterns
+
+### internal/configdir
+- Configuration directory management
+- Creates and manages `~/.config/magellai/` structure
+- Handles project-specific config files (`.magellai.yaml`)
+- Default configuration file generation
 
 ## Workflow Conventions
 

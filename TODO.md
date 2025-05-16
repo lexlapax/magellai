@@ -20,11 +20,11 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [x] Create a simple README.md on root directory with links to documentation under [docs]
 
 ### 1.2 Core Infrastructure
-- [ ] Create logging infrastructure using `slog`
-- [ ] Setup configuration directory structure
-  - [ ] `~/.config/magellai/` for general config
-  - [ ] `~/.config/magellai/sessions/` for session storage
-  - [ ] `~/.config/magellai/plugins/` for plugin installations
+- [x] Create logging infrastructure using `slog`
+- [x] Setup configuration directory structure
+  - [x] `~/.config/magellai/` for general config
+  - [x] `~/.config/magellai/sessions/` for session storage
+  - [x] `~/.config/magellai/plugins/` for plugin installations
 
 ### 1.3 Core Data Models and go-llms Integration
 - [ ] Create wrapper types in `pkg/llm/types.go` that adapt go-llms types
@@ -205,6 +205,7 @@ aliases:
 - [ ] Setup global flag parsing:
   - [ ] `--verbosity/-v` - Log verbosity level
   - [ ] `--output/-o` - Output format [text|json|markdown]
+  - [ ] `--config/-c` - Config file to use
   - [ ] `--profile` - Configuration profile
   - [ ] `--no-color` - Disable color output
   - [ ] `--version` - Show version info
