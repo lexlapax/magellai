@@ -52,12 +52,15 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Unit tests for each provider
 
 ### 1.6 High-Level Ask Function
-- [ ] Implement `Ask()` function in `pkg/magellai.go`
-  - [ ] Use go-llms domain.Provider interface
-  - [ ] Provider/model selection logic (from config)
-  - [ ] Convert prompts to go-llms messages
-  - [ ] Response formatting
-  - [ ] Error handling with go-llms error types
+- [x] Implement `Ask()` function in `pkg/magellai.go`
+  - [x] Use go-llms domain.Provider interface
+  - [x] Provider/model selection logic (from config)
+  - [x] Convert prompts to go-llms messages
+  - [x] Response formatting
+  - [x] Error handling with go-llms error types
+  - [x] Comprehensive unit tests
+  - [x] Support for streaming responses
+  - [x] Support for multimodal attachments (AskWithAttachments)
 
 ## Phase 2: Conversation API & REPL (Week 2)
 
