@@ -21,7 +21,10 @@ go.work
 go.work.sum
 
 # Go build files
-magellai
+#magellai
+#magellai.exe
+magll
+magll.exe
 
 # IDE specific files
 .idea/

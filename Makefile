@@ -25,12 +25,12 @@ all: build
 ## build: Build the binary
 build:
 	@echo "Building $(BINARY_NAME)..."
-	$(GO_BUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) cmd/magellai/main.go
+	$(GO_BUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/magellai/...
 
 ## build-race: Build with race detection
 build-race:
 	@echo "Building with race detection..."
-	$(GO_BUILD) -race $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-race cmd/magellai/main.go
+	$(GO_BUILD) -race $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-race ./cmd/magellai/...
 
 ## install: Install the binary
 install: build

@@ -177,23 +177,27 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] this could potentially be deferred and done as an inbuilt agent or workflow after we complete the workflow tasks below (deferred to Phase 6)
 
 
-## Phase 3: CLI with Cobra, urfave/cli etc(choose one) (Week 3)
+## Phase 3: CLI with Kong (Week 3)
 
-### 3.1 CLI Structure Setup
-- [ ] Research best framework, since we have our own command structure - 
-    - [ ] Cobra, kong + kongplete, urfave/cli, Kingpin, go-flags, docopt,  
-    - [ ] criteria - less dependencies, flexible, does not impose hard to get around conventions, easy to test and read, completions support
-- [ ] Install library dependency
-- [ ] Create main.go in `cmd/magellai/`
-- [ ] Define root command with global flags
-- [ ] Implement version command
-- [ ] Setup global flag parsing:
-  - [ ] `--verbosity/-v` - Log verbosity level
-  - [ ] `--output/-o` - Output format [text|json|markdown]
-  - [ ] `--configfile/-c` - Config file to use (different from `config` command)
-  - [ ] `--profile` - Configuration profile
-  - [ ] `--no-color` - Disable color output
-  - [ ] `--version` - Show version info
+### 3.1 CLI Structure Setup ✅
+- [x] Research best framework, since we have our own command structure - 
+    - [x] Cobra, kong + kongplete, urfave/cli, Kingpin, go-flags, docopt,  
+    - [x] criteria - less dependencies, flexible, does not impose hard to get around conventions, easy to test and read, completions support
+    - [x] Decision: Kong + kongplete chosen (see docs/technical/cli_framework_analysis.md)
+- [x] Install library dependency (Kong + kongplete)
+- [x] Create main.go in `cmd/magellai/`
+- [x] Define root command with global flags
+- [x] Implement version command 
+    - [x] to call the command core `version` command with context
+- [x] Help command handled by Kong framework (core help command still available for REPL/API)
+- [x] Setup global flag parsing: 
+  - [x] `--verbosity/-v` - Log verbosity level
+  - [x] `--output/-o` - Output format [text|json|markdown]
+  - [x] `--configfile/-c` - Config file to use (different from `config` command)
+  - [x] `--profile` - Configuration profile
+  - [x] `--no-color` - Disable color output
+  - [x] `--version` - Show version info (Unix standard flag)
+  - [x] Also support version subcommand for advanced usage
 
 ### 3.2 Ask Command
 - [ ] Implement `ask` subcommand

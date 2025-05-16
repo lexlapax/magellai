@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 2.6 Complete)
+## Current Status (Phase 3.1 Complete)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
@@ -19,6 +19,7 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 2.4: Unified Command System - Complete
 ✅ Phase 2.5: Core Commands Implementation - Complete
 ✅ Phase 2.6: Models Static Inventory - Complete
+✅ Phase 3.1: CLI Structure Setup - Complete
 
 ### Completed Features:
 - Project structure and build system
@@ -109,13 +110,46 @@ The project follows a library-first design where the core intelligence (LLM prov
 - Implemented intelligent flag parsing logic
 - Created static models inventory with comprehensive model information
 
-### Next: Phase 3 - CLI Implementation
-With Phase 2.6 now complete, the next step is to begin Phase 3: CLI implementation with a chosen framework:
-- [ ] Research and choose CLI framework (Cobra, urfave/cli, Kong, etc.)
-- [ ] Implement main.go with chosen framework
-- [ ] Create root command with global flags
-- [ ] Implement ask and chat commands
-- [ ] Hook up CLI to the unified command system
+### Phase 3.1 Completed:
+✅ CLI Framework research and selection
+  - Evaluated multiple frameworks (Cobra, Kong, urfave/cli, Kingpin, go-flags, docopt)
+  - Selected Kong + kongplete based on minimal dependencies, flexibility, testing ease
+  - Documented decision in docs/technical/cli_framework_analysis.md
+
+✅ Kong CLI implementation
+  - Implemented main.go with Kong framework
+  - Created root command with global flags
+  - Integrated command registry with Kong commands
+  - Created stub implementations for ask and chat
+  - Connected CLI to unified command system
+  - Fixed type assertion issues for CLI interface
+  - Registered all core commands from pkg/command/core
+
+✅ Version command implementation
+  - Created core version command in pkg/command/core/version.go
+  - Implemented both --version flag and version subcommand for Unix compatibility
+  - Support for build-time version injection via ldflags
+  - Support for both text and JSON output formats
+  - Made --version flag visible in help text
+  - Comprehensive unit tests in version_test.go
+  - Full integration with command registry and executor
+
+✅ Main.go test coverage
+  - Created main_test.go with comprehensive CLI tests
+  - Tests for version flag behavior and subcommand
+  - Tests for global flags (config, profile, verbose, debug)
+  - Tests for command parsing and registration
+  - Created integration_test.go for end-to-end testing
+  - Fixed test issues with exec.Command approach
+  - Achieved full test coverage for error handling
+
+### Next: Phase 3.2 - Ask Command Implementation
+Now that the CLI structure is complete, the next step is to implement the actual ask command:
+- [ ] Implement real ask command functionality
+- [ ] Handle multimodal attachments
+- [ ] Support streaming responses
+- [ ] Integrate with provider selection logic
+- [ ] Add progress indicators for streaming
 
 ## Architecture
 
@@ -134,7 +168,7 @@ pkg/
 ### Front-End Structure
 ```
 cmd/
-  magellai/  → CLI entry point using Cobra
+  magellai/  → CLI entry point using Kong
 ```
 
 ### Plugin Architecture
@@ -267,7 +301,7 @@ cat data.json | magellai extract summary
 
 The project uses:
 - **go-llms v0.2.1**: LLM provider integration (OpenAI, Anthropic, Gemini)
-- **Cobra**: For CLI command structure
+- **Kong**: For CLI command structure and argument parsing
 - **Koanf v2**: For configuration management (replacing Viper)
 - **Standard Go libraries**: For core functionality
 

@@ -170,6 +170,11 @@ func (r *Registry) Clear() {
 	r.aliases = make(map[string]string)
 }
 
+// GetExecutor returns a command executor for this registry
+func (r *Registry) GetExecutor() *CommandExecutor {
+	return NewExecutor(r)
+}
+
 // MustRegister registers a command and panics on error
 func (r *Registry) MustRegister(cmd Interface) {
 	if err := r.Register(cmd); err != nil {

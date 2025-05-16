@@ -6,6 +6,7 @@ package core
 import (
 	"bytes"
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/lexlapax/magellai/pkg/command"
@@ -461,8 +462,16 @@ func TestAliasCommand_CompleteLifecycle(t *testing.T) {
 	require.NoError(t, err)
 	output = exec.Data["output"].(string)
 	assert.Contains(t, output, "gpt4")
-	assert.NotContains(t, output, "claude")
-	assert.NotContains(t, output, "h (repl)")
+	// Check that the specific aliases we created and removed don't exist anymore
+	// The format is "aliasname → command" or "aliasname (repl) → command"
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		// Check that our removed aliases don't exist as alias names
+		assert.NotRegexp(t, `^\s*claude\s*(→|\(repl\)\s*→)`, line)
+		assert.NotRegexp(t, `^\s*h\s*\(repl\)\s*→`, line)
+	}
+	// Also check that gpt4 still exists
+	assert.Regexp(t, `gpt4\s*→\s*model gpt-4`, output)
 }
 
 func TestAliasCommand_ScopeHandling(t *testing.T) {
