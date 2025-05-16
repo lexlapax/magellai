@@ -28,17 +28,6 @@ const (
 	CapabilityFile  ModelCapability = "file"
 )
 
-// ModelInfo represents metadata about a model
-// NOTE: We intentionally don't maintain a hard-coded list of models
-// as they change frequently. Instead, providers will query their
-// available models at runtime or use configuration.
-type ModelInfo struct {
-	Provider     string            `json:"provider"`
-	Model        string            `json:"model"`
-	Capabilities []ModelCapability `json:"capabilities"`
-	MaxTokens    int               `json:"max_tokens,omitempty"`
-	Description  string            `json:"description,omitempty"`
-}
 
 // Request wraps go-llms domain.Message for Magellai usage
 type Request struct {

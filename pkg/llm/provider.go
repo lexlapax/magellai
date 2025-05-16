@@ -104,12 +104,16 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 		return nil, fmt.Errorf("failed to create provider: %w", err)
 	}
 
-	// Create model info with capabilities based on provider/model
-	modelInfo := ModelInfo{
-		Provider:     providerType,
-		Model:        model,
-		Capabilities: getModelCapabilities(providerType, model),
-		Description:  fmt.Sprintf("%s model %s", providerType, model),
+	// Get model info from registry
+	modelInfo, err := GetModelInfo(providerType, model)
+	if err != nil {
+		// If model not found in registry, create a basic one
+		modelInfo = ModelInfo{
+			Provider:     providerType,
+			Model:        model,
+			Capabilities: ModelCapabilities{Text: true}, // Default to text-only
+			Description:  fmt.Sprintf("%s model %s", providerType, model),
+		}
 	}
 
 	return &providerAdapter{

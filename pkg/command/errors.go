@@ -15,6 +15,9 @@ var (
 	// ErrInvalidArguments indicates invalid command arguments
 	ErrInvalidArguments = errors.New("invalid arguments")
 
+	// ErrMissingArgument indicates a required argument is missing
+	ErrMissingArgument = errors.New("missing argument")
+
 	// ErrMissingRequiredFlag indicates a required flag is missing
 	ErrMissingRequiredFlag = errors.New("missing required flag")
 

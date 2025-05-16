@@ -356,11 +356,15 @@ func TestMultimodalMessageRoundtrip(t *testing.T) {
 	}
 }
 
+// TODO: Fix this test after ModelCapabilities refactoring
 func TestModelInfo(t *testing.T) {
 	model := ModelInfo{
 		Provider:     "openai",
 		Model:        "gpt-4-vision",
-		Capabilities: []ModelCapability{CapabilityText, CapabilityImage},
+		Capabilities: ModelCapabilities{
+			Text:  true,
+			Image: true,
+		},
 		MaxTokens:    128000,
 		Description:  "GPT-4 with vision capabilities",
 	}
@@ -370,16 +374,9 @@ func TestModelInfo(t *testing.T) {
 	hasImage := false
 	hasAudio := false
 
-	for _, cap := range model.Capabilities {
-		switch cap {
-		case CapabilityText:
-			hasText = true
-		case CapabilityImage:
-			hasImage = true
-		case CapabilityAudio:
-			hasAudio = true
-		}
-	}
+	hasText = model.Capabilities.Text
+	hasImage = model.Capabilities.Image
+	hasAudio = model.Capabilities.Audio
 
 	if !hasText {
 		t.Error("Expected text capability")

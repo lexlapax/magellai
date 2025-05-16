@@ -115,27 +115,30 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] CLI-only commands (e.g., `ask`, `chat`)
   - [x] REPL-only commands (e.g., `/reset`, `/exit`)
   - [x] Shared commands (e.g., `model`, `config`)
-  - [x] Flag-to-command mapping for REPL (e.g., `--stream` becomes `/stream`)
+  - [x] Flag-to-command mapping for REPL (e.g., `--stream` becomes `:stream`)
 - [x] Create command discovery and registration mechanism
 - [x] Implement help system that works across CLI and REPL
 
 ### 2.5 Core Commands Implementation
 - [ ] Implement shared commands in `pkg/command/core/`:
-  - [ ] `model` - Switch between LLM models,
-    - [ ] `model` should take argument of the form `<provider>/<modelname`>
-    - [ ] this automatically switches `provider` - Switch between providers
+  - [x] `model` - Switch between LLM models,
+    - [x] `model` should take argument of the form `<provider>/<modelname`>
+    - [x] this automatically switches `provider` - Switch between providers
   - [ ] `config` - Configuration management
   - [ ] `profile` - Profile management
   - [ ] `alias` - Alias management
   - [ ] `help` - Context-aware help
 - [ ] Create command execution framework
 - [ ] Add command validation and error handling
-- [ ] Unit tests for each command
+- [x] Unit tests for each command (model command complete)
 
-## Phase 3: CLI with Cobra (Week 3)
+## Phase 3: CLI with Cobra, urfave/cli etc(choose one) (Week 3)
 
 ### 3.1 CLI Structure Setup
-- [ ] Install Cobra dependency
+- [ ] Research best framework, since we have our own command structure - 
+    - [ ] Cobra, kong, urfave/cli, Kingpin, go-flags, docopt,  
+    - [ ] criteria - less dependencies, flexible, does not impose hard to get around conventions, easy to test and read.
+- [ ] Install library dependency
 - [ ] Create main.go in `cmd/magellai/`
 - [ ] Define root command with global flags
 - [ ] Implement version command

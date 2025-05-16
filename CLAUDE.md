@@ -10,13 +10,14 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 2.4 Complete)
+## Current Status (Phase 2.5 In Progress)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
 ✅ Phase 2.2: Configuration Schema - Complete  
 ✅ Phase 2.3: Configuration Utilities - Complete (mostly)
 ✅ Phase 2.4: Unified Command System - Complete
+🚧 Phase 2.5: Core Commands Implementation - In Progress
 
 ### Completed Features:
 - Project structure and build system
@@ -37,14 +38,24 @@ The project follows a library-first design where the core intelligence (LLM prov
 - Command discovery and registration mechanisms
 - Unified help system for all interfaces
 - Full test coverage for config package (21.6%) and command package (49.0%)
+- Model command implementation with list, info, and select functionality
 
-### Remaining in Phase 2:
-- Configuration migration from old formats
-- Configuration debugging tools
-- Core commands implementation (Phase 2.5)
+### Phase 2.5 Progress:
+✅ Model command implementation
+  - List all available models
+  - Show model information (capabilities, parameters)
+  - Select model using provider/modelname format
+  - Automatic provider switching when model changes
+  - Comprehensive unit tests
 
-### Next: Phase 2.5 - Core Commands Implementation
-This will implement the actual commands (model, config, profile, alias, help) using our unified command system.
+### Remaining in Phase 2.5:
+- Config command implementation
+- Profile command implementation
+- Alias command implementation
+- Help command enhancements
+
+### Next: Continue Phase 2.5 - Remaining Core Commands
+Complete implementation of config, profile, alias, and help commands using our unified command system.
 
 ## Architecture
 
