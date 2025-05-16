@@ -45,7 +45,7 @@ func TestCommandExecutor(t *testing.T) {
 		Stderr: &strings.Builder{},
 		Data:   make(map[string]interface{}),
 	}
-	
+
 	err := executor.Execute(context.Background(), "test", exec)
 	assert.NoError(t, err)
 	assert.True(t, executed)
@@ -69,7 +69,7 @@ func TestCommandNotFound(t *testing.T) {
 // TestPreExecuteHooks verifies pre-execution hooks
 func TestPreExecuteHooks(t *testing.T) {
 	registry := command.NewRegistry()
-	
+
 	hookCalled := false
 	executor := command.NewExecutor(registry, command.WithPreExecuteHook(func(ctx context.Context, cmd command.Interface, exec *command.ExecutionContext) error {
 		hookCalled = true
@@ -101,7 +101,7 @@ func TestPreExecuteHooks(t *testing.T) {
 // TestPostExecuteHooks verifies post-execution hooks
 func TestPostExecuteHooks(t *testing.T) {
 	registry := command.NewRegistry()
-	
+
 	hookCalled := false
 	executor := command.NewExecutor(registry, command.WithPostExecuteHook(func(ctx context.Context, cmd command.Interface, exec *command.ExecutionContext) error {
 		hookCalled = true
@@ -135,7 +135,7 @@ func TestPostExecuteHooks(t *testing.T) {
 // TestHookError verifies hook error handling
 func TestHookError(t *testing.T) {
 	registry := command.NewRegistry()
-	
+
 	tests := []struct {
 		name    string
 		preErr  error
@@ -164,7 +164,7 @@ func TestHookError(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			var exec *command.CommandExecutor
-			
+
 			if tc.preErr != nil {
 				exec = command.NewExecutor(registry, command.WithPreExecuteHook(func(ctx context.Context, cmd command.Interface, exec *command.ExecutionContext) error {
 					return tc.preErr
@@ -264,7 +264,7 @@ func TestFlagValidation(t *testing.T) {
 			}
 
 			err := executor.ExecuteCommand(context.Background(), cmd, exec)
-			
+
 			if tc.wantErr {
 				assert.Error(t, err)
 				var validationErr *command.ValidationError
@@ -408,7 +408,7 @@ func TestCommandValidation(t *testing.T) {
 // TestMultipleHooks verifies execution order of multiple hooks
 func TestMultipleHooks(t *testing.T) {
 	registry := command.NewRegistry()
-	
+
 	order := []string{}
 	executor := command.NewExecutor(registry,
 		command.WithPreExecuteHook(func(ctx context.Context, cmd command.Interface, exec *command.ExecutionContext) error {

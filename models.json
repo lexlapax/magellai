@@ -1,0 +1,420 @@
+{
+  "_metadata": {
+    "version": "1.0.0",
+    "last_updated": "2025-01-16",
+    "description": "Static inventory of LLM models supported by Magellai",
+    "schema_version": "1"
+  },
+  "models": [
+    {
+      "provider": "openai",
+      "name": "gpt-4o",
+      "display_name": "GPT-4o",
+      "description": "Most capable GPT-4 model, multimodal with vision capabilities",
+      "documentation_url": "https://platform.openai.com/docs/models/gpt-4o",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": true,
+          "write": false
+        },
+        "audio": {
+          "read": false,
+          "write": false
+        },
+        "video": {
+          "read": false,
+          "write": false
+        },
+        "file": {
+          "read": true,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": true
+      },
+      "context_window": 128000,
+      "max_output_tokens": 4096,
+      "training_cutoff": "2024-04",
+      "model_family": "gpt-4",
+      "pricing": {
+        "input_per_1k_tokens": 0.005,
+        "output_per_1k_tokens": 0.015
+      },
+      "last_updated": "2025-01-16"
+    },
+    {
+      "provider": "openai",
+      "name": "gpt-4o-mini",
+      "display_name": "GPT-4o Mini",
+      "description": "Fast, lightweight GPT-4 model with vision capabilities",
+      "documentation_url": "https://platform.openai.com/docs/models/gpt-4o-mini",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": true,
+          "write": false
+        },
+        "audio": {
+          "read": false,
+          "write": false
+        },
+        "video": {
+          "read": false,
+          "write": false
+        },
+        "file": {
+          "read": true,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": true
+      },
+      "context_window": 128000,
+      "max_output_tokens": 16384,
+      "training_cutoff": "2024-04",
+      "model_family": "gpt-4",
+      "pricing": {
+        "input_per_1k_tokens": 0.00025,
+        "output_per_1k_tokens": 0.001
+      },
+      "last_updated": "2025-01-16"
+    },
+    {
+      "provider": "openai",
+      "name": "gpt-4-turbo",
+      "display_name": "GPT-4 Turbo",
+      "description": "GPT-4 Turbo with 128K context window",
+      "documentation_url": "https://platform.openai.com/docs/models/gpt-4-turbo",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": true,
+          "write": false
+        },
+        "audio": {
+          "read": false,
+          "write": false
+        },
+        "video": {
+          "read": false,
+          "write": false
+        },
+        "file": {
+          "read": true,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": true
+      },
+      "context_window": 128000,
+      "max_output_tokens": 4096,
+      "training_cutoff": "2023-04",
+      "model_family": "gpt-4",
+      "pricing": {
+        "input_per_1k_tokens": 0.01,
+        "output_per_1k_tokens": 0.03
+      },
+      "last_updated": "2025-01-16"
+    },
+    {
+      "provider": "openai",
+      "name": "gpt-3.5-turbo",
+      "display_name": "GPT-3.5 Turbo",
+      "description": "Fast and efficient text generation model",
+      "documentation_url": "https://platform.openai.com/docs/models/gpt-3-5-turbo",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": false,
+          "write": false
+        },
+        "audio": {
+          "read": false,
+          "write": false
+        },
+        "video": {
+          "read": false,
+          "write": false
+        },
+        "file": {
+          "read": false,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": true
+      },
+      "context_window": 16385,
+      "max_output_tokens": 4096,
+      "training_cutoff": "2021-09",
+      "model_family": "gpt-3.5",
+      "pricing": {
+        "input_per_1k_tokens": 0.0005,
+        "output_per_1k_tokens": 0.0015
+      },
+      "last_updated": "2025-01-16"
+    },
+    {
+      "provider": "anthropic",
+      "name": "claude-3-5-sonnet-20241022",
+      "display_name": "Claude 3.5 Sonnet (October 2024)",
+      "description": "Most capable Claude model with improved performance",
+      "documentation_url": "https://docs.anthropic.com/claude/docs/models-overview",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": true,
+          "write": false
+        },
+        "audio": {
+          "read": false,
+          "write": false
+        },
+        "video": {
+          "read": false,
+          "write": false
+        },
+        "file": {
+          "read": true,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": false
+      },
+      "context_window": 200000,
+      "max_output_tokens": 8192,
+      "training_cutoff": "2024-04",
+      "model_family": "claude-3",
+      "pricing": {
+        "input_per_1k_tokens": 0.003,
+        "output_per_1k_tokens": 0.015
+      },
+      "last_updated": "2025-01-16"
+    },
+    {
+      "provider": "anthropic",
+      "name": "claude-3-opus-20240229",
+      "display_name": "Claude 3 Opus",
+      "description": "Most capable Claude model for complex tasks",
+      "documentation_url": "https://docs.anthropic.com/claude/docs/models-overview",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": true,
+          "write": false
+        },
+        "audio": {
+          "read": false,
+          "write": false
+        },
+        "video": {
+          "read": false,
+          "write": false
+        },
+        "file": {
+          "read": true,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": false
+      },
+      "context_window": 200000,
+      "max_output_tokens": 4096,
+      "training_cutoff": "2023-08",
+      "model_family": "claude-3",
+      "pricing": {
+        "input_per_1k_tokens": 0.015,
+        "output_per_1k_tokens": 0.075
+      },
+      "last_updated": "2025-01-16"
+    },
+    {
+      "provider": "anthropic",
+      "name": "claude-3-haiku-20240307",
+      "display_name": "Claude 3 Haiku",
+      "description": "Fast and affordable Claude model",
+      "documentation_url": "https://docs.anthropic.com/claude/docs/models-overview",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": true,
+          "write": false
+        },
+        "audio": {
+          "read": false,
+          "write": false
+        },
+        "video": {
+          "read": false,
+          "write": false
+        },
+        "file": {
+          "read": true,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": false
+      },
+      "context_window": 200000,
+      "max_output_tokens": 4096,
+      "training_cutoff": "2023-08",
+      "model_family": "claude-3",
+      "pricing": {
+        "input_per_1k_tokens": 0.00025,
+        "output_per_1k_tokens": 0.00125
+      },
+      "last_updated": "2025-01-16"
+    },
+    {
+      "provider": "google",
+      "name": "gemini-2.0-flash-exp",
+      "display_name": "Gemini 2.0 Flash (Experimental)",
+      "description": "Latest experimental Gemini model with fast inference",
+      "documentation_url": "https://ai.google.dev/gemini-api/docs/models",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": true,
+          "write": false
+        },
+        "audio": {
+          "read": true,
+          "write": false
+        },
+        "video": {
+          "read": true,
+          "write": false
+        },
+        "file": {
+          "read": true,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": true
+      },
+      "context_window": 1048576,
+      "max_output_tokens": 8192,
+      "training_cutoff": "2024-08",
+      "model_family": "gemini-2",
+      "pricing": {
+        "input_per_1k_tokens": 0.0,
+        "output_per_1k_tokens": 0.0
+      },
+      "last_updated": "2025-01-16"
+    },
+    {
+      "provider": "google",
+      "name": "gemini-1.5-pro",
+      "display_name": "Gemini 1.5 Pro",
+      "description": "Most capable Gemini model for complex reasoning tasks",
+      "documentation_url": "https://ai.google.dev/gemini-api/docs/models",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": true,
+          "write": false
+        },
+        "audio": {
+          "read": true,
+          "write": false
+        },
+        "video": {
+          "read": true,
+          "write": false
+        },
+        "file": {
+          "read": true,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": true
+      },
+      "context_window": 2097152,
+      "max_output_tokens": 8192,
+      "training_cutoff": "2024-11",
+      "model_family": "gemini-1.5",
+      "pricing": {
+        "input_per_1k_tokens": 0.00125,
+        "output_per_1k_tokens": 0.005
+      },
+      "last_updated": "2025-01-16"
+    },
+    {
+      "provider": "google",
+      "name": "gemini-1.5-flash",
+      "display_name": "Gemini 1.5 Flash",
+      "description": "Fast and efficient Gemini model for high-volume tasks",
+      "documentation_url": "https://ai.google.dev/gemini-api/docs/models",
+      "capabilities": {
+        "text": {
+          "read": true,
+          "write": true
+        },
+        "image": {
+          "read": true,
+          "write": false
+        },
+        "audio": {
+          "read": true,
+          "write": false
+        },
+        "video": {
+          "read": true,
+          "write": false
+        },
+        "file": {
+          "read": true,
+          "write": false
+        },
+        "function_calling": true,
+        "streaming": true,
+        "json_mode": true
+      },
+      "context_window": 1048576,
+      "max_output_tokens": 8192,
+      "training_cutoff": "2024-11",
+      "model_family": "gemini-1.5",
+      "pricing": {
+        "input_per_1k_tokens": 0.000075,
+        "output_per_1k_tokens": 0.0003
+      },
+      "last_updated": "2025-01-16"
+    }
+  ]
+}

@@ -169,7 +169,7 @@ func (e *CommandExecutor) validateCommand(cmd Interface, exec *ExecutionContext)
 	}
 
 	meta := cmd.Metadata()
-	
+
 	// Validate required flags
 	for _, flag := range meta.Flags {
 		if flag.Required {
@@ -278,13 +278,13 @@ func (e *CommandExecutor) ParseAndExecute(ctx context.Context, args []string) er
 
 	// First argument is the command name
 	cmdName := args[0]
-	
+
 	// Get the command to check its flags
 	cmd, err := e.registry.Get(cmdName)
 	if err != nil {
 		return err
 	}
-	
+
 	// Parse remaining arguments with command metadata
 	parsedArgs, parsedFlags, err := parseArgsWithMetadata(args[1:], cmd.Metadata())
 	if err != nil {
@@ -305,7 +305,7 @@ func (e *CommandExecutor) ParseAndExecute(ctx context.Context, args []string) er
 func parseArgsWithMetadata(args []string, meta *Metadata) ([]string, map[string]interface{}, error) {
 	positional := make([]string, 0)
 	flags := make(map[string]interface{})
-	
+
 	// Build a map of flag names to their types
 	flagTypes := make(map[string]FlagType)
 	for _, flag := range meta.Flags {
@@ -314,11 +314,11 @@ func parseArgsWithMetadata(args []string, meta *Metadata) ([]string, map[string]
 			flagTypes[flag.Short] = flag.Type
 		}
 	}
-	
+
 	i := 0
 	for i < len(args) {
 		arg := args[i]
-		
+
 		// Check if it's a flag
 		if len(arg) > 0 && arg[0] == '-' {
 			flagName, flagValue, consumed, err := parseFlagWithType(args[i:], flagTypes)
@@ -333,7 +333,7 @@ func parseArgsWithMetadata(args []string, meta *Metadata) ([]string, map[string]
 			i++
 		}
 	}
-	
+
 	return positional, flags, nil
 }
 
@@ -342,15 +342,15 @@ func parseFlagWithType(args []string, flagTypes map[string]FlagType) (string, in
 	if len(args) == 0 {
 		return "", nil, 0, fmt.Errorf("empty flag")
 	}
-	
+
 	arg := args[0]
 	consumed := 1
-	
+
 	// Handle different flag formats
 	var flagName string
 	var hasValue bool
 	var value string
-	
+
 	if len(arg) > 2 && arg[:2] == "--" {
 		// Long flag: --flag or --flag=value
 		flagName = arg[2:]
@@ -365,21 +365,21 @@ func parseFlagWithType(args []string, flagTypes map[string]FlagType) (string, in
 	} else {
 		return "", nil, 0, fmt.Errorf("invalid flag format: %s", arg)
 	}
-	
+
 	// Get the expected type for this flag
 	flagType, knownFlag := flagTypes[flagName]
-	
+
 	// If we have a value already (from --flag=value), parse it
 	if hasValue {
 		parsedValue := parseValueWithType(value, flagType)
 		return flagName, parsedValue, consumed, nil
 	}
-	
+
 	// For flags without values, check if it's a boolean flag
 	if knownFlag && flagType == FlagTypeBool {
 		return flagName, true, consumed, nil
 	}
-	
+
 	// For non-boolean flags, try to get the value from the next argument
 	if consumed < len(args) {
 		nextArg := args[consumed]
@@ -396,12 +396,12 @@ func parseFlagWithType(args []string, flagTypes map[string]FlagType) (string, in
 		parsedValue := parseValueWithType(nextArg, flagType)
 		return flagName, parsedValue, consumed + 1, nil
 	}
-	
+
 	// No next argument available
 	if knownFlag && flagType == FlagTypeBool {
 		return flagName, true, consumed, nil
 	}
-	
+
 	// Unknown flag or non-boolean without value
 	return flagName, true, consumed, nil
 }
@@ -418,7 +418,7 @@ func parseValueWithType(s string, expectedType FlagType) interface{} {
 		}
 		// Invalid boolean string will be caught in validation
 		return s
-		
+
 	case FlagTypeInt:
 		if n, err := strconv.ParseInt(s, 10, 64); err == nil {
 			return int(n)
@@ -429,24 +429,23 @@ func parseValueWithType(s string, expectedType FlagType) interface{} {
 		}
 		// Invalid integer will be caught in validation
 		return s
-		
+
 	case FlagTypeFloat:
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
 			return f
 		}
 		// Invalid float will be caught in validation
 		return s
-		
+
 	case FlagTypeString, FlagTypeDuration:
 		return s
-		
+
 	case FlagTypeStringSlice:
 		// For now, treat as single string; proper slice handling would need multiple values
 		return []string{s}
-		
+
 	default:
 		// Unknown type, return as string
 		return s
 	}
 }
-

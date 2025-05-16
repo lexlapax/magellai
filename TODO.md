@@ -161,14 +161,20 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Contextual error messages
 - [x] Unit tests for each command (model, config, profile, alias, and help commands complete)
 
-### 2.6 Models static inventory file `models.json`
-- [ ] A statically created `models.json` in root directory - this will/can be used for help and other things later
-  - [ ] version no (semantic versioning), and date as file metadata on top
-  - [ ] list of models by provider
-  - [ ] each model has name, description, url for model documentation/modelcard and a capability list, and last updated in models.json and other metadata
-    - [ ] capability list should be something like text and sub capability like read/consume, write/generate - possible capabilities are text, file, image, audio, video
+### 2.6 Models static inventory file `models.json` ✅
+- [x] A statically created `models.json` in root directory - this will/can be used for help and other things later
+  - [x] version no (semantic versioning), and date as file metadata on top
+  - [x] list of models by provider
+  - [x] each model has name, description, url for model documentation/modelcard and a capability list, and last updated in models.json and other metadata
+    - [x] capability list should be something like text and sub capability like read/consume, write/generate - possible capabilities are text, file, image, audio, video
+- [x] Created pkg/models for loading and querying models.json
+  - [x] Load inventory from root directory
+  - [x] Query models by provider, name, capabilities
+  - [x] Get models with specific capabilities
+  - [x] List providers and model families
+  - [x] Comprehensive unit tests
 - [ ] a utility to go to the provider websites, parse and create the models.json file
-  - [ ] this could potentially be deferred and done as an inbuilt agent or workflow after we complete the workflow tasks below
+  - [ ] this could potentially be deferred and done as an inbuilt agent or workflow after we complete the workflow tasks below (deferred to Phase 6)
 
 
 ## Phase 3: CLI with Cobra, urfave/cli etc(choose one) (Week 3)

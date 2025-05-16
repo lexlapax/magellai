@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 2.5 Complete)
+## Current Status (Phase 2.6 Complete)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
@@ -18,6 +18,7 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 2.3: Configuration Utilities - Complete (mostly)
 ✅ Phase 2.4: Unified Command System - Complete
 ✅ Phase 2.5: Core Commands Implementation - Complete
+✅ Phase 2.6: Models Static Inventory - Complete
 
 ### Completed Features:
 - Project structure and build system
@@ -88,6 +89,17 @@ The project follows a library-first design where the core intelligence (LLM prov
   - Comprehensive error handling with custom validation errors
   - Full unit test coverage with all edge cases
 
+✅ Models static inventory (Phase 2.6)
+  - Created comprehensive models.json file in root directory
+  - Defined JSON schema with metadata and model information
+  - Included all current models from OpenAI, Anthropic, and Google
+  - Detailed capability breakdown (text, image, audio, video, file)
+  - Read/write permissions for each capability
+  - Additional capabilities: function_calling, streaming, json_mode
+  - Model metadata: context_window, max_output_tokens, pricing, training_cutoff
+  - Created pkg/models package for loading and querying models.json
+  - Full test coverage for models package
+
 ### Additional Improvements:
 - Cleaned up help implementation by removing old help.go file
 - Consolidated all help tests into a single help_test.go file
@@ -95,9 +107,10 @@ The project follows a library-first design where the core intelligence (LLM prov
 - Fixed all linting errors
 - Added command executor with proper validation
 - Implemented intelligent flag parsing logic
+- Created static models inventory with comprehensive model information
 
 ### Next: Phase 3 - CLI Implementation
-With Phase 2.5 now complete, the next step is to begin Phase 3: CLI implementation with a chosen framework:
+With Phase 2.6 now complete, the next step is to begin Phase 3: CLI implementation with a chosen framework:
 - [ ] Research and choose CLI framework (Cobra, urfave/cli, Kong, etc.)
 - [ ] Implement main.go with chosen framework
 - [ ] Create root command with global flags
@@ -366,6 +379,17 @@ The library is available as:
   - Integration with the command registry
   - Context-aware execution with proper I/O handling
   - Full test coverage including edge cases
+
+### pkg/models
+- Static model inventory management from models.json
+  - Load and parse models.json from root directory
+  - Query models by provider, name, or full name (provider/model)
+  - Filter models by capabilities (text, image, audio, video, file)
+  - Support for read/write capability queries
+  - List all providers and model families
+  - Get models with specific features (streaming, json_mode, function_calling)
+  - Model metadata access (context window, pricing, training cutoff)
+  - Comprehensive test coverage
 
 ## Workflow Conventions
 
