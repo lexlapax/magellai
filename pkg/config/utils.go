@@ -81,15 +81,15 @@ func (c *Config) All() map[string]interface{} {
 func (c *Config) SetValue(key string, value interface{}) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	// Set the value
 	if err := c.koanf.Set(key, value); err != nil {
 		return fmt.Errorf("failed to set value for key '%s': %w", key, err)
 	}
-	
+
 	// Notify watchers
 	c.notifyWatchers()
-	
+
 	return nil
 }
 
@@ -99,12 +99,12 @@ func (c *Config) GetProviderConfig(provider string) (map[string]interface{}, err
 	if !c.Exists(key) {
 		return nil, fmt.Errorf("provider '%s' not configured", provider)
 	}
-	
+
 	config := c.Get(key)
 	if configMap, ok := config.(map[string]interface{}); ok {
 		return configMap, nil
 	}
-	
+
 	return nil, fmt.Errorf("invalid configuration for provider '%s'", provider)
 }
 
@@ -115,12 +115,12 @@ func (c *Config) GetModelSettings(providerModel string) (*ModelSettings, error) 
 		// Return default settings if model-specific settings don't exist
 		return &ModelSettings{}, nil
 	}
-	
+
 	var settings ModelSettings
 	if err := c.koanf.Unmarshal(key, &settings); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal model settings: %w", err)
 	}
-	
+
 	return &settings, nil
 }
 
@@ -150,12 +150,12 @@ func (c *Config) GetProfile(name string) (*ProfileConfig, error) {
 	if !c.Exists(key) {
 		return nil, fmt.Errorf("profile '%s' not found", name)
 	}
-	
+
 	var profile ProfileConfig
 	if err := c.koanf.Unmarshal(key, &profile); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal profile: %w", err)
 	}
-	
+
 	return &profile, nil
 }
 
@@ -163,12 +163,12 @@ func (c *Config) GetProfile(name string) (*ProfileConfig, error) {
 func (c *Config) GetSchema() (*Schema, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	var schema Schema
 	if err := c.koanf.Unmarshal("", &schema); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
-	
+
 	return &schema, nil
 }
 
@@ -179,7 +179,7 @@ func (c *Config) GetProviderAPIKey(provider string) string {
 	if apiKey := os.Getenv(envKey); apiKey != "" {
 		return apiKey
 	}
-	
+
 	// Then check config
 	configKey := fmt.Sprintf("provider.%s.api_key", strings.ToLower(provider))
 	return c.GetString(configKey)
@@ -191,14 +191,14 @@ func (c *Config) MergeProfile(profileName string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Apply profile settings
 	for key, value := range profile.Settings {
 		if err := c.SetValue(key, value); err != nil {
 			return fmt.Errorf("failed to apply profile setting '%s': %w", key, err)
 		}
 	}
-	
+
 	// Set provider and model if specified
 	if profile.Provider != "" {
 		if err := c.SetDefaultProvider(profile.Provider); err != nil {
@@ -210,7 +210,7 @@ func (c *Config) MergeProfile(profileName string) error {
 			return fmt.Errorf("failed to set default model: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -218,7 +218,7 @@ func (c *Config) MergeProfile(profileName string) error {
 func (c *Config) Export() ([]byte, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	return c.koanf.Marshal(yaml.Parser())
 }
 
@@ -226,20 +226,20 @@ func (c *Config) Export() ([]byte, error) {
 func (c *Config) Import(data []byte) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	// Create a temporary koanf instance to validate the data
 	temp := koanf.New(".")
 	if err := temp.Load(rawbytes.Provider(data), yaml.Parser()); err != nil {
 		return fmt.Errorf("failed to parse configuration data: %w", err)
 	}
-	
+
 	// If valid, merge into the main configuration
 	if err := c.koanf.Merge(temp); err != nil {
 		return fmt.Errorf("failed to merge configuration: %w", err)
 	}
-	
+
 	// Notify watchers
 	c.notifyWatchers()
-	
+
 	return nil
 }

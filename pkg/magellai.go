@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	
+
 	"github.com/lexlapax/magellai/pkg/llm"
 )
 
@@ -42,27 +42,27 @@ func Ask(ctx context.Context, prompt string, options *AskOptions) (*AskResult, e
 	if prompt == "" {
 		return nil, fmt.Errorf("prompt cannot be empty")
 	}
-	
+
 	// Use default options if none provided
 	if options == nil {
 		options = &AskOptions{}
 	}
-	
+
 	// Parse provider and model from the model string
 	provider, model := parseModel(options.Model)
-	
+
 	// Create the LLM provider
 	llmProvider, err := llm.NewProvider(provider, model)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %w", err)
 	}
-	
+
 	// Build provider options
 	providerOpts := buildProviderOptions(options)
-	
+
 	// Create messages for the LLM
 	messages := []llm.Message{}
-	
+
 	// Add system prompt if provided
 	if options.SystemPrompt != "" {
 		messages = append(messages, llm.Message{
@@ -70,18 +70,18 @@ func Ask(ctx context.Context, prompt string, options *AskOptions) (*AskResult, e
 			Content: options.SystemPrompt,
 		})
 	}
-	
+
 	// Add user prompt
 	messages = append(messages, llm.Message{
 		Role:    "user",
 		Content: prompt,
 	})
-	
+
 	// Handle streaming vs non-streaming
 	if options.Stream {
 		return askStream(ctx, llmProvider, messages, providerOpts)
 	}
-	
+
 	return askNonStream(ctx, llmProvider, messages, providerOpts)
 }
 
@@ -91,9 +91,9 @@ func askNonStream(ctx context.Context, provider llm.Provider, messages []llm.Mes
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate response: %w", err)
 	}
-	
+
 	modelInfo := provider.GetModelInfo()
-	
+
 	return &AskResult{
 		Content:      response.Content,
 		Model:        modelInfo.Model,
@@ -109,10 +109,10 @@ func askStream(ctx context.Context, provider llm.Provider, messages []llm.Messag
 	if err != nil {
 		return nil, fmt.Errorf("failed to start stream: %w", err)
 	}
-	
+
 	var content strings.Builder
 	var finishReason string
-	
+
 	for chunk := range stream {
 		if chunk.Error != nil {
 			return nil, fmt.Errorf("streaming error: %w", chunk.Error)
@@ -122,9 +122,9 @@ func askStream(ctx context.Context, provider llm.Provider, messages []llm.Messag
 			finishReason = chunk.FinishReason
 		}
 	}
-	
+
 	modelInfo := provider.GetModelInfo()
-	
+
 	return &AskResult{
 		Content:      content.String(),
 		Model:        modelInfo.Model,
@@ -139,29 +139,29 @@ func parseModel(modelStr string) (provider, model string) {
 		// Default to OpenAI GPT-3.5 if no model specified
 		return llm.ProviderOpenAI, "gpt-3.5-turbo"
 	}
-	
+
 	return llm.ParseModelString(modelStr)
 }
 
 // buildProviderOptions converts AskOptions to provider options
 func buildProviderOptions(opts *AskOptions) []llm.ProviderOption {
 	var providerOpts []llm.ProviderOption
-	
+
 	if opts.Temperature != nil {
 		providerOpts = append(providerOpts, llm.WithTemperature(*opts.Temperature))
 	}
-	
+
 	if opts.MaxTokens != nil {
 		providerOpts = append(providerOpts, llm.WithMaxTokens(*opts.MaxTokens))
 	}
-	
+
 	if opts.ResponseFormat != "" {
 		providerOpts = append(providerOpts, llm.WithResponseFormat(opts.ResponseFormat))
 	}
-	
+
 	// Add any additional provider-specific options
 	providerOpts = append(providerOpts, opts.ProviderOptions...)
-	
+
 	return providerOpts
 }
 
@@ -170,27 +170,27 @@ func AskWithAttachments(ctx context.Context, prompt string, attachments []llm.At
 	if prompt == "" && len(attachments) == 0 {
 		return nil, fmt.Errorf("prompt and attachments cannot both be empty")
 	}
-	
+
 	// Use default options if none provided
 	if options == nil {
 		options = &AskOptions{}
 	}
-	
+
 	// Parse provider and model from the model string
 	provider, model := parseModel(options.Model)
-	
+
 	// Create the LLM provider
 	llmProvider, err := llm.NewProvider(provider, model)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %w", err)
 	}
-	
+
 	// Build provider options
 	providerOpts := buildProviderOptions(options)
-	
+
 	// Create messages for the LLM
 	messages := []llm.Message{}
-	
+
 	// Add system prompt if provided
 	if options.SystemPrompt != "" {
 		messages = append(messages, llm.Message{
@@ -198,18 +198,18 @@ func AskWithAttachments(ctx context.Context, prompt string, attachments []llm.At
 			Content: options.SystemPrompt,
 		})
 	}
-	
+
 	// Add user prompt with attachments
 	messages = append(messages, llm.Message{
 		Role:        "user",
 		Content:     prompt,
 		Attachments: attachments,
 	})
-	
+
 	// Handle streaming vs non-streaming
 	if options.Stream {
 		return askStream(ctx, llmProvider, messages, providerOpts)
 	}
-	
+
 	return askNonStream(ctx, llmProvider, messages, providerOpts)
 }

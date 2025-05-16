@@ -10,12 +10,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/knadh/koanf/v2"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/posflag"
+	"github.com/knadh/koanf/v2"
 	// "github.com/lexlapax/magellai/internal/logging"
 	"github.com/spf13/pflag"
 )
@@ -124,7 +124,7 @@ func (c *Config) LoadFile(path string) error {
 // loadFile is the internal file loading method (not thread-safe)
 func (c *Config) loadFile(path string) error {
 	expandedPath := expandPath(path)
-	
+
 	// Check if file exists
 	if _, err := os.Stat(expandedPath); os.IsNotExist(err) {
 		return err
@@ -163,7 +163,7 @@ func (c *Config) findProjectConfig() string {
 func (c *Config) SetProfile(profile string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	c.profile = profile
 	return c.applyProfile(profile)
 }
@@ -177,7 +177,7 @@ func (c *Config) applyProfile(profile string) error {
 
 	// Get profile config
 	profileConfig := c.koanf.Cut(profileKey)
-	
+
 	// Merge profile config over current config
 	if err := c.koanf.Merge(profileConfig); err != nil {
 		return fmt.Errorf("failed to apply profile '%s': %w", profile, err)
@@ -226,7 +226,7 @@ func expandPath(path string) string {
 func (c *Config) Watch(callback func()) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	c.watchers = append(c.watchers, callback)
 	// TODO: Implement file watching using fsnotify
 }

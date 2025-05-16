@@ -2,7 +2,7 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-## Phase 1: Core Foundation (Week 1)
+## Phase 1: Core Foundation (Week 1) ✅
 
 ### 1.1 Project Setup
 - [x] Initialize Go module structure (`go mod init github.com/lexlapax/magellai`)
@@ -62,9 +62,9 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Support for streaming responses
   - [x] Support for multimodal attachments (AskWithAttachments)
 
-## Phase 2: Configuration and Command Foundation (Week 2)
+## Phase 2: Configuration and Command Foundation (Week 2) ⚙️
 
-### 2.1 Configuration Management with Koanf
+### 2.1 Configuration Management with Koanf ✅
 - [x] Install koanf dependency (`go get github.com/knadh/koanf/v2`)
 - [x] Create `pkg/config/config.go` with koanf integration
   - [x] Multi-layer configuration support:
@@ -80,7 +80,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Configuration watchers for live reload
   - [x] Configuration merging strategies
 
-### 2.2 Configuration Schema
+### 2.2 Configuration Schema ✅
 - [x] Define configuration structure in `pkg/config/schema.go`
   - [x] Provider configurations (API keys, endpoints)
   - [x] Model settings using `provider/model` format
@@ -93,7 +93,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Aliases for common commands
   - [x] Model parsing utilities (split provider/model strings)
 
-### 2.3 Configuration Utilities
+### 2.3 Configuration Utilities ✅
 - [x] Implement configuration helpers in `pkg/config/utils.go`
   - [x] GetString/GetInt/GetBool methods
   - [x] SetValue with validation
@@ -104,20 +104,20 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Secret handling (API keys)
   - [ ] Configuration debugging tools
 
-### 2.4 Unified Command System
-- [ ] Create directory structure for unified command management `pkg/command`
-- [ ] Design command registry system to be central
-  - [ ] Command interface for all commands (CLI and REPL)
-  - [ ] Command metadata (name, description, flags, availability)
-  - [ ] Command execution context
-  - [ ] Command validation and error handling
-- [ ] Define command categories:
-  - [ ] CLI-only commands (e.g., `ask`, `chat`)
-  - [ ] REPL-only commands (e.g., `/reset`, `/exit`)
-  - [ ] Shared commands (e.g., `model`, `config`)
-  - [ ] Flag-to-command mapping for REPL (e.g., `--stream` becomes `/stream`)
-- [ ] Create command discovery and registration mechanism
-- [ ] Implement help system that works across CLI and REPL
+### 2.4 Unified Command System ✅
+- [x] Create directory structure for unified command management `pkg/command`
+- [x] Design command registry system to be central
+  - [x] Command interface for all commands (CLI and REPL - could be rest-api in the future)
+  - [x] Command metadata (name, description, flags, availability)
+  - [x] Command execution context
+  - [x] Command validation and error handling
+- [x] Define command categories:
+  - [x] CLI-only commands (e.g., `ask`, `chat`)
+  - [x] REPL-only commands (e.g., `/reset`, `/exit`)
+  - [x] Shared commands (e.g., `model`, `config`)
+  - [x] Flag-to-command mapping for REPL (e.g., `--stream` becomes `/stream`)
+- [x] Create command discovery and registration mechanism
+- [x] Implement help system that works across CLI and REPL
 
 ### 2.5 Core Commands Implementation
 - [ ] Implement shared commands in `pkg/command/core/`:
@@ -177,10 +177,10 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] `config export` - Export current config
   - [ ] `config import <file>` - Import configuration
   - [ ] `config profiles list` - List profiles
-  - [ ] `config profiles create <name>` - Create profile
-  - [ ] `config profiles delete <name>` - Delete profile
-  - [ ] `config profiles export <name>` - Export profile
-  - [ ] `config profiles switch <name>` - Switch active profile
+  - [ ] `config profiles create <n>` - Create profile
+  - [ ] `config profiles delete <n>` - Delete profile
+  - [ ] `config profiles export <n>` - Export profile
+  - [ ] `config profiles switch <n>` - Switch active profile
 
 ### 3.5 History Commands
 - [ ] Implement history subcommands:
@@ -249,10 +249,10 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] `/attach <file>` - Add attachment
   - [ ] `/config show` - Display current config
   - [ ] `/config set <key> <value>` - Set config value
-  - [ ] `/profile <name>` - Switch profile
+  - [ ] `/profile <n>` - Switch profile
   - [ ] `/alias list` - list aliases
-  - [ ] `/alias add <name> <command>` - create a new alias
-  - [ ] `/alias remove <name>` - remove an alias
+  - [ ] `/alias add <n> <command>` - create a new alias
+  - [ ] `/alias remove <n>` - remove an alias
 
 
 
@@ -325,9 +325,9 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [ ] Implement plugin commands:
   - [ ] `plugin list` - List installed plugins
   - [ ] `plugin install <source>` - Install plugin
-  - [ ] `plugin remove <name>` - Remove plugin
+  - [ ] `plugin remove <n>` - Remove plugin
   - [ ] `plugin update [name]` - Update plugin(s)
-  - [ ] `plugin info <name>` - Show plugin details
+  - [ ] `plugin info <n>` - Show plugin details
 
 ## Phase 6: Tools, Agents & Workflows (Week 6)
 
@@ -342,9 +342,9 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ### 6.2 Tool Commands
 - [ ] Implement tool commands:
   - [ ] `tool list` - List available tools
-  - [ ] `tool run <name> [args]` - Execute tool
-  - [ ] `tool info <name>` - Show tool details
-  - [ ] `tool test <name>` - Test tool
+  - [ ] `tool run <n> [args]` - Execute tool
+  - [ ] `tool info <n>` - Show tool details
+  - [ ] `tool test <n>` - Test tool
 
 ### 6.3 Agent Framework
 - [ ] Implement `pkg/agent/agent.go`
@@ -368,13 +368,13 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ### 6.5 Agent & Workflow Commands
 - [ ] Implement agent/workflow commands:
   - [ ] `agent list` - List available agents
-  - [ ] `agent run <name> [args]` - Execute agent
-  - [ ] `agent info <name>` - Show agent details
+  - [ ] `agent run <n> [args]` - Execute agent
+  - [ ] `agent info <n>` - Show agent details
   - [ ] `workflow list` - List workflows
-  - [ ] `workflow run <name> [args]` - Execute workflow
-  - [ ] `workflow define <name>` - Define workflow
-  - [ ] `workflow visualize <name>` - Show workflow graph
-  - [ ] `workflow export <name>` - Export workflow
+  - [ ] `workflow run <n> [args]` - Execute workflow
+  - [ ] `workflow define <n>` - Define workflow
+  - [ ] `workflow visualize <n>` - Show workflow graph
+  - [ ] `workflow export <n>` - Export workflow
 
 ### 6.6 Built-in Agents
 - [ ] Implement example agents:

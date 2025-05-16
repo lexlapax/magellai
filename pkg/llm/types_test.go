@@ -4,7 +4,7 @@ package llm
 
 import (
 	"testing"
-	
+
 	"github.com/lexlapax/go-llms/pkg/llm/domain"
 )
 
@@ -20,7 +20,7 @@ func TestParseModelString(t *testing.T) {
 		{"gpt-3.5-turbo", "openai", "gpt-3.5-turbo"}, // Default to OpenAI
 		{"", "openai", ""},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
 			provider, model := ParseModelString(tt.input)
@@ -44,7 +44,7 @@ func TestFormatModelString(t *testing.T) {
 		{"anthropic", "claude-3-opus", "anthropic/claude-3-opus"},
 		{"gemini", "gemini-pro", "gemini/gemini-pro"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
 			result := FormatModelString(tt.provider, tt.model)
@@ -61,7 +61,7 @@ func TestMessageConversion(t *testing.T) {
 		Role:    "user",
 		Content: "Hello, world!",
 	}
-	
+
 	llmMsg := msg.ToLLMMessage()
 	if llmMsg.Role != domain.RoleUser {
 		t.Errorf("Expected role user, got %v", llmMsg.Role)
@@ -72,7 +72,7 @@ func TestMessageConversion(t *testing.T) {
 	if llmMsg.Content[0].Text != "Hello, world!" {
 		t.Errorf("Expected content 'Hello, world!', got %q", llmMsg.Content[0].Text)
 	}
-	
+
 	// Test conversion back
 	converted := FromLLMMessage(llmMsg)
 	if converted.Role != msg.Role {
@@ -98,13 +98,13 @@ func TestMessageWithAttachments(t *testing.T) {
 			},
 		},
 	}
-	
+
 	llmMsg := msg.ToLLMMessage()
 	// Should have text content + 2 attachments = 3 parts
 	if len(llmMsg.Content) != 3 {
 		t.Fatalf("Expected 3 parts, got %d", len(llmMsg.Content))
 	}
-	
+
 	// Check main text
 	if llmMsg.Content[0].Type != domain.ContentTypeText {
 		t.Errorf("Expected text part first, got %v", llmMsg.Content[0].Type)
@@ -112,7 +112,7 @@ func TestMessageWithAttachments(t *testing.T) {
 	if llmMsg.Content[0].Text != "Look at this image" {
 		t.Errorf("Expected main text content, got %q", llmMsg.Content[0].Text)
 	}
-	
+
 	// Check image part
 	if llmMsg.Content[1].Type != domain.ContentTypeImage {
 		t.Errorf("Expected image part, got %v", llmMsg.Content[1].Type)
@@ -120,7 +120,7 @@ func TestMessageWithAttachments(t *testing.T) {
 	if llmMsg.Content[1].Image == nil {
 		t.Error("Expected image content to be non-nil")
 	}
-	
+
 	// Check text attachment part
 	if llmMsg.Content[2].Type != domain.ContentTypeText {
 		t.Errorf("Expected text part, got %v", llmMsg.Content[2].Type)
@@ -128,7 +128,7 @@ func TestMessageWithAttachments(t *testing.T) {
 	if llmMsg.Content[2].Text != "Additional text" {
 		t.Errorf("Expected text attachment content, got %q", llmMsg.Content[2].Text)
 	}
-	
+
 	// Test conversion back
 	converted := FromLLMMessage(llmMsg)
 	if converted.Content != msg.Content {
@@ -197,7 +197,7 @@ func TestAttachmentConversion(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			part := tt.attachment.ToLLMContentPart()
@@ -216,7 +216,7 @@ func TestPromptParams(t *testing.T) {
 	temp := 0.7
 	maxTokens := 100
 	topP := 0.9
-	
+
 	params := PromptParams{
 		Temperature: &temp,
 		MaxTokens:   &maxTokens,
@@ -226,7 +226,7 @@ func TestPromptParams(t *testing.T) {
 			"custom_key": "custom_value",
 		},
 	}
-	
+
 	// Test that all fields are set correctly
 	if *params.Temperature != temp {
 		t.Errorf("Expected temperature %v, got %v", temp, *params.Temperature)
@@ -248,7 +248,7 @@ func TestPromptParams(t *testing.T) {
 func TestRequest(t *testing.T) {
 	temp := 0.8
 	maxTokens := 1000
-	
+
 	req := Request{
 		Messages: []Message{
 			{
@@ -270,7 +270,7 @@ func TestRequest(t *testing.T) {
 			MaxTokens:   &maxTokens,
 		},
 	}
-	
+
 	if len(req.Messages) != 2 {
 		t.Errorf("Expected 2 messages, got %d", len(req.Messages))
 	}
@@ -296,7 +296,7 @@ func TestResponse(t *testing.T) {
 		},
 		FinishReason: "stop",
 	}
-	
+
 	if resp.Content != "Hello! How can I help you?" {
 		t.Errorf("Unexpected content: %q", resp.Content)
 	}
@@ -326,13 +326,13 @@ func TestMultimodalMessageRoundtrip(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Convert to go-llms format
 	llmMsg := original.ToLLMMessage()
-	
+
 	// Convert back to our format
 	converted := FromLLMMessage(llmMsg)
-	
+
 	// Verify the content matches
 	if converted.Role != original.Role {
 		t.Errorf("Role mismatch: %q != %q", converted.Role, original.Role)
@@ -343,7 +343,7 @@ func TestMultimodalMessageRoundtrip(t *testing.T) {
 	if len(converted.Attachments) != len(original.Attachments) {
 		t.Fatalf("Attachment count mismatch: %d != %d", len(converted.Attachments), len(original.Attachments))
 	}
-	
+
 	// Check attachments
 	for i, att := range converted.Attachments {
 		origAtt := original.Attachments[i]
@@ -364,12 +364,12 @@ func TestModelInfo(t *testing.T) {
 		MaxTokens:    128000,
 		Description:  "GPT-4 with vision capabilities",
 	}
-	
+
 	// Test capability check
 	hasText := false
 	hasImage := false
 	hasAudio := false
-	
+
 	for _, cap := range model.Capabilities {
 		switch cap {
 		case CapabilityText:
@@ -380,7 +380,7 @@ func TestModelInfo(t *testing.T) {
 			hasAudio = true
 		}
 	}
-	
+
 	if !hasText {
 		t.Error("Expected text capability")
 	}
@@ -390,7 +390,7 @@ func TestModelInfo(t *testing.T) {
 	if hasAudio {
 		t.Error("Did not expect audio capability")
 	}
-	
+
 	if model.MaxTokens != 128000 {
 		t.Errorf("Expected max tokens 128000, got %d", model.MaxTokens)
 	}

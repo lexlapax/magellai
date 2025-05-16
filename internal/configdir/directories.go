@@ -31,7 +31,7 @@ func GetPaths() (Paths, error) {
 	}
 
 	base := filepath.Join(home, ".config", "magellai")
-	
+
 	return Paths{
 		Base:     base,
 		Sessions: filepath.Join(base, "sessions"),

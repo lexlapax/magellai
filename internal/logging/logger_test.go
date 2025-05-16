@@ -12,7 +12,7 @@ import (
 
 func TestDefaultConfig(t *testing.T) {
 	config := DefaultConfig()
-	
+
 	if config.Level != "info" {
 		t.Errorf("expected default level 'info', got %s", config.Level)
 	}
@@ -83,7 +83,7 @@ func TestLoggerInitialization(t *testing.T) {
 
 func TestJSONFormat(t *testing.T) {
 	var buf bytes.Buffer
-	
+
 	// Create a logger with JSON format
 	handler := slog.NewJSONHandler(&buf, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
@@ -95,7 +95,7 @@ func TestJSONFormat(t *testing.T) {
 	}
 
 	logger.Info("test message", "key", "value")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, `"msg":"test message"`) {
 		t.Errorf("JSON output missing message: %s", output)
@@ -107,7 +107,7 @@ func TestJSONFormat(t *testing.T) {
 
 func TestTextFormat(t *testing.T) {
 	var buf bytes.Buffer
-	
+
 	// Create a logger with text format
 	handler := slog.NewTextHandler(&buf, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
@@ -119,7 +119,7 @@ func TestTextFormat(t *testing.T) {
 	}
 
 	logger.Info("test message", "key", "value")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "test message") {
 		t.Errorf("text output missing message: %s", output)
@@ -143,7 +143,7 @@ func TestLoggerWith(t *testing.T) {
 	// Create a new logger with additional attributes
 	childLogger := logger.With("component", "test")
 	childLogger.Info("child message")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "component=test") {
 		t.Errorf("output missing component attribute: %s", output)
@@ -155,11 +155,11 @@ func TestLoggerWith(t *testing.T) {
 
 func TestLogHelpers(t *testing.T) {
 	var buf bytes.Buffer
-	
+
 	// Initialize logger with buffer output
 	defaultLogger = nil
 	once = sync.Once{}
-	
+
 	handler := slog.NewTextHandler(&buf, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})
@@ -173,7 +173,7 @@ func TestLogHelpers(t *testing.T) {
 	LogDebug("debug message", "key", "value")
 	LogInfo("info message", "key", "value")
 	LogWarn("warn message", "key", "value")
-	
+
 	output := buf.String()
 	if !strings.Contains(output, "debug message") {
 		t.Error("output missing debug message")

@@ -4,7 +4,7 @@ package llm
 
 import (
 	"strings"
-	
+
 	"github.com/lexlapax/go-llms/pkg/llm/domain"
 )
 
@@ -42,20 +42,20 @@ type ModelInfo struct {
 
 // Request wraps go-llms domain.Message for Magellai usage
 type Request struct {
-	Messages    []Message      `json:"messages"`
-	Model       string         `json:"model,omitempty"`       // provider/model format
-	Temperature *float64       `json:"temperature,omitempty"`
-	MaxTokens   *int           `json:"max_tokens,omitempty"`
-	Stream      bool           `json:"stream,omitempty"`
+	Messages     []Message     `json:"messages"`
+	Model        string        `json:"model,omitempty"` // provider/model format
+	Temperature  *float64      `json:"temperature,omitempty"`
+	MaxTokens    *int          `json:"max_tokens,omitempty"`
+	Stream       bool          `json:"stream,omitempty"`
 	SystemPrompt string        `json:"system_prompt,omitempty"`
-	Options     *PromptParams  `json:"options,omitempty"`
+	Options      *PromptParams `json:"options,omitempty"`
 }
 
 // Message wraps go-llms domain.Message
 type Message struct {
-	Role        string        `json:"role"`         // system, user, assistant
-	Content     string        `json:"content"`
-	Attachments []Attachment  `json:"attachments,omitempty"`
+	Role        string       `json:"role"` // system, user, assistant
+	Content     string       `json:"content"`
+	Attachments []Attachment `json:"attachments,omitempty"`
 }
 
 // Response wraps go-llms response types
@@ -77,7 +77,7 @@ type Usage struct {
 // Attachment represents multimodal content
 type Attachment struct {
 	Type     AttachmentType `json:"type"`
-	Content  string         `json:"content,omitempty"`  // For text or base64 data
+	Content  string         `json:"content,omitempty"`   // For text or base64 data
 	FilePath string         `json:"file_path,omitempty"` // For file references
 	MimeType string         `json:"mime_type,omitempty"`
 }
@@ -114,7 +114,7 @@ func (m Message) ToLLMMessage() domain.Message {
 	llmMsg := domain.Message{
 		Role: domain.Role(m.Role),
 	}
-	
+
 	// Convert simple text content
 	if m.Content != "" && len(m.Attachments) == 0 {
 		llmMsg.Content = []domain.ContentPart{
@@ -125,10 +125,10 @@ func (m Message) ToLLMMessage() domain.Message {
 		}
 		return llmMsg
 	}
-	
+
 	// Convert with attachments
 	llmMsg.Content = make([]domain.ContentPart, 0)
-	
+
 	// Add text content first if present
 	if m.Content != "" {
 		llmMsg.Content = append(llmMsg.Content, domain.ContentPart{
@@ -136,14 +136,14 @@ func (m Message) ToLLMMessage() domain.Message {
 			Text: m.Content,
 		})
 	}
-	
+
 	// Add attachments
 	for _, att := range m.Attachments {
 		if part := att.ToLLMContentPart(); part != nil {
 			llmMsg.Content = append(llmMsg.Content, *part)
 		}
 	}
-	
+
 	return llmMsg
 }
 
@@ -155,8 +155,8 @@ func (a Attachment) ToLLMContentPart() *domain.ContentPart {
 			Type: domain.ContentTypeImage,
 			Image: &domain.ImageContent{
 				Source: domain.SourceInfo{
-					Type: domain.SourceTypeURL,
-					URL:  a.Content,
+					Type:      domain.SourceTypeURL,
+					URL:       a.Content,
 					MediaType: a.MimeType,
 				},
 			},
@@ -180,8 +180,8 @@ func (a Attachment) ToLLMContentPart() *domain.ContentPart {
 			Type: domain.ContentTypeVideo,
 			Video: &domain.VideoContent{
 				Source: domain.SourceInfo{
-					Type: domain.SourceTypeURL,
-					URL:  a.FilePath,
+					Type:      domain.SourceTypeURL,
+					URL:       a.FilePath,
 					MediaType: a.MimeType,
 				},
 			},
@@ -191,8 +191,8 @@ func (a Attachment) ToLLMContentPart() *domain.ContentPart {
 			Type: domain.ContentTypeAudio,
 			Audio: &domain.AudioContent{
 				Source: domain.SourceInfo{
-					Type: domain.SourceTypeURL,
-					URL:  a.FilePath,
+					Type:      domain.SourceTypeURL,
+					URL:       a.FilePath,
 					MediaType: a.MimeType,
 				},
 			},
@@ -206,7 +206,7 @@ func FromLLMMessage(msg domain.Message) Message {
 	m := Message{
 		Role: string(msg.Role),
 	}
-	
+
 	// Convert content parts
 	for _, part := range msg.Content {
 		switch part.Type {
@@ -226,7 +226,7 @@ func FromLLMMessage(msg domain.Message) Message {
 			}
 		}
 	}
-	
+
 	return m
 }
 

@@ -32,14 +32,14 @@ func ParseProviderModel(s string) ProviderModelPair {
 
 // Schema represents the complete configuration structure
 type Schema struct {
-	Log      LogConfig      `koanf:"log"`
-	Provider ProviderConfig `koanf:"provider"`
-	Model    ModelConfig    `koanf:"model"`
-	Output   OutputConfig   `koanf:"output"`
-	Session  SessionConfig  `koanf:"session"`
-	Plugin   PluginConfig   `koanf:"plugin"`
+	Log      LogConfig                `koanf:"log"`
+	Provider ProviderConfig           `koanf:"provider"`
+	Model    ModelConfig              `koanf:"model"`
+	Output   OutputConfig             `koanf:"output"`
+	Session  SessionConfig            `koanf:"session"`
+	Plugin   PluginConfig             `koanf:"plugin"`
 	Profiles map[string]ProfileConfig `koanf:"profiles"`
-	Aliases  map[string]string `koanf:"aliases"`
+	Aliases  map[string]string        `koanf:"aliases"`
 }
 
 // LogConfig represents logging configuration
@@ -50,10 +50,10 @@ type LogConfig struct {
 
 // ProviderConfig represents provider configuration
 type ProviderConfig struct {
-	Default string                       `koanf:"default"`
-	OpenAI  *OpenAIConfig               `koanf:"openai"`
-	Anthropic *AnthropicConfig         `koanf:"anthropic"`
-	Gemini  *GeminiConfig               `koanf:"gemini"`
+	Default   string           `koanf:"default"`
+	OpenAI    *OpenAIConfig    `koanf:"openai"`
+	Anthropic *AnthropicConfig `koanf:"anthropic"`
+	Gemini    *GeminiConfig    `koanf:"gemini"`
 	// Generic map for provider-specific settings
 	Settings map[string]map[string]interface{} `koanf:"settings"`
 }
@@ -113,32 +113,32 @@ type ProfileConfig struct {
 
 // OpenAIConfig represents OpenAI-specific configuration
 type OpenAIConfig struct {
-	APIKey         string `koanf:"api_key"`
-	BaseURL        string `koanf:"base_url"`
-	Organization   string `koanf:"organization"`
-	APIVersion     string `koanf:"api_version"`
-	DefaultModel   string `koanf:"default_model"`
-	Timeout        time.Duration `koanf:"timeout"`
-	MaxRetries     int    `koanf:"max_retries"`
+	APIKey       string        `koanf:"api_key"`
+	BaseURL      string        `koanf:"base_url"`
+	Organization string        `koanf:"organization"`
+	APIVersion   string        `koanf:"api_version"`
+	DefaultModel string        `koanf:"default_model"`
+	Timeout      time.Duration `koanf:"timeout"`
+	MaxRetries   int           `koanf:"max_retries"`
 }
 
 // AnthropicConfig represents Anthropic-specific configuration
 type AnthropicConfig struct {
-	APIKey       string `koanf:"api_key"`
-	BaseURL      string `koanf:"base_url"`
-	APIVersion   string `koanf:"api_version"`
-	DefaultModel string `koanf:"default_model"`
+	APIKey       string        `koanf:"api_key"`
+	BaseURL      string        `koanf:"base_url"`
+	APIVersion   string        `koanf:"api_version"`
+	DefaultModel string        `koanf:"default_model"`
 	Timeout      time.Duration `koanf:"timeout"`
-	MaxRetries   int    `koanf:"max_retries"`
+	MaxRetries   int           `koanf:"max_retries"`
 }
 
 // GeminiConfig represents Google Gemini-specific configuration
 type GeminiConfig struct {
-	APIKey       string `koanf:"api_key"`
-	BaseURL      string `koanf:"base_url"`
-	ProjectID    string `koanf:"project_id"`
-	Location     string `koanf:"location"`
-	DefaultModel string `koanf:"default_model"`
+	APIKey       string        `koanf:"api_key"`
+	BaseURL      string        `koanf:"base_url"`
+	ProjectID    string        `koanf:"project_id"`
+	Location     string        `koanf:"location"`
+	DefaultModel string        `koanf:"default_model"`
 	Timeout      time.Duration `koanf:"timeout"`
-	MaxRetries   int    `koanf:"max_retries"`
+	MaxRetries   int           `koanf:"max_retries"`
 }

@@ -10,31 +10,41 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 1.6 Complete)
+## Current Status (Phase 2.4 Complete)
 
-✅ Project structure set up  
-✅ Makefile with build/test/lint targets  
-✅ MIT license  
-✅ Basic README.md  
-✅ Logging infrastructure using slog  
-✅ Configuration directory management  
-✅ Core data models and go-llms type wrappers  
-✅ Model capability system (no hard-coded models)  
-✅ Full multimodal support (text, image, audio, video, file)  
-✅ Provider adapter interface wrapping go-llms  
-✅ Provider factory with configuration helpers  
-✅ Streaming support for all providers  
-✅ Comprehensive provider options  
-✅ All tests passing  
-✅ Placeholder main.go for build verification  
-✅ Provider implementations (OpenAI, Anthropic, Gemini, Mock)  
-✅ Comprehensive unit tests for all providers  
-✅ High-level Ask function with multimodal support  
-✅ Streaming response support  
-✅ Complete error handling  
-✅ Full test coverage for Ask functionality  
+✅ Phase 1: Core Foundation - Complete
+✅ Phase 2.1: Configuration Management with Koanf - Complete
+✅ Phase 2.2: Configuration Schema - Complete  
+✅ Phase 2.3: Configuration Utilities - Complete (mostly)
+✅ Phase 2.4: Unified Command System - Complete
 
-Next: Phase 2.2 - Configuration Schema (Already implemented during 2.1)
+### Completed Features:
+- Project structure and build system
+- Logging infrastructure using slog
+- Core data models and go-llms type wrappers
+- Multi-modal support (text, image, audio, video, file)
+- Provider implementations (OpenAI, Anthropic, Gemini, Mock)
+- High-level Ask function with streaming support
+- Configuration management with Koanf v2
+- Multi-layer configuration support (defaults, system, user, project, env, CLI)
+- Profile system for configuration management
+- Configuration validation and type-safe access
+- Configuration export/import functionality
+- Provider/model string parsing utilities
+- Unified command system with interface, registry, and validation
+- Command categories for CLI, REPL, and API support
+- Flag-to-command mapping for REPL
+- Command discovery and registration mechanisms
+- Unified help system for all interfaces
+- Full test coverage for config package (21.6%) and command package (49.0%)
+
+### Remaining in Phase 2:
+- Configuration migration from old formats
+- Configuration debugging tools
+- Core commands implementation (Phase 2.5)
+
+### Next: Phase 2.5 - Core Commands Implementation
+This will implement the actual commands (model, config, profile, alias, help) using our unified command system.
 
 ## Architecture
 

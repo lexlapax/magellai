@@ -6,13 +6,13 @@ import (
 	"context"
 	"strings"
 	"testing"
-	
+
 	"github.com/lexlapax/magellai/pkg/llm"
 )
 
 func TestAsk(t *testing.T) {
 	ctx := context.Background()
-	
+
 	tests := []struct {
 		name    string
 		prompt  string
@@ -67,7 +67,7 @@ func TestAsk(t *testing.T) {
 			errMsg:  "API key not provided for invalid",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Use mock provider for testing
@@ -77,18 +77,18 @@ func TestAsk(t *testing.T) {
 			if !strings.Contains(tt.options.Model, "invalid") {
 				tt.options.Model = "mock/test-model"
 			}
-			
+
 			result, err := Ask(ctx, tt.prompt, tt.options)
-			
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Ask() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 			if tt.wantErr && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
 				t.Errorf("Ask() error = %v, want error containing %q", err, tt.errMsg)
 			}
-			
+
 			if !tt.wantErr {
 				if result == nil {
 					t.Error("Expected non-nil result")
@@ -102,7 +102,7 @@ func TestAsk(t *testing.T) {
 
 func TestAskWithAttachments(t *testing.T) {
 	ctx := context.Background()
-	
+
 	tests := []struct {
 		name        string
 		prompt      string
@@ -167,20 +167,20 @@ func TestAskWithAttachments(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := AskWithAttachments(ctx, tt.prompt, tt.attachments, tt.options)
-			
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AskWithAttachments() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 			if tt.wantErr && tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
 				t.Errorf("AskWithAttachments() error = %v, want error containing %q", err, tt.errMsg)
 			}
-			
+
 			if !tt.wantErr {
 				if result == nil {
 					t.Error("Expected non-nil result")
@@ -204,7 +204,7 @@ func TestParseModel(t *testing.T) {
 		{"gemini/gemini-pro", "gemini", "gemini-pro"},
 		{"gpt-4", "openai", "gpt-4"}, // Default to OpenAI
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.modelStr, func(t *testing.T) {
 			provider, model := parseModel(tt.modelStr)
@@ -221,7 +221,7 @@ func TestParseModel(t *testing.T) {
 func TestBuildProviderOptions(t *testing.T) {
 	temp := 0.7
 	maxTokens := 1000
-	
+
 	tests := []struct {
 		name     string
 		options  *AskOptions
@@ -259,7 +259,7 @@ func TestBuildProviderOptions(t *testing.T) {
 			expected: 2,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			opts := buildProviderOptions(tt.options)
@@ -272,26 +272,26 @@ func TestBuildProviderOptions(t *testing.T) {
 
 func TestAskStreaming(t *testing.T) {
 	ctx := context.Background()
-	
+
 	// Test streaming functionality
 	options := &AskOptions{
 		Model:  "mock/test-model",
 		Stream: true,
 	}
-	
+
 	result, err := Ask(ctx, "Test streaming", options)
 	if err != nil {
 		t.Fatalf("Ask() with streaming failed: %v", err)
 	}
-	
+
 	if result == nil {
 		t.Fatal("Expected non-nil result")
 	}
-	
+
 	if result.Content == "" {
 		t.Error("Expected non-empty content from streaming")
 	}
-	
+
 	if result.FinishReason == "" {
 		t.Error("Expected finish reason from streaming")
 	}
@@ -299,21 +299,21 @@ func TestAskStreaming(t *testing.T) {
 
 func TestAskWithSystemPrompt(t *testing.T) {
 	ctx := context.Background()
-	
+
 	options := &AskOptions{
 		Model:        "mock/test-model",
 		SystemPrompt: "You are a helpful assistant",
 	}
-	
+
 	result, err := Ask(ctx, "Hello", options)
 	if err != nil {
 		t.Fatalf("Ask() with system prompt failed: %v", err)
 	}
-	
+
 	if result == nil {
 		t.Fatal("Expected non-nil result")
 	}
-	
+
 	// The mock provider should return something
 	if result.Content == "" {
 		t.Error("Expected non-empty content")
@@ -323,25 +323,25 @@ func TestAskWithSystemPrompt(t *testing.T) {
 func TestAskResult(t *testing.T) {
 	// Test that AskResult properly contains all expected fields
 	ctx := context.Background()
-	
+
 	options := &AskOptions{
 		Model: "mock/test-model",
 	}
-	
+
 	result, err := Ask(ctx, "Test", options)
 	if err != nil {
 		t.Fatalf("Ask() failed: %v", err)
 	}
-	
+
 	// Check all fields are populated correctly
 	if result.Provider != "mock" {
 		t.Errorf("Expected provider 'mock', got %q", result.Provider)
 	}
-	
+
 	if result.Model != "test-model" {
 		t.Errorf("Expected model 'test-model', got %q", result.Model)
 	}
-	
+
 	if result.Content == "" {
 		t.Error("Expected non-empty content")
 	}

@@ -18,48 +18,48 @@ type ValidationError struct {
 // Validate validates the configuration
 func (c *Config) Validate() error {
 	var errors []ValidationError
-	
+
 	// Validate log configuration
 	if err := c.validateLogConfig(); err != nil {
 		errors = append(errors, err...)
 	}
-	
+
 	// Validate provider configuration
 	if err := c.validateProviderConfig(); err != nil {
 		errors = append(errors, err...)
 	}
-	
+
 	// Validate output configuration
 	if err := c.validateOutputConfig(); err != nil {
 		errors = append(errors, err...)
 	}
-	
+
 	// Validate session configuration
 	if err := c.validateSessionConfig(); err != nil {
 		errors = append(errors, err...)
 	}
-	
+
 	// Validate plugin configuration
 	if err := c.validatePluginConfig(); err != nil {
 		errors = append(errors, err...)
 	}
-	
+
 	// Validate profiles
 	if err := c.validateProfiles(); err != nil {
 		errors = append(errors, err...)
 	}
-	
+
 	if len(errors) > 0 {
 		return fmt.Errorf("configuration validation failed: %v", errors)
 	}
-	
+
 	return nil
 }
 
 // validateLogConfig validates logging configuration
 func (c *Config) validateLogConfig() []ValidationError {
 	var errors []ValidationError
-	
+
 	level := c.GetString("log.level")
 	validLevels := []string{"debug", "info", "warn", "error"}
 	if !containsString(validLevels, level) {
@@ -69,7 +69,7 @@ func (c *Config) validateLogConfig() []ValidationError {
 			Error: fmt.Sprintf("invalid log level, must be one of: %v", validLevels),
 		})
 	}
-	
+
 	format := c.GetString("log.format")
 	validFormats := []string{"text", "json"}
 	if !containsString(validFormats, format) {
@@ -79,14 +79,14 @@ func (c *Config) validateLogConfig() []ValidationError {
 			Error: fmt.Sprintf("invalid log format, must be one of: %v", validFormats),
 		})
 	}
-	
+
 	return errors
 }
 
 // validateProviderConfig validates provider configuration
 func (c *Config) validateProviderConfig() []ValidationError {
 	var errors []ValidationError
-	
+
 	defaultProvider := c.GetString("provider.default")
 	validProviders := []string{"openai", "anthropic", "gemini"}
 	if defaultProvider != "" && !containsString(validProviders, defaultProvider) {
@@ -96,7 +96,7 @@ func (c *Config) validateProviderConfig() []ValidationError {
 			Error: fmt.Sprintf("invalid default provider, must be one of: %v", validProviders),
 		})
 	}
-	
+
 	// Validate specific provider configurations if they exist
 	for _, provider := range validProviders {
 		if c.Exists(fmt.Sprintf("provider.%s", provider)) {
@@ -105,14 +105,14 @@ func (c *Config) validateProviderConfig() []ValidationError {
 			}
 		}
 	}
-	
+
 	return errors
 }
 
 // validateSpecificProvider validates a specific provider's configuration
 func (c *Config) validateSpecificProvider(provider string) []ValidationError {
 	var errors []ValidationError
-	
+
 	// Check if API key is provided (either in config or environment)
 	apiKey := c.GetProviderAPIKey(provider)
 	if apiKey == "" {
@@ -122,7 +122,7 @@ func (c *Config) validateSpecificProvider(provider string) []ValidationError {
 			Error: fmt.Sprintf("API key for %s not found in config or environment", provider),
 		})
 	}
-	
+
 	// Validate timeout if specified
 	timeoutKey := fmt.Sprintf("provider.%s.timeout", provider)
 	if c.Exists(timeoutKey) {
@@ -135,7 +135,7 @@ func (c *Config) validateSpecificProvider(provider string) []ValidationError {
 			})
 		}
 	}
-	
+
 	// Validate max_retries if specified
 	retriesKey := fmt.Sprintf("provider.%s.max_retries", provider)
 	if c.Exists(retriesKey) {
@@ -148,14 +148,14 @@ func (c *Config) validateSpecificProvider(provider string) []ValidationError {
 			})
 		}
 	}
-	
+
 	return errors
 }
 
 // validateOutputConfig validates output configuration
 func (c *Config) validateOutputConfig() []ValidationError {
 	var errors []ValidationError
-	
+
 	format := c.GetString("output.format")
 	validFormats := []string{"text", "json", "markdown"}
 	if !containsString(validFormats, format) {
@@ -165,14 +165,14 @@ func (c *Config) validateOutputConfig() []ValidationError {
 			Error: fmt.Sprintf("invalid output format, must be one of: %v", validFormats),
 		})
 	}
-	
+
 	return errors
 }
 
 // validateSessionConfig validates session configuration
 func (c *Config) validateSessionConfig() []ValidationError {
 	var errors []ValidationError
-	
+
 	sessionDir := c.GetString("session.directory")
 	if sessionDir != "" {
 		expandedDir := expandPath(sessionDir)
@@ -185,7 +185,7 @@ func (c *Config) validateSessionConfig() []ValidationError {
 			})
 		}
 	}
-	
+
 	// Validate max_age if specified
 	if c.Exists("session.max_age") {
 		maxAge := c.GetDuration("session.max_age")
@@ -197,14 +197,14 @@ func (c *Config) validateSessionConfig() []ValidationError {
 			})
 		}
 	}
-	
+
 	return errors
 }
 
 // validatePluginConfig validates plugin configuration
 func (c *Config) validatePluginConfig() []ValidationError {
 	var errors []ValidationError
-	
+
 	pluginDir := c.GetString("plugin.directory")
 	if pluginDir != "" {
 		expandedDir := expandPath(pluginDir)
@@ -217,7 +217,7 @@ func (c *Config) validatePluginConfig() []ValidationError {
 			})
 		}
 	}
-	
+
 	// Validate plugin paths
 	pluginPaths := c.GetStringSlice("plugin.path")
 	for i, path := range pluginPaths {
@@ -230,18 +230,18 @@ func (c *Config) validatePluginConfig() []ValidationError {
 			})
 		}
 	}
-	
+
 	return errors
 }
 
 // validateProfiles validates profile configurations
 func (c *Config) validateProfiles() []ValidationError {
 	var errors []ValidationError
-	
+
 	if !c.Exists("profiles") {
 		return errors
 	}
-	
+
 	profiles := c.Get("profiles")
 	if profileMap, ok := profiles.(map[string]interface{}); ok {
 		for name := range profileMap {
@@ -250,14 +250,14 @@ func (c *Config) validateProfiles() []ValidationError {
 			}
 		}
 	}
-	
+
 	return errors
 }
 
 // validateProfile validates a specific profile
 func (c *Config) validateProfile(name string) []ValidationError {
 	var errors []ValidationError
-	
+
 	profile, err := c.GetProfile(name)
 	if err != nil {
 		errors = append(errors, ValidationError{
@@ -267,7 +267,7 @@ func (c *Config) validateProfile(name string) []ValidationError {
 		})
 		return errors
 	}
-	
+
 	// Validate provider if specified
 	if profile.Provider != "" {
 		validProviders := []string{"openai", "anthropic", "gemini"}
@@ -279,7 +279,7 @@ func (c *Config) validateProfile(name string) []ValidationError {
 			})
 		}
 	}
-	
+
 	// Validate model format if specified
 	if profile.Model != "" {
 		pair := ParseProviderModel(profile.Model)
@@ -291,7 +291,7 @@ func (c *Config) validateProfile(name string) []ValidationError {
 			})
 		}
 	}
-	
+
 	return errors
 }
 
@@ -308,7 +308,7 @@ func containsString(slice []string, str string) bool {
 // ValidateModelSettings validates model-specific settings
 func ValidateModelSettings(settings *ModelSettings) []ValidationError {
 	var errors []ValidationError
-	
+
 	if settings.Temperature != nil {
 		if *settings.Temperature < 0 || *settings.Temperature > 2 {
 			errors = append(errors, ValidationError{
@@ -318,7 +318,7 @@ func ValidateModelSettings(settings *ModelSettings) []ValidationError {
 			})
 		}
 	}
-	
+
 	if settings.TopP != nil {
 		if *settings.TopP < 0 || *settings.TopP > 1 {
 			errors = append(errors, ValidationError{
@@ -328,7 +328,7 @@ func ValidateModelSettings(settings *ModelSettings) []ValidationError {
 			})
 		}
 	}
-	
+
 	if settings.FrequencyPenalty != nil {
 		if *settings.FrequencyPenalty < -2 || *settings.FrequencyPenalty > 2 {
 			errors = append(errors, ValidationError{
@@ -338,7 +338,7 @@ func ValidateModelSettings(settings *ModelSettings) []ValidationError {
 			})
 		}
 	}
-	
+
 	if settings.PresencePenalty != nil {
 		if *settings.PresencePenalty < -2 || *settings.PresencePenalty > 2 {
 			errors = append(errors, ValidationError{
@@ -348,7 +348,7 @@ func ValidateModelSettings(settings *ModelSettings) []ValidationError {
 			})
 		}
 	}
-	
+
 	if settings.MaxTokens != nil {
 		if *settings.MaxTokens <= 0 {
 			errors = append(errors, ValidationError{
@@ -358,6 +358,6 @@ func ValidateModelSettings(settings *ModelSettings) []ValidationError {
 			})
 		}
 	}
-	
+
 	return errors
 }

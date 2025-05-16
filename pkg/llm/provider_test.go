@@ -6,7 +6,7 @@ import (
 	"context"
 	"os"
 	"testing"
-	
+
 	"github.com/lexlapax/go-llms/pkg/llm/domain"
 )
 
@@ -57,7 +57,7 @@ func TestNewProvider(t *testing.T) {
 			wantErr:      true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up environment variable if needed
@@ -65,20 +65,20 @@ func TestNewProvider(t *testing.T) {
 				os.Setenv(tt.envKey, tt.envValue)
 				defer os.Unsetenv(tt.envKey)
 			}
-			
+
 			var p Provider
 			var err error
-			
+
 			if tt.apiKey != "" {
 				p, err = NewProvider(tt.providerType, tt.model, tt.apiKey)
 			} else {
 				p, err = NewProvider(tt.providerType, tt.model)
 			}
-			
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewProvider() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			
+
 			if !tt.wantErr && p != nil {
 				// Test that the provider was created successfully
 				info := p.GetModelInfo()
@@ -123,14 +123,14 @@ func TestGetAPIKeyFromEnv(t *testing.T) {
 			expected: "",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.provider, func(t *testing.T) {
 			if tt.envKey != "" {
 				os.Setenv(tt.envKey, tt.envValue)
 				defer os.Unsetenv(tt.envKey)
 			}
-			
+
 			got := getAPIKeyFromEnv(tt.provider)
 			if got != tt.expected {
 				t.Errorf("getAPIKeyFromEnv(%s) = %q, want %q", tt.provider, got, tt.expected)
@@ -176,16 +176,16 @@ func TestGetModelCapabilities(t *testing.T) {
 			expected: []ModelCapability{CapabilityText, CapabilityImage},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.provider+"/"+tt.model, func(t *testing.T) {
 			got := getModelCapabilities(tt.provider, tt.model)
-			
+
 			if len(got) != len(tt.expected) {
-				t.Errorf("getModelCapabilities(%s, %s) returned %d capabilities, want %d", 
+				t.Errorf("getModelCapabilities(%s, %s) returned %d capabilities, want %d",
 					tt.provider, tt.model, len(got), len(tt.expected))
 			}
-			
+
 			// Check each capability exists
 			for _, expectedCap := range tt.expected {
 				found := false
@@ -205,56 +205,56 @@ func TestGetModelCapabilities(t *testing.T) {
 
 func TestProviderOptions(t *testing.T) {
 	config := &providerConfig{}
-	
+
 	// Test temperature option
 	WithTemperature(0.8)(config)
 	if config.temperature == nil || *config.temperature != 0.8 {
 		t.Errorf("WithTemperature failed, got %v", config.temperature)
 	}
-	
+
 	// Test max tokens option
 	WithMaxTokens(2048)(config)
 	if config.maxTokens == nil || *config.maxTokens != 2048 {
 		t.Errorf("WithMaxTokens failed, got %v", config.maxTokens)
 	}
-	
+
 	// Test stop sequences option
 	stops := []string{"END", "STOP"}
 	WithStopSequences(stops)(config)
 	if len(config.stopSequences) != 2 {
 		t.Errorf("WithStopSequences failed, got %v", config.stopSequences)
 	}
-	
+
 	// Test top-p option
 	WithTopP(0.9)(config)
 	if config.topP == nil || *config.topP != 0.9 {
 		t.Errorf("WithTopP failed, got %v", config.topP)
 	}
-	
+
 	// Test top-k option
 	WithTopK(40)(config)
 	if config.topK == nil || *config.topK != 40 {
 		t.Errorf("WithTopK failed, got %v", config.topK)
 	}
-	
+
 	// Test presence penalty option
 	WithPresencePenalty(0.1)(config)
 	if config.presencePenalty == nil || *config.presencePenalty != 0.1 {
 		t.Errorf("WithPresencePenalty failed, got %v", config.presencePenalty)
 	}
-	
+
 	// Test frequency penalty option
 	WithFrequencyPenalty(0.2)(config)
 	if config.frequencyPenalty == nil || *config.frequencyPenalty != 0.2 {
 		t.Errorf("WithFrequencyPenalty failed, got %v", config.frequencyPenalty)
 	}
-	
+
 	// Test seed option
 	WithSeed(42)(config)
 	if config.seed == nil || *config.seed != 42 {
 		t.Errorf("WithSeed failed, got %v", config.seed)
 	}
-	
+
 	// Test response format option
 	WithResponseFormat("json_object")(config)
 	if config.responseFormat != "json_object" {
@@ -264,26 +264,26 @@ func TestProviderOptions(t *testing.T) {
 
 func TestProviderAdapter_buildLLMOptions(t *testing.T) {
 	p := &providerAdapter{}
-	
+
 	temp := 0.8
 	maxTokens := 1024
 	topP := 0.9
-	
+
 	opts := []ProviderOption{
 		WithTemperature(temp),
 		WithMaxTokens(maxTokens),
 		WithStopSequences([]string{"DONE"}),
 		WithTopP(topP),
 	}
-	
+
 	llmOpts := p.buildLLMOptions(opts...)
-	
+
 	// Apply options to a provider options struct to verify
 	providerOpts := domain.DefaultOptions()
 	for _, opt := range llmOpts {
 		opt(providerOpts)
 	}
-	
+
 	if providerOpts.Temperature != temp {
 		t.Errorf("Expected temperature %f, got %f", temp, providerOpts.Temperature)
 	}
@@ -305,9 +305,9 @@ func TestProviderAdapterMock(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create mock provider: %v", err)
 	}
-	
+
 	ctx := context.Background()
-	
+
 	// Test Generate
 	result, err := p.Generate(ctx, "test prompt")
 	if err != nil {
@@ -316,7 +316,7 @@ func TestProviderAdapterMock(t *testing.T) {
 	if result == "" {
 		t.Error("Expected non-empty generate result")
 	}
-	
+
 	// Test GenerateMessage
 	messages := []Message{
 		{Role: "user", Content: "Hello"},
@@ -328,13 +328,13 @@ func TestProviderAdapterMock(t *testing.T) {
 	if response == nil || response.Content == "" {
 		t.Error("Expected non-empty message response")
 	}
-	
+
 	// Test Stream
 	streamChan, err := p.Stream(ctx, "test prompt")
 	if err != nil {
 		t.Errorf("Stream failed: %v", err)
 	}
-	
+
 	chunks := 0
 	for chunk := range streamChan {
 		if chunk.Error != nil {
@@ -345,13 +345,13 @@ func TestProviderAdapterMock(t *testing.T) {
 	if chunks == 0 {
 		t.Error("Expected at least one stream chunk")
 	}
-	
+
 	// Test StreamMessage
 	streamMsgChan, err := p.StreamMessage(ctx, messages)
 	if err != nil {
 		t.Errorf("StreamMessage failed: %v", err)
 	}
-	
+
 	msgChunks := 0
 	for chunk := range streamMsgChan {
 		if chunk.Error != nil {
@@ -375,7 +375,7 @@ func TestContains(t *testing.T) {
 		{[]string{}, "a", false},
 		{[]string{"test"}, "test", true},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.item, func(t *testing.T) {
 			got := contains(tt.slice, tt.item)

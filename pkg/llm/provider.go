@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	
+
 	"github.com/lexlapax/go-llms/pkg/llm/domain"
 	"github.com/lexlapax/go-llms/pkg/llm/provider"
 	schemadomain "github.com/lexlapax/go-llms/pkg/schema/domain"
@@ -17,19 +17,19 @@ import (
 type Provider interface {
 	// Generate produces text from a prompt
 	Generate(ctx context.Context, prompt string, options ...ProviderOption) (string, error)
-	
+
 	// GenerateMessage produces a response from messages
 	GenerateMessage(ctx context.Context, messages []Message, options ...ProviderOption) (*Response, error)
-	
+
 	// GenerateWithSchema produces structured output conforming to a schema
 	GenerateWithSchema(ctx context.Context, prompt string, schema *schemadomain.Schema, options ...ProviderOption) (interface{}, error)
-	
+
 	// Stream streams responses token by token
 	Stream(ctx context.Context, prompt string, options ...ProviderOption) (<-chan StreamChunk, error)
-	
+
 	// StreamMessage streams responses from messages
 	StreamMessage(ctx context.Context, messages []Message, options ...ProviderOption) (<-chan StreamChunk, error)
-	
+
 	// GetModelInfo returns information about the current model
 	GetModelInfo() ModelInfo
 }
@@ -68,7 +68,7 @@ type providerAdapter struct {
 func NewProvider(providerType, model string, apiKey ...string) (Provider, error) {
 	var llmProvider domain.Provider
 	var err error
-	
+
 	// Use provided API key or fall back to environment variable
 	key := ""
 	if len(apiKey) > 0 {
@@ -76,12 +76,12 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 	} else {
 		key = getAPIKeyFromEnv(providerType)
 	}
-	
+
 	// Mock provider doesn't need an API key
 	if providerType != ProviderMock && key == "" {
 		return nil, fmt.Errorf("API key not provided for %s", providerType)
 	}
-	
+
 	// Create the underlying go-llms provider
 	switch providerType {
 	case ProviderOpenAI:
@@ -99,11 +99,11 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", providerType)
 	}
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %w", err)
 	}
-	
+
 	// Create model info with capabilities based on provider/model
 	modelInfo := ModelInfo{
 		Provider:     providerType,
@@ -111,7 +111,7 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 		Capabilities: getModelCapabilities(providerType, model),
 		Description:  fmt.Sprintf("%s model %s", providerType, model),
 	}
-	
+
 	return &providerAdapter{
 		provider:  llmProvider,
 		modelInfo: modelInfo,
@@ -137,7 +137,7 @@ func getAPIKeyFromEnv(provider string) string {
 func getModelCapabilities(provider, model string) []ModelCapability {
 	// Default capabilities for text models
 	capabilities := []ModelCapability{CapabilityText}
-	
+
 	// Add multimodal capabilities for known models
 	switch provider {
 	case ProviderOpenAI:
@@ -157,7 +157,7 @@ func getModelCapabilities(provider, model string) []ModelCapability {
 			capabilities = append(capabilities, CapabilityImage)
 		}
 	}
-	
+
 	return capabilities
 }
 
@@ -174,13 +174,13 @@ func (p *providerAdapter) GenerateMessage(ctx context.Context, messages []Messag
 	for i, msg := range messages {
 		llmMessages[i] = msg.ToLLMMessage()
 	}
-	
+
 	llmOptions := p.buildLLMOptions(options...)
 	llmResponse, err := p.provider.GenerateMessage(ctx, llmMessages, llmOptions...)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Convert go-llms response to our response type
 	return &Response{
 		Content: llmResponse.Content,
@@ -202,7 +202,7 @@ func (p *providerAdapter) Stream(ctx context.Context, prompt string, options ...
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Convert go-llms stream to our stream format
 	chunkChan := make(chan StreamChunk)
 	go func() {
@@ -221,7 +221,7 @@ func (p *providerAdapter) Stream(ctx context.Context, prompt string, options ...
 			}
 		}
 	}()
-	
+
 	return chunkChan, nil
 }
 
@@ -232,13 +232,13 @@ func (p *providerAdapter) StreamMessage(ctx context.Context, messages []Message,
 	for i, msg := range messages {
 		llmMessages[i] = msg.ToLLMMessage()
 	}
-	
+
 	llmOptions := p.buildLLMOptions(options...)
 	llmStream, err := p.provider.StreamMessage(ctx, llmMessages, llmOptions...)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Convert go-llms stream to our stream format
 	chunkChan := make(chan StreamChunk)
 	go func() {
@@ -257,7 +257,7 @@ func (p *providerAdapter) StreamMessage(ctx context.Context, messages []Message,
 			}
 		}
 	}()
-	
+
 	return chunkChan, nil
 }
 
@@ -272,9 +272,9 @@ func (p *providerAdapter) buildLLMOptions(options ...ProviderOption) []domain.Op
 	for _, opt := range options {
 		opt(config)
 	}
-	
+
 	var llmOptions []domain.Option
-	
+
 	if config.temperature != nil {
 		llmOptions = append(llmOptions, domain.WithTemperature(*config.temperature))
 	}
@@ -293,7 +293,7 @@ func (p *providerAdapter) buildLLMOptions(options ...ProviderOption) []domain.Op
 	if config.frequencyPenalty != nil {
 		llmOptions = append(llmOptions, domain.WithFrequencyPenalty(*config.frequencyPenalty))
 	}
-	
+
 	return llmOptions
 }
 
