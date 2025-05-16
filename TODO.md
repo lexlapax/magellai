@@ -8,16 +8,16 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [x] Initialize Go module structure (`go mod init github.com/lexlapax/magellai`)
 - [x] Add go-llms dependency (`go get github.com/lexlapax/go-llms@v0.2.1`)
 - [x] Add go-llms as git submodule for source reference
-- [ ] Create directory structure:
-  - [ ] `cmd/magellai/` - CLI entry point
-  - [ ] `pkg/llm/` - LLM provider adapter/wrapper for go-llms
-  - [ ] `pkg/config/` - Configuration management
-  - [ ] `pkg/session/` - Session storage
-  - [ ] `internal/` - Internal utilities
-  - [ ] put build binaries in `bin/`
-- [ ] Create Makefile for builds, tests, and other tasks
-- [ ] Create a license file - use MIT license in root directory
-- [ ] Create a simple README.md on root directory with links to documentation under [docs]
+- [x] Create directory structure:
+  - [x] `cmd/magellai/` - CLI entry point
+  - [x] `pkg/llm/` - LLM provider adapter/wrapper for go-llms
+  - [x] `pkg/config/` - Configuration management
+  - [x] `pkg/session/` - Session storage
+  - [x] `internal/` - Internal utilities
+  - [x] put build binaries in `bin/`
+- [x] Create Makefile for builds, tests, and other tasks
+- [x] Create a license file - use MIT license in root directory
+- [x] Create a simple README.md on root directory with links to documentation under [docs]
 
 ### 1.2 Core Infrastructure
 - [ ] Create logging infrastructure using `slog`

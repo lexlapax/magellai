@@ -186,3 +186,4 @@ The library is available as:
 ## Workflow Conventions
 
 - Always update TODO.md after completion and before compaction.
+- Stop and ask after every task section or major task before continuing on to another task.
