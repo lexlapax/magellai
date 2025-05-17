@@ -20,20 +20,24 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [ ] Enhance session management:
   - [x] Auto-save functionality ✅
   - [x] Session export formats (JSON, Markdown) ✅
-  - [ ] Session search by content
+  - [x] Session search by content ✅
   - [ ] Session tags and metadata
   - [ ] Session branching/forking
   - [ ] Session merging
+  - [ ] Session library abstraction for future database and other storage
+    - [ ] Check for abstraction first and provide recommendation
 
-### 4.3 REPL UI Enhancements
-- [ ] Improve REPL interface:
-  - [ ] Tab completion for commands
-  - [ ] Syntax highlighting for code blocks
-  - [ ] ANSI color output when TTY
-  - [ ] Non-interactive mode detection
-  - [ ] Custom prompt themes
-  - [ ] Progress indicators for streaming
-  - [ ] Rich media rendering (images, tables)
+
+### 4.3 Error Handling & Recovery
+- [ ] Ensure loglevels are implemented at the library level with cmd line just passing the argument through
+  - [ ] set default loglevel to warn
+- [ ] Implement robust error handling:
+  - [ ] Graceful network error recovery
+  - [ ] Provider fallback mechanisms
+  - [ ] Session auto-recovery after crashes
+  - [ ] Partial response handling
+  - [ ] Rate limit handling
+  - [ ] Context length management
 
 ### 4.4 REPL Integration with Unified Command System
 - [ ] Connect REPL to unified command system:
@@ -44,14 +48,15 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Support command aliases in REPL
   - [ ] Context preservation between commands
 
-### 4.5 Error Handling & Recovery
-- [ ] Implement robust error handling:
-  - [ ] Graceful network error recovery
-  - [ ] Provider fallback mechanisms
-  - [ ] Session auto-recovery after crashes
-  - [ ] Partial response handling
-  - [ ] Rate limit handling
-  - [ ] Context length management
+### 4.5 REPL UI Enhancements
+- [ ] Improve REPL interface:
+  - [ ] Tab completion for commands
+  - [ ] Syntax highlighting for code blocks
+  - [ ] ANSI color output when TTY
+  - [ ] Non-interactive mode detection
+  - [ ] Custom prompt themes
+  - [ ] Progress indicators for streaming
+  - [ ] Rich media rendering (images, tables)
 
 ## Phase 5: Plugin System (Week 5)
 

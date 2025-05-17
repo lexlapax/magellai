@@ -104,7 +104,7 @@ func TestSessionManager_ListSessions(t *testing.T) {
 	err := sm.SaveSession(session1)
 	require.NoError(t, err)
 
-	time.Sleep(1000 * time.Millisecond) // Ensure different timestamps
+	time.Sleep(10 * time.Millisecond) // Ensure different timestamps
 
 	session2 := sm.NewSession("Session 2")
 	session2.Tags = []string{"personal"}
@@ -215,25 +215,25 @@ func TestSessionManager_SearchSessions(t *testing.T) {
 	require.NoError(t, err)
 	t.Logf("Search for 'project' returned %d results", len(results))
 	require.Len(t, results, 1)
-	assert.Equal(t, session1.ID, results[0].ID)
+	assert.Equal(t, session1.ID, results[0].Session.ID)
 
 	// Search for "code"
 	results, err = sm.SearchSessions("code")
 	require.NoError(t, err)
 	assert.Len(t, results, 1)
-	assert.Equal(t, session3.ID, results[0].ID)
+	assert.Equal(t, session3.ID, results[0].Session.ID)
 
 	// Search for "chicken"
 	results, err = sm.SearchSessions("chicken")
 	require.NoError(t, err)
 	assert.Len(t, results, 1)
-	assert.Equal(t, session2.ID, results[0].ID)
+	assert.Equal(t, session2.ID, results[0].Session.ID)
 
 	// Search in session names
 	results, err = sm.SearchSessions("personal")
 	require.NoError(t, err)
 	assert.Len(t, results, 1)
-	assert.Equal(t, session2.ID, results[0].ID)
+	assert.Equal(t, session2.ID, results[0].Session.ID)
 }
 
 func TestSessionManager_ExportSessionJSON(t *testing.T) {

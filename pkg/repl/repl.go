@@ -416,6 +416,8 @@ func (r *REPL) handleCommand(cmd string) error {
 		}
 	case "/export":
 		return r.exportSession(args)
+	case "/search":
+		return r.searchSessions(args)
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}
@@ -495,6 +497,7 @@ COMMANDS:
   /system [prompt]   Set or show system prompt
   /history           Show conversation history
   /sessions          List all sessions
+  /search <query>    Search sessions by content
   /attach <file>     Attach a file to the next message
   /attachments       List current attachments
   /config show       Display current configuration

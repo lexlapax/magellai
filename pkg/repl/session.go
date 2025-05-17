@@ -208,16 +208,34 @@ func (sm *SessionManager) DeleteSession(id string) error {
 	return nil
 }
 
-// SearchSessions searches for sessions by text in messages
-func (sm *SessionManager) SearchSessions(query string) ([]*SessionInfo, error) {
-	logging.LogDebug("Searching sessions", "query", query)
+// SearchResult represents a search result with context
+type SearchResult struct {
+	Session  *SessionInfo
+	Matches  []SearchMatch
+}
+
+// SearchMatch represents a single match with context
+type SearchMatch struct {
+	Type     string // "message", "system_prompt", "name", "tag"
+	Role     string // for messages: "user", "assistant", "system"
+	Content  string // the actual matched content snippet
+	Context  string // surrounding context
+	Position int    // message index if applicable
+}
+
+// SearchSessions searches for sessions by text in messages, system prompts, names, and tags
+func (sm *SessionManager) SearchSessions(query string) ([]*SearchResult, error) {
+	start := time.Now()
+	logging.LogInfo("Searching sessions", "query", query)
 
 	sessions, err := sm.ListSessions()
 	if err != nil {
+		logging.LogError(err, "Failed to list sessions for search")
 		return nil, err
 	}
 
-	var matches []*SessionInfo
+	var results []*SearchResult
+	lowerQuery := strings.ToLower(query)
 
 	for _, info := range sessions {
 		// Load full session to search content
@@ -227,31 +245,72 @@ func (sm *SessionManager) SearchSessions(query string) ([]*SessionInfo, error) {
 			continue
 		}
 
-		// Search in messages
-		for _, msg := range session.Conversation.Messages {
-			if strings.Contains(strings.ToLower(msg.Content), strings.ToLower(query)) {
-				matches = append(matches, info)
-				break
+		var matches []SearchMatch
+
+		// Search in system prompt
+		if session.Conversation.SystemPrompt != "" {
+			lowerContent := strings.ToLower(session.Conversation.SystemPrompt)
+			if strings.Contains(lowerContent, lowerQuery) {
+				match := SearchMatch{
+					Type:    "system_prompt",
+					Content: extractSnippet(session.Conversation.SystemPrompt, query, 50),
+					Context: "System Prompt",
+				}
+				matches = append(matches, match)
 			}
 		}
 
-		// Also search in name and tags
-		if strings.Contains(strings.ToLower(session.Name), strings.ToLower(query)) {
-			found := false
-			for _, match := range matches {
-				if match.ID == info.ID {
-					found = true
-					break
+		// Search in messages
+		for idx, msg := range session.Conversation.Messages {
+			lowerContent := strings.ToLower(msg.Content)
+			if strings.Contains(lowerContent, lowerQuery) {
+				match := SearchMatch{
+					Type:     "message",
+					Role:     msg.Role,
+					Content:  extractSnippet(msg.Content, query, 50),
+					Context:  fmt.Sprintf("Message %d (%s)", idx+1, msg.Role),
+					Position: idx,
 				}
+				matches = append(matches, match)
 			}
-			if !found {
-				matches = append(matches, info)
+		}
+
+		// Search in session name
+		if strings.Contains(strings.ToLower(session.Name), lowerQuery) {
+			match := SearchMatch{
+				Type:    "name",
+				Content: session.Name,
+				Context: "Session Name",
 			}
+			matches = append(matches, match)
+		}
+
+		// Search in tags
+		for _, tag := range session.Tags {
+			if strings.Contains(strings.ToLower(tag), lowerQuery) {
+				match := SearchMatch{
+					Type:    "tag",
+					Content: tag,
+					Context: "Tag",
+				}
+				matches = append(matches, match)
+			}
+		}
+
+		// Add to results if matches found
+		if len(matches) > 0 {
+			result := &SearchResult{
+				Session: info,
+				Matches: matches,
+			}
+			results = append(results, result)
 		}
 	}
 
-	logging.LogDebug("Search completed", "query", query, "matches", len(matches))
-	return matches, nil
+	duration := time.Since(start)
+	logging.LogInfo("Search completed", "query", query, "sessions_searched", len(sessions), "results", len(results))
+	logging.LogDebug("Search duration", "duration", duration)
+	return results, nil
 }
 
 // SessionInfo represents basic session information for listing
@@ -340,4 +399,74 @@ func generateSessionID() string {
 	id := fmt.Sprintf("%s-%04d", time.Now().Format("20060102-150405-000000000"), rand.Intn(10000))
 	logging.LogDebug("Generated session ID", "id", id)
 	return id
+}
+
+// extractSnippet extracts a snippet with context around the matched query
+func extractSnippet(content, query string, contextRadius int) string {
+	lowerContent := strings.ToLower(content)
+	lowerQuery := strings.ToLower(query)
+	
+	// Find the first occurrence of the query
+	idx := strings.Index(lowerContent, lowerQuery)
+	if idx == -1 {
+		// This shouldn't happen, but if it does, return beginning of content
+		if len(content) <= contextRadius*2 {
+			return content
+		}
+		return content[:contextRadius*2] + "..."
+	}
+	
+	// Calculate start and end positions for the snippet
+	start := idx - contextRadius
+	end := idx + len(query) + contextRadius
+	
+	// Ensure we don't go out of bounds
+	prefix := ""
+	suffix := ""
+	
+	if start < 0 {
+		start = 0
+	} else {
+		prefix = "..."
+	}
+	
+	if end > len(content) {
+		end = len(content)
+	} else {
+		suffix = "..."
+	}
+	
+	// Extract the snippet
+	snippet := content[start:end]
+	
+	// If the snippet is at word boundaries, try to adjust
+	if start > 0 && !isWordBoundary(content[start-1]) {
+		// Find the previous word boundary
+		for i := start; i > 0; i-- {
+			if isWordBoundary(content[i-1]) {
+				start = i
+				snippet = content[start:end]
+				break
+			}
+		}
+	}
+	
+	if end < len(content) && !isWordBoundary(content[end-1]) {
+		// Find the next word boundary
+		for i := end; i < len(content); i++ {
+			if isWordBoundary(content[i]) {
+				end = i
+				snippet = content[start:end]
+				break
+			}
+		}
+	}
+	
+	return prefix + strings.TrimSpace(snippet) + suffix
+}
+
+// isWordBoundary checks if a character is a word boundary
+func isWordBoundary(c byte) bool {
+	return c == ' ' || c == '\n' || c == '\t' || c == '\r' ||
+		c == '.' || c == '!' || c == '?' || c == ',' || c == ';' || c == ':'
 }

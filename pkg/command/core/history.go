@@ -203,15 +203,15 @@ func (c *HistoryCommand) executeSearch(ctx context.Context, exec *command.Execut
 	w := tabwriter.NewWriter(exec.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "ID\tNAME\tCREATED\tTAGS")
 
-	for _, session := range sessions {
-		created := session.Created.Format("2006-01-02 15:04")
-		tags := strings.Join(session.Tags, ", ")
+	for _, result := range sessions {
+		created := result.Session.Created.Format("2006-01-02 15:04")
+		tags := strings.Join(result.Session.Tags, ", ")
 		if tags == "" {
 			tags = "-"
 		}
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
-			session.ID,
-			session.Name,
+			result.Session.ID,
+			result.Session.Name,
 			created,
 			tags)
 	}

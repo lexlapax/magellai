@@ -39,8 +39,18 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 4.1: Extended REPL Commands - Complete
 ✅ Phase 4.1.1: Fix logging and file attachment issues - Complete
 🚧 Phase 4.2: Advanced Session Features - In Progress
+  ✅ Phase 4.2.1: Auto-save functionality - Complete
+  ✅ Phase 4.2.2: Session export formats (JSON/Markdown) - Complete
+  ✅ Phase 4.2.3: Session search by content - Complete
 
 ### Recent Improvements
+- Completed Session Management Features (Phase 4.2):
+  - Implemented auto-save functionality with timers and signal handling
+  - Added session export to JSON and Markdown formats
+  - Created full-text session search across messages, prompts, and metadata
+  - Fixed history command compilation error with SearchResult structure
+  - Improved extract snippet function with word boundary adjustments
+  - Complete test coverage for all session features
 - Fixed logging and file attachment issues (Phase 4.1.1):
   - Fixed double initialization of logger
   - Logger now properly respects MAGELLAI_LOG_LEVEL environment variable
@@ -357,6 +367,10 @@ The library is available as:
 - Special commands (:) for settings
 - Multi-line input support
 - Attachment support for multimodal content
+- Auto-save functionality with timers
+- Session export (JSON, Markdown)
+- Full-text session search
+- Session list and management
 
 ### pkg/command/core/chat
 - Chat command implementation

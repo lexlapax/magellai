@@ -584,6 +584,43 @@ func (r *REPL) exportSession(args []string) error {
 	return nil
 }
 
+// searchSessions searches for sessions by content
+func (r *REPL) searchSessions(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("usage: /search <query>")
+	}
+
+	query := strings.Join(args, " ")
+	logging.LogInfo("Searching sessions", "query", query)
+
+	results, err := r.manager.SearchSessions(query)
+	if err != nil {
+		logging.LogError(err, "Failed to search sessions", "query", query)
+		return fmt.Errorf("failed to search sessions: %w", err)
+	}
+
+	if len(results) == 0 {
+		fmt.Fprintf(r.writer, "No sessions found matching: %s\n", query)
+		return nil
+	}
+
+	fmt.Fprintf(r.writer, "Found %d sessions matching '%s':\n\n", len(results), query)
+	
+	for _, result := range results {
+		// Session info
+		fmt.Fprintf(r.writer, "Session: %s (%s)\n", result.Session.Name, result.Session.ID)
+		fmt.Fprintf(r.writer, "Created: %s\n", result.Session.Created.Format("2006-01-02 15:04:05"))
+		
+		// Show matches
+		for _, match := range result.Matches {
+			fmt.Fprintf(r.writer, "  %s: %s\n", match.Context, match.Content)
+		}
+		fmt.Fprintln(r.writer)
+	}
+
+	return nil
+}
+
 // Helper function to capitalize first letter
 func title(s string) string {
 	if s == "" {
