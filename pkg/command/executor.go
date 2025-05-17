@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	
+	"github.com/lexlapax/magellai/internal/logging"
 )
 
 // ValidationErrorType represents the type of validation error
@@ -61,6 +63,8 @@ type ExecutorOption func(*CommandExecutor)
 
 // NewExecutor creates a new command executor
 func NewExecutor(registry *Registry, opts ...ExecutorOption) *CommandExecutor {
+	logging.LogDebug("Creating new command executor", "registrySize", len(registry.commands))
+	
 	e := &CommandExecutor{
 		registry:      registry,
 		defaultStdin:  os.Stdin,
@@ -102,9 +106,12 @@ func WithPostExecuteHook(hook ExecutorHook) ExecutorOption {
 
 // Execute runs a command by name with the given context
 func (e *CommandExecutor) Execute(ctx context.Context, name string, exec *ExecutionContext) error {
+	logging.LogDebug("Executing command", "name", name, "args", exec.Args)
+	
 	// Get command from registry
 	cmd, err := e.registry.Get(name)
 	if err != nil {
+		logging.LogError(err, "Command not found", "name", name)
 		return err
 	}
 
@@ -114,6 +121,13 @@ func (e *CommandExecutor) Execute(ctx context.Context, name string, exec *Execut
 
 // ExecuteCommand runs a specific command with validation and hooks
 func (e *CommandExecutor) ExecuteCommand(ctx context.Context, cmd Interface, exec *ExecutionContext) error {
+	meta := cmd.Metadata()
+	flagCount := 0
+	if exec.Flags != nil {
+		flagCount = len(exec.Flags.values)
+	}
+	logging.LogDebug("Starting command execution", "name", meta.Name, "args", exec.Args, "flagCount", flagCount)
+	
 	// Set defaults if not provided
 	if exec.Stdin == nil {
 		exec.Stdin = e.defaultStdin
@@ -132,28 +146,43 @@ func (e *CommandExecutor) ExecuteCommand(ctx context.Context, cmd Interface, exe
 	}
 
 	// Validate the command
+	logging.LogDebug("Validating command", "name", meta.Name)
 	if err := e.validateCommand(cmd, exec); err != nil {
+		logging.LogError(err, "Command validation failed", "command", meta.Name)
 		return err
 	}
+	logging.LogDebug("Command validation successful", "name", meta.Name)
 
 	// Run pre-execution hooks
-	for _, hook := range e.preExecute {
+	for i, hook := range e.preExecute {
+		logging.LogDebug("Running pre-execution hook", "hookIndex", i, "command", meta.Name)
 		if err := hook(ctx, cmd, exec); err != nil {
+			logging.LogError(err, "Pre-execution hook failed", "hookIndex", i, "command", meta.Name)
 			return fmt.Errorf("pre-execute hook failed: %w", err)
 		}
 	}
 
 	// Execute the command
+	logging.LogInfo("Executing command", "name", meta.Name, "category", meta.Category)
 	err := cmd.Execute(ctx, exec)
+	
+	if err != nil {
+		logging.LogError(err, "Command execution failed", "command", meta.Name)
+	} else {
+		logging.LogDebug("Command execution completed successfully", "name", meta.Name)
+	}
 
 	// Run post-execution hooks (even if command failed)
-	for _, hook := range e.postExecute {
+	for i, hook := range e.postExecute {
+		logging.LogDebug("Running post-execution hook", "hookIndex", i, "command", meta.Name)
 		if hookErr := hook(ctx, cmd, exec); hookErr != nil {
 			// If command succeeded but post-hook failed, return hook error
 			if err == nil {
+				logging.LogError(hookErr, "Post-execution hook failed", "hookIndex", i, "command", meta.Name)
 				return fmt.Errorf("post-execute hook failed: %w", hookErr)
 			}
 			// If both failed, log hook error but return original error
+			logging.LogWarn("Post-execution hook failed after command error", "hookError", hookErr, "commandError", err, "hookIndex", i, "command", meta.Name)
 			fmt.Fprintf(exec.Stderr, "post-execute hook failed: %v\n", hookErr)
 		}
 	}
@@ -164,7 +193,9 @@ func (e *CommandExecutor) ExecuteCommand(ctx context.Context, cmd Interface, exe
 // validateCommand validates command and execution context
 func (e *CommandExecutor) validateCommand(cmd Interface, exec *ExecutionContext) error {
 	// Validate the command itself
+	logging.LogDebug("Validating command structure", "command", cmd.Metadata().Name)
 	if err := cmd.Validate(); err != nil {
+		logging.LogError(err, "Command structure validation failed", "command", cmd.Metadata().Name)
 		return fmt.Errorf("command validation failed: %w", err)
 	}
 
@@ -174,6 +205,7 @@ func (e *CommandExecutor) validateCommand(cmd Interface, exec *ExecutionContext)
 	for _, flag := range meta.Flags {
 		if flag.Required {
 			if !exec.Flags.Has(flag.Name) {
+				logging.LogError(nil, "Missing required flag", "command", meta.Name, "flag", flag.Name)
 				return &ValidationError{
 					Command: meta.Name,
 					Flag:    flag.Name,
@@ -181,6 +213,7 @@ func (e *CommandExecutor) validateCommand(cmd Interface, exec *ExecutionContext)
 					Message: fmt.Sprintf("required flag '--%s' not provided", flag.Name),
 				}
 			}
+			logging.LogDebug("Required flag present", "command", meta.Name, "flag", flag.Name)
 		}
 	}
 
@@ -188,7 +221,9 @@ func (e *CommandExecutor) validateCommand(cmd Interface, exec *ExecutionContext)
 	for _, flag := range meta.Flags {
 		if exec.Flags.Has(flag.Name) {
 			value := exec.Flags.Get(flag.Name)
+			logging.LogDebug("Validating flag type", "command", meta.Name, "flag", flag.Name, "expectedType", flag.Type, "value", value)
 			if err := validateFlagType(flag, value); err != nil {
+				logging.LogError(err, "Invalid flag type", "command", meta.Name, "flag", flag.Name, "expectedType", flag.Type, "actualValue", value)
 				return &ValidationError{
 					Command: meta.Name,
 					Flag:    flag.Name,
@@ -273,24 +308,32 @@ func (e *CommandExecutor) ExecuteWithArgs(ctx context.Context, name string, args
 
 // ParseAndExecute parses command line arguments and executes the command
 func (e *CommandExecutor) ParseAndExecute(ctx context.Context, args []string) error {
+	logging.LogDebug("Parsing and executing command", "argCount", len(args))
+	
 	if len(args) == 0 {
+		logging.LogError(ErrMissingArgument, "No command provided")
 		return ErrMissingArgument
 	}
 
 	// First argument is the command name
 	cmdName := args[0]
+	logging.LogDebug("Command name extracted", "name", cmdName)
 
 	// Get the command to check its flags
 	cmd, err := e.registry.Get(cmdName)
 	if err != nil {
+		logging.LogError(err, "Failed to get command from registry", "name", cmdName)
 		return err
 	}
 
 	// Parse remaining arguments with command metadata
+	logging.LogDebug("Parsing arguments", "name", cmdName, "remainingArgs", args[1:])
 	parsedArgs, parsedFlags, err := parseArgsWithMetadata(args[1:], cmd.Metadata())
 	if err != nil {
+		logging.LogError(err, "Failed to parse arguments", "command", cmdName)
 		return fmt.Errorf("failed to parse arguments: %w", err)
 	}
+	logging.LogDebug("Arguments parsed", "command", cmdName, "args", parsedArgs, "flagCount", len(parsedFlags))
 
 	// Create execution context
 	exec := &ExecutionContext{

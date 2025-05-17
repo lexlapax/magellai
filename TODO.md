@@ -8,10 +8,10 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ## Phase 3: CLI with Kong (Week 3) ✅
 
-### 3.2 Ask Command - Partially Complete
+### 3.2 Ask Command - Partially Complete (REVISIT)
 - [ ] Pipeline support (stdin/stdout)
 
-### 3.2.1 CLI Help System Improvements - Partially Complete
+### 3.2.1 CLI Help System Improvements - Partially Complete (REVISIT)
 - [ ] Future improvements (if needed):
   - [ ] Add custom help formatter for more control
   - [ ] Integrate Kong help with core help system for unified behavior
@@ -25,19 +25,8 @@ This document provides a detailed, phased implementation plan for the Magellai p
 #### 3.5.2 LLM Provider Logging (pkg/llm/) ✅
 
 #### 3.5.3 Session Management Logging (pkg/repl/) ✅
-- [x] Session creation/restoration (INFO)
-- [x] Session save/load operations (INFO)
-- [x] Session search operations (DEBUG)
-- [x] Session deletion (INFO)
-- [x] Session export operations (INFO)
-- [x] File I/O operations (DEBUG)
 
-#### 3.5.4 Command Execution Logging (pkg/command/)
-- [ ] Command execution start/end (DEBUG)
-- [ ] Command validation (DEBUG)
-- [ ] Pre/post execution hooks (DEBUG)
-- [ ] Command errors (ERROR)
-- [ ] Command registry operations (DEBUG)
+#### 3.5.4 Command Execution Logging (pkg/command/) ✅
 
 #### 3.5.5 REPL Operations Logging (pkg/repl/)
 - [ ] User input processing (DEBUG)

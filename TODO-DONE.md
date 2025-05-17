@@ -312,3 +312,10 @@ This document contains all completed sections from the original TODO.md file for
 - [x] Session deletion (INFO)
 - [x] Session export operations (INFO)
 - [x] File I/O operations (DEBUG)
+
+#### 3.5.4 Command Execution Logging (pkg/command/) ✅
+- [x] Command execution start/end (DEBUG)
+- [x] Command validation (DEBUG)
+- [x] Pre/post execution hooks (DEBUG)
+- [x] Command errors (ERROR)
+- [x] Command registry operations (DEBUG)

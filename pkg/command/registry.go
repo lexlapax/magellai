@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	
+	"github.com/lexlapax/magellai/internal/logging"
 )
 
 // Registry manages all registered commands
@@ -22,6 +24,7 @@ var GlobalRegistry = NewRegistry()
 
 // NewRegistry creates a new command registry
 func NewRegistry() *Registry {
+	logging.LogDebug("Creating new command registry")
 	return &Registry{
 		commands: make(map[string]Interface),
 		aliases:  make(map[string]string),
@@ -35,30 +38,38 @@ func (r *Registry) Register(cmd Interface) error {
 
 	meta := cmd.Metadata()
 	if meta.Name == "" {
+		logging.LogError(nil, "Cannot register command with empty name")
 		return ErrInvalidCommand
 	}
 
+	logging.LogDebug("Registering command", "name", meta.Name, "category", meta.Category)
+
 	// Validate the command
 	if err := cmd.Validate(); err != nil {
+		logging.LogError(err, "Command validation failed during registration", "name", meta.Name)
 		return fmt.Errorf("command validation failed: %w", err)
 	}
 
 	// Check if command already exists
 	if _, exists := r.commands[meta.Name]; exists {
+		logging.LogError(nil, "Command already registered", "name", meta.Name)
 		return ErrCommandAlreadyRegistered
 	}
 
 	// Register the primary command
 	r.commands[meta.Name] = cmd
+	logging.LogInfo("Command registered", "name", meta.Name, "category", meta.Category, "aliasCount", len(meta.Aliases))
 
 	// Register aliases
 	for _, alias := range meta.Aliases {
 		if _, exists := r.aliases[alias]; exists {
 			// Rollback registration if alias conflict
 			delete(r.commands, meta.Name)
+			logging.LogError(nil, "Alias conflict during registration", "alias", alias, "command", meta.Name)
 			return fmt.Errorf("alias '%s' already registered", alias)
 		}
 		r.aliases[alias] = meta.Name
+		logging.LogDebug("Alias registered", "alias", alias, "command", meta.Name)
 	}
 
 	return nil
@@ -69,18 +80,23 @@ func (r *Registry) Get(name string) (Interface, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	logging.LogDebug("Looking up command", "name", name)
+
 	// Check primary names first
 	if cmd, exists := r.commands[name]; exists {
+		logging.LogDebug("Command found by primary name", "name", name)
 		return cmd, nil
 	}
 
 	// Check aliases
 	if primaryName, exists := r.aliases[name]; exists {
 		if cmd, exists := r.commands[primaryName]; exists {
+			logging.LogDebug("Command found by alias", "alias", name, "primaryName", primaryName)
 			return cmd, nil
 		}
 	}
 
+	logging.LogError(nil, "Command not found", "name", name)
 	return nil, ErrCommandNotFound
 }
 
@@ -89,6 +105,8 @@ func (r *Registry) List(category Category) []Interface {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	logging.LogDebug("Listing commands", "category", category)
+
 	var commands []Interface
 	for _, cmd := range r.commands {
 		meta := cmd.Metadata()
@@ -96,6 +114,8 @@ func (r *Registry) List(category Category) []Interface {
 			commands = append(commands, cmd)
 		}
 	}
+
+	logging.LogDebug("Commands found", "count", len(commands), "category", category)
 
 	// Sort by name for consistent output
 	sort.Slice(commands, func(i, j int) bool {
@@ -131,6 +151,8 @@ func (r *Registry) Search(query string) []Interface {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	logging.LogDebug("Searching for commands", "query", query)
+
 	query = strings.ToLower(query)
 	var matches []Interface
 	seen := make(map[string]bool)
@@ -153,6 +175,8 @@ func (r *Registry) Search(query string) []Interface {
 		}
 	}
 
+	logging.LogDebug("Search completed", "query", query, "matchCount", len(matches))
+
 	// Sort by name for consistent output
 	sort.Slice(matches, func(i, j int) bool {
 		return matches[i].Metadata().Name < matches[j].Metadata().Name
@@ -166,8 +190,12 @@ func (r *Registry) Clear() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	logging.LogDebug("Clearing command registry", "commandCount", len(r.commands), "aliasCount", len(r.aliases))
+
 	r.commands = make(map[string]Interface)
 	r.aliases = make(map[string]string)
+
+	logging.LogInfo("Command registry cleared")
 }
 
 // GetExecutor returns a command executor for this registry

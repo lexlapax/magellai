@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	
+	"github.com/lexlapax/magellai/internal/logging"
 )
 
 // Validator provides validation for commands
@@ -23,10 +25,12 @@ func NewValidator(cmd Interface) *Validator {
 // ValidateArgs validates command arguments
 func (v *Validator) ValidateArgs(args []string) error {
 	meta := v.cmd.Metadata()
+	logging.LogDebug("Validating command arguments", "command", meta.Name, "argCount", len(args))
 
 	// Check minimum/maximum args if needed
 	// This is a basic implementation - can be extended with min/max arg counts
 	if meta.Name == "" {
+		logging.LogError(nil, "Invalid command: empty name")
 		return ErrInvalidCommand
 	}
 
@@ -36,13 +40,16 @@ func (v *Validator) ValidateArgs(args []string) error {
 // ValidateFlags validates command flags
 func (v *Validator) ValidateFlags(flags *Flags) error {
 	meta := v.cmd.Metadata()
+	logging.LogDebug("Validating command flags", "command", meta.Name, "flagCount", len(flags.values))
 
 	// Check required flags
 	for _, flag := range meta.Flags {
 		if flag.Required {
 			if !flags.Has(flag.Name) {
+				logging.LogError(ErrMissingRequiredFlag, "Missing required flag", "command", meta.Name, "flag", flag.Name)
 				return fmt.Errorf("%w: %s", ErrMissingRequiredFlag, flag.Name)
 			}
+			logging.LogDebug("Required flag validated", "command", meta.Name, "flag", flag.Name)
 		}
 	}
 
@@ -50,7 +57,9 @@ func (v *Validator) ValidateFlags(flags *Flags) error {
 	for _, flag := range meta.Flags {
 		if flags.Has(flag.Name) {
 			value := flags.Get(flag.Name)
+			logging.LogDebug("Validating flag value", "command", meta.Name, "flag", flag.Name, "value", value)
 			if err := validateFlagValue(flag, value); err != nil {
+				logging.LogError(err, "Invalid flag value", "command", meta.Name, "flag", flag.Name)
 				return fmt.Errorf("%w for flag '%s': %v", ErrInvalidFlagValue, flag.Name, err)
 			}
 		}
@@ -61,29 +70,38 @@ func (v *Validator) ValidateFlags(flags *Flags) error {
 
 // ValidateContext validates the execution context
 func (v *Validator) ValidateContext(ctx *ExecutionContext) error {
+	meta := v.cmd.Metadata()
+	logging.LogDebug("Validating execution context", "command", meta.Name)
+	
 	if ctx == nil {
+		logging.LogError(nil, "Execution context is nil", "command", meta.Name)
 		return fmt.Errorf("execution context is nil")
 	}
 
 	// Validate args
 	if err := v.ValidateArgs(ctx.Args); err != nil {
+		logging.LogError(err, "Argument validation failed", "command", meta.Name)
 		return err
 	}
 
 	// Validate flags
 	if err := v.ValidateFlags(ctx.Flags); err != nil {
+		logging.LogError(err, "Flag validation failed", "command", meta.Name)
 		return err
 	}
 
 	// Check for required I/O streams
 	if ctx.Stdout == nil {
+		logging.LogError(nil, "stdout is nil", "command", meta.Name)
 		return fmt.Errorf("stdout is required")
 	}
 
 	if ctx.Stderr == nil {
+		logging.LogError(nil, "stderr is nil", "command", meta.Name)
 		return fmt.Errorf("stderr is required")
 	}
 
+	logging.LogDebug("Execution context validated successfully", "command", meta.Name)
 	return nil
 }
 
