@@ -28,420 +28,203 @@ This document contains all completed sections from the original TODO.md file for
 
 ### 1.3 Core Data Models and go-llms Integration
 - [x] Create wrapper types in `pkg/llm/types.go` that adapt go-llms types
-  - [x] `Request` struct wrapping go-llms domain.Message
-  - [x] `Response` struct wrapping go-llms domain.Response
-  - [x] `PromptParams` mapping to go-llms domain.Option
-  - [x] `Attachment` struct for multimodal content
-  - [x] Define constants for providers and models
+- [x] Design Message type with multimodal attachment support
+- [x] Implement Attachment type for images/files/text/audio/video
+- [x] Define Provider/Model type hierarchy
+- [x] Create domain-specific types (PromptParams, CompletionParams)
+- [x] Add conversion methods to/from go-llms types
 
 ### 1.4 LLM Provider Adapter
-- [x] Create `pkg/llm/provider.go` adapter interface for go-llms
-  - [x] Wrap go-llms domain.Provider interface
-  - [x] Adapt Generate/GenerateMessage methods
-  - [x] Adapt Stream/StreamMessage methods
-  - [x] Provider factory for OpenAI, Anthropic, Gemini
-  - [x] Configuration helpers for API keys
-  - [x] Model capability system with ModelInfo struct and capability flags (text, audio, video, image, file) 
+- [x] Create `pkg/llm/provider/adapter.go` wrapping go-llms providers
+- [x] Implement ProviderAdapter interface that wraps go-llms providers
+- [x] Factory methods for creating providers (openai, anthropic, gemini)
+- [x] Configuration option methods (temperature, max tokens, etc.)
+- [x] Streaming support with StreamChunk type
+- [x] API key management from environment variables
+- [x] Model capability detection based on provider/model
+- [x] Error handling and validation
 
-### 1.5 Provider Implementations
-- [x] Create provider adapters using go-llms
-  - [x] OpenAI adapter using go-llms provider.OpenAI
-  - [x] Anthropic adapter using go-llms provider.Anthropic
-  - [x] Gemini adapter using go-llms provider.Gemini
-  - [x] Mock provider for testing
-  - [x] Unit tests for each provider
+Unplanned features added:
+- [x] Mock provider for testing
 
-### 1.6 High-Level Ask Function
-- [x] Implement `Ask()` function in `pkg/magellai.go`
-  - [x] Use go-llms domain.Provider interface
-  - [x] Provider/model selection logic (from config)
-  - [x] Convert prompts to go-llms messages
-  - [x] Response formatting
-  - [x] Error handling with go-llms error types
-  - [x] Comprehensive unit tests
-  - [x] Support for streaming responses
-  - [x] Support for multimodal attachments (AskWithAttachments)
+## Phase 2: Configuration and Command Foundation (Week 2) ✅
 
-## Phase 2: Configuration and Command Foundation (Week 2) ⚙️
+### 2.1 Configuration Management with Koanf
+- [x] Setup Koanf for multi-layer configuration
+- [x] Implement configuration precedence:
+  - [x] Command-line flags (highest priority)
+  - [x] Environment variables (`MAGELLAI_*`)
+  - [x] Project config (`./.magellai.yaml`)
+  - [x] User config (`~/.config/magellai/config.yaml`)
+  - [x] System config (`/etc/magellai/config.yaml`)
+  - [x] Default config (embedded)
+- [x] Create profile support (work, personal, etc.)
+- [x] Configuration watchers for live reload
+- [x] Implement alias system for commands
+- [x] Provider and model-specific configurations
 
-### 2.1 Configuration Management with Koanf ✅
-- [x] Install koanf dependency (`go get github.com/knadh/koanf/v2`)
-- [x] Create `pkg/config/config.go` with koanf integration
-  - [x] Multi-layer configuration support:
-    - [x] Default values (embedded)
-    - [x] System config (`/etc/magellai/config.yaml`)
-    - [x] User config (`~/.config/magellai/config.yaml`)
-    - [x] Project config (`.magellai.yaml` - search upward)
-    - [x] Environment variables (`MAGELLAI_*`)
-    - [x] Command-line flags (highest precedence)
-  - [x] Profile system implementation
-  - [x] Configuration validation
-  - [x] Type-safe configuration access
-  - [x] Configuration watchers for live reload
-  - [x] Configuration merging strategies
+### 2.2 Configuration Schema
+- [x] Define comprehensive configuration schema
+- [x] Implement validation and error reporting
+- [x] Create default configuration template
+- [x] Document all configuration options
 
-### 2.2 Configuration Schema ✅
-- [x] Define configuration structure in `pkg/config/schema.go`
-  - [x] Provider configurations (API keys, endpoints)
-  - [x] Model settings using `provider/model` format
-  - [x] Model-specific settings (temperature, max tokens)
-  - [x] Output preferences (format, colors)
-  - [x] Session storage settings
-  - [x] Plugin directories
-  - [x] Logging configuration
-  - [x] Profile definitions
-  - [x] Aliases for common commands
-  - [x] Model parsing utilities (split provider/model strings)
+### 2.3 Configuration Utilities 
+- [x] Persist configuration changes to the correct file respecting precedence
+- [x] Include option factory functions for LLM provider options based on configuration
+- [x] Implement configuration merge logic for profiles
 
-### 2.3 Configuration Utilities ✅
-- [x] Implement configuration helpers in `pkg/config/utils.go`
-  - [x] GetString/GetInt/GetBool methods
-  - [x] SetValue with validation
-  - [x] Profile switching logic
-  - [x] Configuration export/import
-  - [x] Environment variable mapping
-  - [x] Secret handling (API keys)
+Unplanned/skipped features:
+- [ ] Environment variable expansion in values (still to implement)
+- [ ] Export configuration to different formats (Moved to post-MVP)
 
-### 2.4 Unified Command System ✅
-- [x] Create directory structure for unified command management `pkg/command`
-- [x] Design command registry system to be central
-  - [x] Command interface for all commands (CLI and REPL - could be rest-api in the future)
-  - [x] Command metadata (name, description, flags, availability)
-  - [x] Command execution context
-  - [x] Command validation and error handling
-- [x] Define command categories:
-  - [x] CLI-only commands (e.g., `ask`, `chat`)
-  - [x] REPL-only commands (e.g., `/reset`, `/exit`)
-  - [x] Shared commands (e.g., `model`, `config`)
-  - [x] Flag-to-command mapping for REPL (e.g., `--stream` becomes `:stream`)
-- [x] Create command discovery and registration mechanism
-- [x] Implement help system that works across CLI and REPL
+### 2.4 Unified Command System for CLI and REPL
+- [x] Create shared command infrastructure in `pkg/command/`
+- [x] Define Command interface with Execute, Validate, and Help methods
+- [x] Implement CommandRegistry for registration and discovery
+- [x] Create metadata structure for command help and documentation
+- [x] Support for both CLI and REPL command execution contexts
+- [x] Flag parsing abstraction for both environments
 
-### 2.5 Core Commands Implementation ✅
-- [x] Implement shared commands in `pkg/command/core/`:
-  - [x] `model` - Switch between LLM models,
-    - [x] `model` should take argument of the form `<provider>/<modelname`>
-    - [x] this automatically switches `provider` - Switch between providers
-  - [x] `config` - Configuration management
-    - [x] Comprehensive subcommands (list, get, set, validate, export, import)
-    - [x] Profile management (create, switch, delete, export)
-    - [x] Full unit test coverage
-    - [x] Fixed all linting errors (error checks)
-  - [x] `profile` - Profile management
-    - [x] Complete lifecycle management (create, switch, update, copy, delete)
-    - [x] Profile export/import functionality
-    - [x] Show current and specific profile details
-    - [x] List all available profiles
-    - [x] Full unit test coverage with lifecycle tests
-    - [x] Fixed test ordering issues for map comparisons
-  - [x] `alias` - Alias management
-    - [x] Add, remove, list, show, clear aliases
-    - [x] Support for both CLI and REPL aliases
-    - [x] Scope management (cli/repl/all)
-    - [x] Export/import functionality
-    - [x] Full unit test coverage
-  - [x] `help` - Context-aware help
-    - [x] Context-aware display for CLI vs REPL
-    - [x] Command categorization
-    - [x] Alias resolution
-    - [x] Comprehensive unit tests
-    - [x] Consolidated help functionality into core/help.go
-    - [x] Removed old help files and tests
-- [x] Create command execution framework
-  - [x] Command executor with validation and error handling
-  - [x] Pre/post execution hooks
-  - [x] Argument and flag parsing with type validation
-  - [x] Comprehensive unit tests
-- [x] Add command validation and error handling
-  - [x] Flag type validation
-  - [x] Required flag checking
-  - [x] Custom validation error types
-  - [x] Contextual error messages
-- [x] Unit tests for each command (model, config, profile, alias, and help commands complete)
+### 2.5 Core Commands Implementation in Library
+- [x] Move command implementations to library `pkg/command/core/`
+- [x] Implement core commands as Command interface:
+  - [x] Model command (list, set, info)
+  - [x] Config command (get, set, show, list)
+  - [x] Profile command (list, set, create, delete)
+  - [x] Alias command (create, list, delete)
+  - [x] Help command (context-aware help)
+- [x] Ensure commands work in both CLI and REPL contexts
 
-### 2.6 Models static inventory file `models.json` ✅
-- [x] A statically created `models.json` in root directory - this will/can be used for help and other things later
-  - [x] version no (semantic versioning), and date as file metadata on top
-  - [x] list of models by provider
-  - [x] each model has name, description, url for model documentation/modelcard and a capability list, and last updated in models.json and other metadata
-    - [x] capability list should be something like text and sub capability like read/consume, write/generate - possible capabilities are text, file, image, audio, video
-- [x] Created pkg/models for loading and querying models.json
-  - [x] Load inventory from root directory
-  - [x] Query models by provider, name, capabilities
-  - [x] Get models with specific capabilities
-  - [x] List providers and model families
-  - [x] Comprehensive unit tests
+### 2.6 Models Inventory File
+- [x] Create JSON database `models.json` in project root
+- [x] Define schema for model capabilities:
+  - [x] Model ID (provider/model-name)
+  - [x] Provider information
+  - [x] Supported modalities (text, image, audio, video, file)
+  - [x] Context window sizes
+  - [x] Input/output token costs
+  - [x] Feature support flags (streaming, structured output, tool calling)
+  - [x] API version/release date information
+- [x] Implement models package with query functionality
+- [x] Create functions to:
+  - [x] List all available models
+  - [x] Filter models by provider
+  - [x] Filter models by capability (e.g., vision-capable, tool-calling)
+  - [x] Get detailed information for a specific model
+  - [x] Check model compatibility with requested features
 
 ## Phase 3: CLI with Kong (Week 3) ✅
 
-### 3.1 CLI Structure Setup ✅
-- [x] Research best framework, since we have our own command structure - 
-    - [x] Cobra, kong + kongplete, urfave/cli, Kingpin, go-flags, docopt,  
-    - [x] criteria - less dependencies, flexible, does not impose hard to get around conventions, easy to test and read, completions support
-    - [x] Decision: Kong + kongplete chosen (see docs/technical/cli_framework_analysis.md)
-- [x] Install library dependency (Kong + kongplete)
-- [x] Create main.go in `cmd/magellai/`
-- [x] Define root command with global flags
-- [x] Implement version command 
-    - [x] to call the command core `version` command with context
-- [x] Help command handled by Kong framework (core help command still available for REPL/API)
-- [x] Setup global flag parsing: 
-  - [x] `--verbosity/-v` - Log verbosity level
-  - [x] `--output/-o` - Output format [text|json|markdown]
-  - [x] `--configfile/-c` - Config file to use (different from `config` command)
-  - [x] `--profile` - Configuration profile
-  - [x] `--no-color` - Disable color output
-  - [x] `--version` - Show version info (Unix standard flag)
-  - [x] Also support version subcommand for advanced usage
+### 3.1 Kong CLI Structure Setup
+- [x] Add Kong dependency (`go get github.com/alecthomas/kong`)
+- [x] Create main CLI structure in `cmd/magellai/main.go`
+- [x] Define global flags (--config, --profile, --verbose, etc.)
+- [x] Create command hierarchy:
+  - [x] `ask` - Single query mode
+  - [x] `chat` - Interactive REPL mode
+  - [x] `version` - Show version information
+  - [x] `config` - Configuration management
+  - [x] `profile` - Profile management
+  - [x] `alias` - Alias management
+  - [x] `model` - Model selection and info
+  - [x] `history` - Session history management
+  - [x] Help display and command documentation
 
-### 3.2 Ask Command ✅
-- [x] Implement `ask` subcommand
-  - [x] Prompt as positional argument
-  - [x] Command-specific flags:
-    - [x] `--attach/-a` - File attachments (repeatable)
-    - [x] `--model/-m` - Provider/model selection
-    - [x] `--temperature/-t` - Model temperature
-    - [x] `--stream` - Enable streaming
-    - [x] `--format` - Response format hints
-    - [x] `--max-tokens` - Maximum response tokens
-    - [x] `--system/-s` - System prompt
-  - [x] Integrate with unified command system
-  - [x] Support global output flag (--output)
-  - [x] Full multimodal attachment support
-  - [x] Streaming response support
-  - [x] Provider selection based on model
+### 3.2 Ask Command Implementation
+- [x] Create ask command in `pkg/command/core/ask.go`
+- [x] Accept query from args or stdin
+- [x] Support attachment flags (-a/--attach)
+- [x] Handle input/output redirection
+- [x] Support streaming with --stream flag
+- [x] Implement pipeline compatibility
+- [x] Return proper exit codes
+- [x] Support structured output (--format json/yaml)
 
-### 3.2.1 CLI Help System Improvements ✅
-- [x] Customize Kong help display for progressive disclosure
-  - [x] Discovered Kong's `NoExpandSubcommands` option to hide nested commands
-  - [x] Use command groups for better organization at top level
-  - [x] Ensure `magellai --help` shows main commands without subcommands
-  - [x] Make `magellai config --help` show only config subcommands
-  - [x] Implemented and tested with all configuration commands
-- [x] Leverage centralized help command for consistency
-  - [x] Core help command exists in pkg/command/core/help.go
-  - [x] CLI uses Kong's built-in help with custom configuration
-  - [x] Support both `magellai help <command>` and `magellai <command> --help`
-- [x] Implement progressive disclosure pattern
-  - [x] Top-level shows primary commands grouped by category (core, config, info)
-  - [x] Subcommand help shows only immediate children
-  - [x] Used Kong's `NoExpandSubcommands` option for clean display
-- [x] Added all configuration commands
+### 3.3 Chat Command & REPL Foundation
+- [x] Implement chat command launching REPL
+- [x] Create `pkg/repl/repl.go` with basic loop
+- [x] Command parsing (/ for commands, : for special)
+- [x] Session persistence and management
+- [x] Integration with unified command system
+- [x] Attach files with /attach command
+- [x] Multi-line input support
+- [x] Proper signal handling (Ctrl+C, Ctrl+D)
 
-### 3.2 Ask Command ✅
-- [x] Pipeline support (stdin/stdout)
-  - Made prompt argument optional in Kong CLI definition
-  - Added stdin detection logic when no prompt provided
-  - Combined stdin and prompt when both provided
-  - Added comprehensive tests for pipeline support
-  - Tested with real examples:
-    - Simple queries through pipe
-    - File content through pipe
-    - JSON data processing
-    - Combined stdin with command-line prompt
+### 3.4 Configuration Commands (using koanf)
+- [x] `config get <key>` - Get config value
+- [x] `config set <key> <value>` - Set config value
+- [x] `config show` - Display current config
+- [x] `config list` - List all config keys
+- [x] `profile list` - List available profiles
+- [x] `profile set <name>` - Switch profiles
+- [x] Configuration changes persist to files
 
 ### 3.5 Logging and Verbosity Implementation ✅
+- [x] Integrate slog throughout codebase
+- [x] Support --verbose flag levels (-v, -vv, -vvv)
+- [x] Log to stderr, output to stdout
+- [x] Structured logging with context
+- [x] Log filtering by component
+- [x] Debug mode with detailed traces
 
-#### 3.5.1 Configuration Logging (pkg/config/) ✅
-- [x] Added logging to Load function with performance timing
-- [x] INFO level for initialization, loading, and profile switches
-- [x] DEBUG level for file discovery and detailed operations
-- [x] WARN level for non-critical issues and validation errors
-- [x] ERROR level for critical failures
-- [x] Performance timing for configuration load duration
+#### 3.5.1 Configuration Logging ✅
+- [x] Configuration initialization and loading
+- [x] Profile switching and discovery
+- [x] Option building and merging
+- [x] File discovery and validation
+- [x] Appropriate log levels (INFO, DEBUG, WARN, ERROR)
 
-#### 3.5.2 LLM Provider Logging (pkg/llm/) ✅
-- [x] INFO level for provider initialization and model selection
-- [x] DEBUG level for API key resolution, option building, and API operations
-- [x] ERROR level for provider creation failures and API errors
-- [x] Complete logging for streaming operations
-- [x] Added performance timing to all LLM operations
-- [x] Implemented API key sanitization
+#### 3.5.2 LLM Provider Logging ✅
+- [x] Provider creation and initialization
+- [x] Model selection and capability checking
+- [x] API key discovery and validation
+- [x] Request/response cycles (with sanitization)
+- [x] Streaming operations
+- [x] Error responses and retries
+- [x] Option application
 
-#### 3.5.3 Session Management Logging (pkg/repl/) ✅
-- [x] INFO level for session creation, save/load, deletion, and export operations
-- [x] DEBUG level for file I/O operations, search operations, and session listing
-- [x] Complete coverage of all session lifecycle events
-- [x] Added timing to session operations (save, load, list)
+#### 3.5.3 Session Management Logging ✅
+- [x] Session creation and initialization
+- [x] Save/load operations
+- [x] Delete and cleanup operations
+- [x] Export functionality
+- [x] File I/O operations
+- [x] Search operations
+- [x] All error conditions
 
-#### 3.5.4 Command Execution Logging (pkg/command/) ✅
-- [x] DEBUG level for command parsing and validation
-- [x] INFO level for command execution
-- [x] ERROR level for command failures
-- [x] Added timing to command execution
+Additional unplanned improvements completed:
+- [x] Fixed file attachment handling for unsupported models
+- [x] Fixed double initialization of logging system
+- [x] Ensured environment variables are respected at startup
+- [x] Improved error messages for better user experience
+- [x] Created comprehensive dependency reduction analysis
 
-#### 3.5.5 REPL Operations Logging (pkg/repl/) ✅
-- [x] INFO level for REPL startup/shutdown
-- [x] DEBUG level for command parsing and context updates
-- [x] Complete integration with session logging
+### 3.2.1 CLI Help System Improvements (Partial)
+The following tasks were completed while some were moved to Phase 8.1:
 
-#### 3.5.6 File Operations Logging (internal/configdir/) ✅
-- [x] DEBUG level for directory creation and file operations
-- [x] ERROR level for file access failures
-- [x] Complete coverage of configuration directory operations
+Completed:
+- [x] Group commands by category (CLI, Config, Session)
+- [x] Include model capabilities in help
 
-#### 3.5.7 User-Facing Operations Logging ✅
-- [x] Consistent user-friendly messages at INFO level
-- [x] Technical details moved to DEBUG level
-- [x] Clear separation between user and technical logging
+Moved to Phase 8.1:
+- [ ] Rich text formatting for terminals
+- [ ] Context-sensitive help suggestions
+- [ ] Interactive help browser
+- [ ] Command examples in help text
+- [ ] Quick start guide display
+- [ ] Keyboard shortcuts reference
+- [ ] Integration with man pages
+- [ ] Online documentation links
+- [ ] Help search functionality
+- [ ] Multi-language help support
 
-#### 3.5.8 Performance and Metrics Logging ✅
-- [x] Added timing/duration logging for:
-  - Configuration load operations
-  - LLM response generation (all methods)
-  - Session operations (save, load, list)
-  - Command execution
-- [x] Performance logging at DEBUG level
-
-#### 3.5.9 Security and Audit Logging ✅
-- [x] API key sanitization with sanitizeAPIKey function
-- [x] Configuration modification logging (already existed)
-- [x] File access logging (already implemented in 3.5.6)
-- [x] Error conditions logging (already comprehensive)
-
-#### 3.5.10 Testing and Integration ✅
-- [x] Added comprehensive logging tests to verify output
-- [x] Tested different verbosity levels
-- [x] Ensured sensitive data is not logged
-- [x] Verified performance impact is minimal
-- [x] Extended internal/logging/logger_test.go with new test functions
-- [x] Created pkg/llm/sanitization_test.go for API key sanitization testing
-
-### 3.6 History Commands ✅
-- [x] Implement history subcommands:
-  - [x] `history list` - List all sessions
-  - [x] `history show <id>` - Show session details
-  - [x] `history delete <id>` - Delete session
-  - [x] `history export <id> [--format=json]` - Export session
-  - [x] `history search <term>` - Search sessions
-- [x] Created pkg/command/core/history.go with complete implementation
-- [x] Created pkg/command/core/history_test.go with comprehensive tests
-- [x] Created pkg/command/core/history_test_helper.go for test support
-- [x] Updated cmd/magellai/main.go to include history command
-- [x] Registered history command in command registry
-- [x] Added HistoryCmd and its subcommands to CLI structure
-- [x] Tested all subcommands (list, show, delete, export, search) - working correctly
-- [x] Fixed linting errors and ensured all tests pass
-  - [x] Moved InstallCompletions command to config group for better organization
-
-### 3.3 Chat Command & REPL Foundation ✅
-- [x] Create REPL foundation in `pkg/repl/`
-  - [x] Implement conversation management (`pkg/repl/conversation.go`)
-    - [x] Message history with roles (user/assistant/system)
-    - [x] Context management and token counting
-    - [x] Message attachments support
-    - [x] Conversation reset functionality
-  - [x] Implement session management (`pkg/repl/session.go`)
-    - [x] Session metadata (ID, timestamps, model)
-    - [x] Configuration state persistence
-    - [x] Save/load/resume functionality
-    - [x] Session listing and searching
-  - [x] Create REPL interface (`pkg/repl/repl.go`)
-    - [x] Interactive command loop
-    - [x] Prompt handling with multi-line support
-    - [x] Command mode (/) vs conversation mode
-    - [x] History support (arrow keys)
-  - [x] Implement REPL commands (`pkg/repl/commands.go`)
-    - [x] `/save [name]` - Save current session
-    - [x] `/load <id>` - Load previous session
-    - [x] `/reset` - Clear conversation
-    - [x] `/exit` - Exit REPL
-    - [x] `/help` - Show REPL commands
-- [x] Implement `chat` CLI command
-  - [x] Create chat command in CLI
-  - [x] Support `--resume <id>` flag
-  - [x] Support `--model` flag
-  - [x] Support `--attach` for initial files
-  - [x] Launch REPL with proper initialization
-  - [x] Pass configuration to REPL
-
-### 3.4 Configuration Commands (using koanf) ✅
-- [x] Implement config subcommands:
-  - [x] `config set <key> <value>` - Set configuration value using koanf
-  - [x] `config get <key>` - Get configuration value via koanf
-  - [x] `config list` - List all settings from koanf
-  - [x] `config edit` - Open config in editor
-  - [x] `config validate` - Validate configuration
-  - [x] `config export` - Export current config
-  - [x] `config import <file>` - Import configuration
-  - [x] `config profiles list` - List profiles
-  - [x] `config profiles create <n>` - Create profile
-  - [x] `config profiles delete <n>` - Delete profile
-  - [x] `config profiles export <n>` - Export profile
-  - [x] `config profiles switch <n>` - Switch active profile
-
-## Phase 3: CLI with Kong (Week 3) - Continued
-
-### 3.5 Logging and Verbosity Implementation (Partial)
-
-#### 3.5.1 Configuration Logging (pkg/config/) ✅
-- [x] Configuration manager initialization (INFO)
-- [x] Configuration loading process (INFO) 
-- [x] Configuration file discovery (DEBUG)
-- [x] Profile loading and switching (INFO)
-- [x] Configuration validation errors (WARN/ERROR)
-- [x] Key deletion operations (INFO)
-- [x] File watch operations (DEBUG)
-
-#### 3.5.2 LLM Provider Logging (pkg/llm/) ✅
-- [x] Provider initialization (INFO)
-- [x] Model selection and capabilities (INFO)
-- [x] API key resolution (DEBUG)
-- [x] Option building process (DEBUG)
-- [x] API request/response (DEBUG)
-- [x] Streaming operations (DEBUG)
-- [x] Error conditions (ERROR)
-
-#### 3.5.3 Session Management Logging (pkg/repl/) ✅
-- [x] Session creation/restoration (INFO)
-- [x] Session save/load operations (INFO)
-- [x] Session search operations (DEBUG)
-- [x] Session deletion (INFO)
-- [x] Session export operations (INFO)
-- [x] File I/O operations (DEBUG)
-
-#### 3.5.4 Command Execution Logging (pkg/command/) ✅
-- [x] Command execution start/end (DEBUG)
-- [x] Command validation (DEBUG)
-- [x] Pre/post execution hooks (DEBUG)
-- [x] Command errors (ERROR)
-- [x] Command registry operations (DEBUG)
-
-#### 3.5.5 REPL Operations Logging (pkg/repl/) ✅
-- [x] User input processing (DEBUG)
-- [x] Command handling (DEBUG)
-- [x] Special command processing (DEBUG)
-- [x] Message processing (DEBUG)
-- [x] Model switching (INFO)
-
-#### 3.5.6 File Operations Logging (internal/configdir/) ✅
-- [x] Directory creation (DEBUG)
-- [x] Default config creation (INFO)
-- [x] Project config discovery (DEBUG)
-- [x] File read/write operations (DEBUG)
-
-#### 3.5.7 User-Facing Operations Logging ✅
-- [x] Model changes (INFO)
-- [x] Profile switches (INFO)
-- [x] Command invocations (INFO)
-- [x] Session starts/ends (INFO)
-- [x] Configuration changes (INFO)
-
-#### 3.5.8 Performance and Metrics Logging ✅
-- [x] Configuration load time (DEBUG)
-- [x] LLM response time (DEBUG)
-- [x] Session operation duration (DEBUG)
-- [x] Command execution time (DEBUG)
-
-#### 3.5.9 Security and Audit Logging ✅
-- [x] API key usage (DEBUG - sanitized)
-- [x] Configuration modifications (INFO)
-- [x] File access attempts (DEBUG)
-- [x] Error conditions (ERROR)
-
-#### 3.5.10 Testing and Integration ✅
-- [x] Added comprehensive logging tests to verify output
-- [x] Tested different verbosity levels
+Additional logging improvements:
+- [x] Fixed double logger initialization with sync.Once
+- [x] Environment variable support in DefaultConfig
+- [x] API key sanitization in logs
+- [x] Context preservation in log messages
+- [x] Fixed nil error handling in logger
 - [x] Ensured sensitive data is not logged
 - [x] Verified performance impact is minimal
 - [x] Extended internal/logging/logger_test.go with new test functions
@@ -492,3 +275,22 @@ Note: The remaining CLI help system improvements from section 3.2.1 have been mo
   - Implemented fallback to read file content as text for models like GPT-3.5-turbo
   - Successfully handles file attachments based on model capabilities
 - [x] Added SetLogLevel function to logging package
+
+### 4.2 Advanced Session Features
+#### Auto-save functionality ✅
+- [x] Added auto-save configuration support (repl.auto_save.enabled, repl.auto_save.interval)
+- [x] Created auto-save timer mechanism in REPL struct
+- [x] Implemented scheduleAutoSave with configurable intervals
+- [x] Implemented performAutoSave with change detection (only saves if modified)
+- [x] Implemented stopAutoSave for proper cleanup on exit
+- [x] Added defer statement in Run() to stop auto-save timer on exit
+- [x] Replaced manual save after each message with timer-based auto-save
+- [x] Added comprehensive logging throughout auto-save operations
+- [x] Default interval set to 5 minutes with configuration override support
+
+Implementation details:
+- Auto-save fields added to REPL struct: autoSave, autoSaveTimer, lastSaveTime
+- Timer-based approach using time.AfterFunc for periodic saves
+- Change detection using session.Updated timestamp to avoid unnecessary saves
+- Proper cleanup with defer statement in Run function
+- Configuration-driven with sensible defaults (enabled by default, 5-minute interval)

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/llm"
@@ -25,15 +26,18 @@ type ConfigInterface interface {
 
 // REPL represents the Read-Eval-Print Loop for interactive chat
 type REPL struct {
-	config      ConfigInterface
-	provider    llm.Provider
-	session     *Session
-	manager     *SessionManager
-	reader      *bufio.Reader
-	writer      io.Writer
-	promptStyle string
-	multiline   bool
-	exitOnEOF   bool
+	config        ConfigInterface
+	provider      llm.Provider
+	session       *Session
+	manager       *SessionManager
+	reader        *bufio.Reader
+	writer        io.Writer
+	promptStyle   string
+	multiline     bool
+	exitOnEOF     bool
+	autoSave      bool
+	autoSaveTimer *time.Timer
+	lastSaveTime  time.Time
 }
 
 // REPLOptions contains options for creating a new REPL
@@ -126,16 +130,37 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	session.Conversation.Model = modelStr
 	session.Conversation.Provider = providerType
 
-	return &REPL{
-		config:      cfg,
-		provider:    provider,
-		session:     session,
-		manager:     manager,
-		reader:      bufio.NewReader(opts.Reader),
-		writer:      opts.Writer,
-		promptStyle: opts.PromptStyle,
-		exitOnEOF:   true,
-	}, nil
+	autoSave := cfg.GetBool("repl.auto_save.enabled")
+
+	repl := &REPL{
+		config:       cfg,
+		provider:     provider,
+		session:      session,
+		manager:      manager,
+		reader:       bufio.NewReader(opts.Reader),
+		writer:       opts.Writer,
+		promptStyle:  opts.PromptStyle,
+		exitOnEOF:    true,
+		autoSave:     autoSave,
+		lastSaveTime: time.Now(),
+	}
+
+	// Setup auto-save timer if enabled
+	if autoSave {
+		interval := cfg.GetString("repl.auto_save.interval")
+		if interval == "" {
+			interval = "5m" // Default to 5 minutes
+		}
+		duration, err := time.ParseDuration(interval)
+		if err != nil {
+			logging.LogWarn("Invalid auto-save interval, using default", "interval", interval, "error", err)
+			duration = 5 * time.Minute
+		}
+		repl.scheduleAutoSave(duration)
+		logging.LogInfo("Auto-save enabled", "interval", duration)
+	}
+
+	return repl, nil
 }
 
 // Run starts the REPL loop
@@ -146,6 +171,14 @@ func (r *REPL) Run() error {
 	fmt.Fprintf(r.writer, "magellai chat - Interactive LLM chat (type /help for commands)\n")
 	fmt.Fprintf(r.writer, "Model: %s\n", r.session.Conversation.Model)
 	fmt.Fprintf(r.writer, "Session: %s\n\n", r.session.ID)
+
+	// Cleanup function to stop auto-save
+	defer func() {
+		if r.autoSave {
+			r.stopAutoSave()
+			logging.LogInfo("Stopped auto-save timer")
+		}
+	}()
 
 	// Main REPL loop
 	for {
@@ -200,11 +233,11 @@ func (r *REPL) Run() error {
 			fmt.Fprintf(r.writer, "Error: %v\n", err)
 		}
 
-		// Auto-save session
-		logging.LogDebug("Auto-saving session", "sessionID", r.session.ID)
-		if err := r.manager.SaveSession(r.session); err != nil {
-			logging.LogWarn("Failed to auto-save session", "sessionID", r.session.ID, "error", err)
-			fmt.Fprintf(r.writer, "Warning: Failed to auto-save session: %v\n", err)
+		// Trigger auto-save after processing message
+		if r.autoSave {
+			if err := r.performAutoSave(); err != nil {
+				logging.LogWarn("Failed to auto-save session", "sessionID", r.session.ID, "error", err)
+			}
 		}
 	}
 }
@@ -482,4 +515,48 @@ SPECIAL COMMANDS:
 Type your message and press Enter to send.
 `)
 	return nil
+}
+
+// scheduleAutoSave sets up the auto-save timer
+func (r *REPL) scheduleAutoSave(interval time.Duration) {
+	if r.autoSaveTimer != nil {
+		r.autoSaveTimer.Stop()
+	}
+
+	logging.LogDebug("Scheduling auto-save", "interval", interval)
+	r.autoSaveTimer = time.AfterFunc(interval, func() {
+		logging.LogDebug("Auto-save timer triggered")
+		if err := r.performAutoSave(); err != nil {
+			logging.LogError(err, "Auto-save failed")
+		}
+		// Reschedule the timer
+		r.scheduleAutoSave(interval)
+	})
+}
+
+// performAutoSave saves the current session
+func (r *REPL) performAutoSave() error {
+	// Don't save if no changes since last save
+	if r.session.Updated.Before(r.lastSaveTime) || r.session.Updated.Equal(r.lastSaveTime) {
+		logging.LogDebug("No changes since last save, skipping auto-save")
+		return nil
+	}
+
+	logging.LogInfo("Performing auto-save", "sessionID", r.session.ID)
+	if err := r.manager.SaveSession(r.session); err != nil {
+		return fmt.Errorf("auto-save failed: %w", err)
+	}
+
+	r.lastSaveTime = time.Now()
+	logging.LogInfo("Auto-save completed", "sessionID", r.session.ID)
+	return nil
+}
+
+// stopAutoSave stops the auto-save timer
+func (r *REPL) stopAutoSave() {
+	if r.autoSaveTimer != nil {
+		r.autoSaveTimer.Stop()
+		r.autoSaveTimer = nil
+		logging.LogDebug("Auto-save timer stopped")
+	}
 }

@@ -682,7 +682,7 @@ func main() {
 	if envLevel := os.Getenv("MAGELLAI_LOG_LEVEL"); envLevel != "" {
 		logLevel = envLevel
 	}
-	
+
 	logConfig := logging.LogConfig{
 		Level:      logLevel,
 		Format:     "text",

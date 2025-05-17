@@ -142,7 +142,7 @@ func TestCommandLineOverrides(t *testing.T) {
 
 	// Create test command-line overrides as a map
 	cmdlineOverrides := map[string]interface{}{
-		"profile": "test",
+		"profile":   "test",
 		"verbosity": 2,
 	}
 

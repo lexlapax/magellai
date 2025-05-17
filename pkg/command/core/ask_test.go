@@ -6,8 +6,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
@@ -271,6 +274,16 @@ func TestAskCommandAttachments(t *testing.T) {
 	cmd := NewAskCommand(cfg)
 
 	t.Run("Single attachment", func(t *testing.T) {
+		// Create a temporary file for testing
+		tmpFile, err := os.CreateTemp("", "test*.png")
+		require.NoError(t, err)
+		defer os.Remove(tmpFile.Name())
+
+		// Write some test content
+		_, err = tmpFile.WriteString("Test image content")
+		require.NoError(t, err)
+		tmpFile.Close()
+
 		ctx := context.Background()
 		var stdout bytes.Buffer
 
@@ -278,7 +291,7 @@ func TestAskCommandAttachments(t *testing.T) {
 			Context: ctx,
 			Args:    []string{"Describe this image"},
 			Flags: command.NewFlags(map[string]interface{}{
-				"attach": []string{"test.png"},
+				"attach": []string{tmpFile.Name()},
 			}),
 			Stdout: &stdout,
 			Stderr: &bytes.Buffer{},
@@ -286,13 +299,31 @@ func TestAskCommandAttachments(t *testing.T) {
 		}
 
 		// Should work with mock provider
-		err := cmd.Execute(ctx, exec)
+		err = cmd.Execute(ctx, exec)
 		if err != nil && !strings.Contains(err.Error(), "mock provider") {
 			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 
 	t.Run("Multiple attachments", func(t *testing.T) {
+		// Create temporary files for testing
+		tmpFile1, err := os.CreateTemp("", "test*.txt")
+		require.NoError(t, err)
+		defer os.Remove(tmpFile1.Name())
+
+		tmpFile2, err := os.CreateTemp("", "test*.txt")
+		require.NoError(t, err)
+		defer os.Remove(tmpFile2.Name())
+
+		// Write some test content
+		_, err = tmpFile1.WriteString("Test file 1 content")
+		require.NoError(t, err)
+		tmpFile1.Close()
+
+		_, err = tmpFile2.WriteString("Test file 2 content")
+		require.NoError(t, err)
+		tmpFile2.Close()
+
 		ctx := context.Background()
 		var stdout bytes.Buffer
 
@@ -300,7 +331,7 @@ func TestAskCommandAttachments(t *testing.T) {
 			Context: ctx,
 			Args:    []string{"Compare these files"},
 			Flags: command.NewFlags(map[string]interface{}{
-				"attach": []string{"file1.txt", "file2.txt"},
+				"attach": []string{tmpFile1.Name(), tmpFile2.Name()},
 			}),
 			Stdout: &stdout,
 			Stderr: &bytes.Buffer{},
@@ -308,7 +339,7 @@ func TestAskCommandAttachments(t *testing.T) {
 		}
 
 		// Should work with mock provider
-		err := cmd.Execute(ctx, exec)
+		err = cmd.Execute(ctx, exec)
 		if err != nil && !strings.Contains(err.Error(), "mock provider") {
 			t.Errorf("Unexpected error: %v", err)
 		}
