@@ -18,86 +18,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ### 4.2 Advanced Session Features
 
-### 4.2.1 Session Storage library abstraction
-- [ ] Session library abstraction for future database and other storage
-  - [x] Check for abstraction first and provide recommendation
-
-#### 4.2.1.1 Interface and Filesystem Implementation ✅
-    - [x] Create StorageBackend interface with all session operations 
-    - [x] Implement FileSystemStorage backend maintaining current behavior
-    - [x] Create factory for storage backends
-    - [x] Add storage configuration support in config system
-    - [x] Migrate SessionManager to use StorageBackend - remove backward compatibility requirement - replace functionality
-    - [x] Fix history_test.go to use new storage abstraction pattern
-    - [x] Update session commands to support abstract storage
-    - [x] Add unit tests for interface and filesystem implementation
-    - [x] Add integration tests 
-
-#### 4.2.1.2 Database Support [add as optional compile time / build time feature to reduce dependency] ✅
-    - [x] Ensure Schemas have multi-user/tenant support, default is current user
-    - [x] Implement SQLiteStorage backend for local database
-    - [x] Add build tags for optional database support
-    - [x] Implement FTS5 fallback for systems without FTS5 support
-    - [x] Add database-specific configuration options
-    - [x] Update documentation for database setup
-    - [x] Add performance benchmarks for database vs filesystem
-    - [x] Update makefile targets, create new target for benchmarks ✅
-
-### 4.2.1.3 default configs for session storage and cleanup ✅
-    - [x] Default session storage should be filestore. ✅
-    - [x] Make sure to check if sqllite is feature is compiled in/available when switching config to db/sqlite backend ✅
-    - [x] refactor code so that storage is under pkg/storage or something like that so it makes sense ✅
-    - [x] Removed obsolete session_filesystem.go file replaced by storage abstraction
-    - [x] Created comprehensive tests for storage_manager.go and session_manager.go  
-    - [x] Created comprehensive tests for adapter.go with 100% coverage
-
-### 4.2.1.4 Fix domain layer and types
-    - [ ] Create domain layer package structure
-        - [ ] Create new package `pkg/session/` as the domain layer
-        - [ ] Create `pkg/session/types.go` for shared domain types
-        - [ ] Add package documentation explaining domain layer purpose
-    
-    - [ ] Identify and consolidate shared types
-        - [ ] Move `SessionInfo` type from both packages to `pkg/session/types.go`
-        - [ ] Move `SearchResult` type from both packages to `pkg/session/types.go`
-        - [ ] Move `SearchMatch` type from both packages to `pkg/session/types.go`
-        - [ ] Analyze `Session` type differences and create unified domain model
-        - [ ] Create common `Message` type in domain layer
-        - [ ] Decide on attachment strategy (use `llm.Attachment` or create domain type)
-    
-    - [ ] Refactor storage package
-        - [ ] Remove duplicate types from `pkg/storage/types.go`
-        - [ ] Import shared types from `pkg/session/`
-        - [ ] Keep only storage-specific types (e.g., database models if needed)
-        - [ ] Update storage interfaces to use domain types
-        - [ ] Update all storage implementations (filesystem, sqlite) to use domain types
-    
-    - [ ] Refactor REPL package
-        - [ ] Remove duplicate types from `pkg/repl/types.go`
-        - [ ] Import shared types from `pkg/session/`
-        - [ ] Keep only REPL-specific types (e.g., `Conversation`)
-        - [ ] Update REPL code to use domain types
-        - [ ] Analyze if `pkg/repl/adapter.go` is still needed after refactoring
-    
-    - [ ] Update type conversions
-        - [ ] Eliminate unnecessary conversions between duplicate types
-        - [ ] Simplify or remove adapter layer if no longer needed
-        - [ ] Update `StorageManager` to work directly with domain types
-        - [ ] Update `SessionManager` to work directly with domain types
-    
-    - [ ] Update tests for new structure
-        - [ ] Create tests for domain types in `pkg/session/types_test.go`
-        - [ ] Update storage package tests to use domain types
-        - [ ] Update REPL package tests to use domain types
-        - [ ] Remove or update adapter tests as needed
-        - [ ] Ensure all existing tests still pass after refactoring
-    
-    - [ ] Documentation and cleanup
-        - [ ] Update package documentation to reflect new architecture
-        - [ ] Create architecture diagram showing domain/application/infrastructure layers
-        - [ ] Document type ownership and responsibilities
-        - [ ] Remove obsolete code and comments
-        - [ ] Update README or contributing guide with new structure
+### 4.2.1 Session Storage library abstraction ✅
 
 ### 4.2.2 Session Auto-save functionality
 - [ ] Enhance session management:
@@ -138,6 +59,136 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Custom prompt themes
   - [ ] Progress indicators for streaming
   - [ ] Rich media rendering (images, tables)
+
+### 4.6 Fix domain layer and types
+- [ ] Create domain layer package structure
+    - [ ] Create new package `pkg/domain/` as the central domain layer
+    - [ ] Create directory structure for domain entities
+    - [ ] Add comprehensive package documentation (doc.go)
+
+- [ ] Implement core domain types
+    - [ ] Create `pkg/domain/session.go`
+        - [ ] Define `Session` type with all fields
+        - [ ] Define `SessionInfo` type
+        - [ ] Add validation methods
+        - [ ] Add session-related constants
+    - [ ] Create `pkg/domain/message.go`
+        - [ ] Define `Message` type
+        - [ ] Define `MessageRole` enum (user, assistant, system)
+        - [ ] Add message validation
+    - [ ] Create `pkg/domain/attachment.go`
+        - [ ] Define `Attachment` type
+        - [ ] Define `AttachmentType` enum
+        - [ ] Add attachment validation and helper methods
+    - [ ] Create `pkg/domain/conversation.go`
+        - [ ] Define `Conversation` type
+        - [ ] Add conversation management methods
+        - [ ] Define conversation constants
+    - [ ] Create `pkg/domain/search.go`
+        - [ ] Define `SearchResult` type
+        - [ ] Define `SearchMatch` type
+        - [ ] Add search-related enums
+    - [ ] Create `pkg/domain/provider.go`
+        - [ ] Define `Provider` type
+        - [ ] Define `Model` type
+        - [ ] Define `ModelCapability` type
+    - [ ] Create `pkg/domain/types.go`
+        - [ ] Define shared enums and constants
+        - [ ] Add common interface definitions
+
+- [ ] Refactor storage package to use domain types
+    - [ ] Remove all duplicate type definitions from `pkg/storage/types.go`
+    - [ ] Update imports to use `pkg/domain/`
+    - [ ] Update `Backend` interface to use domain types
+    - [ ] Update filesystem implementation
+        - [ ] Modify all methods to use domain types
+        - [ ] Remove type conversion code
+        - [ ] Update JSON marshaling/unmarshaling
+    - [ ] Update SQLite implementation
+        - [ ] Modify all methods to use domain types
+        - [ ] Update database schema mappings
+        - [ ] Remove type conversion code
+    - [ ] Update storage factory to return domain types
+    - [ ] Remove obsolete conversion functions
+
+- [ ] Refactor REPL package to use domain types
+    - [ ] Remove all duplicate type definitions from `pkg/repl/types.go`
+    - [ ] Update imports to use `pkg/domain/`
+    - [ ] Update `Conversation` to use domain types
+    - [ ] Update `SessionManager` to use domain types
+    - [ ] Update `StorageManager` to use domain types
+    - [ ] Remove or refactor `adapter.go`
+        - [ ] Identify remaining conversion needs
+        - [ ] Remove unnecessary conversions
+        - [ ] Keep only LLM-specific adaptations if needed
+    - [ ] Update all REPL commands to use domain types
+    - [ ] Update session export functionality
+
+- [ ] Update LLM package integration
+    - [ ] Analyze current LLM `Message` type usage
+    - [ ] Create adapter between domain and LLM types if needed
+    - [ ] Update provider interfaces to use domain types where possible
+    - [ ] Ensure multimodal attachment support works with domain types
+
+- [ ] Update configuration and models packages
+    - [ ] Check for any type dependencies in config package
+    - [ ] Update models package to use domain provider types
+    - [ ] Ensure configuration values map to domain types
+
+- [ ] Comprehensive test updates
+    - [ ] Create domain package tests
+        - [ ] `pkg/domain/session_test.go`
+        - [ ] `pkg/domain/message_test.go`
+        - [ ] `pkg/domain/attachment_test.go`
+        - [ ] `pkg/domain/conversation_test.go`
+        - [ ] `pkg/domain/search_test.go`
+        - [ ] `pkg/domain/provider_test.go`
+    - [ ] Update storage package tests
+        - [ ] Fix filesystem tests for domain types
+        - [ ] Fix SQLite tests for domain types
+        - [ ] Update backend interface tests
+    - [ ] Update REPL package tests
+        - [ ] Fix session manager tests
+        - [ ] Fix storage manager tests
+        - [ ] Update conversation tests
+        - [ ] Fix command tests
+    - [ ] Update integration tests
+        - [ ] Ensure end-to-end functionality
+        - [ ] Test cross-package interactions
+
+- [ ] Documentation and architecture updates
+    - [ ] Update architecture documentation
+        - [ ] Create domain layer diagrams
+        - [ ] Update package relationship diagrams
+        - [ ] Document type ownership
+    - [ ] Update package documentation
+        - [ ] Add godoc comments to all domain types
+        - [ ] Update existing package docs
+        - [ ] Create migration guide
+    - [ ] Update README with new architecture
+    - [ ] Create ARCHITECTURE.md if needed
+
+- [ ] Code cleanup and optimization
+    - [ ] Remove all obsolete type conversion code
+    - [ ] Delete unused adapter functions
+    - [ ] Remove duplicate type definitions
+    - [ ] Clean up import statements
+    - [ ] Run gofmt and golangci-lint
+    - [ ] Verify no circular dependencies
+
+- [ ] Performance and compatibility verification
+    - [ ] Run benchmarks before and after refactoring
+    - [ ] Ensure no performance regression
+    - [ ] Verify JSON serialization compatibility
+    - [ ] Test database migration if schema changes
+    - [ ] Ensure existing sessions can be loaded
+
+- [ ] Final validation and rollout
+    - [ ] Run full test suite
+    - [ ] Manual testing of all features
+    - [ ] Update CHANGELOG.md
+    - [ ] Create release notes
+    - [ ] Plan deployment strategy
 
 ## Phase 5: Plugin System (Week 5)
 
@@ -353,28 +404,6 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Migration guide from binary plugins
   - [ ] Security considerations
 
-### 8.5 Additional Session Storage Backends
-#### 8.5.1 Additional Database Support
-    - [ ] Implement PostgreSQLStorage backend for remote database
-    - [ ] Add database connection pooling and retry logic
-    - [ ] Add configuration options
-    - [ ] Create database migration scripts
-#### 8.5.2 Cloud Storage Support 
-    - [ ] Implement S3Storage backend for object storage
-    - [ ] Implement RedisStorage backend for in-memory cache
-    - [ ] Add cloud authentication and credentials support
-    - [ ] Implement storage middleware (compression, encryption)
-    - [ ] Add multi-tier storage with caching layer
-    - [ ] Create cloud deployment documentation
-    - [ ] Add configuration options
-#### 8.5.3 Advanced Features 
-    - [ ] Add storage migration tool for backend switching
-    - [ ] Implement storage health checks and monitoring
-    - [ ] Add storage backup and restore functionality
-    - [ ] Create storage performance optimization guide
-    - [ ] Implement storage quota management
-    - [ ] Add storage backend plugin architecture
-
 ### 8.4 Web Interface
 - [ ] HTTP API server
   - [ ] RESTful endpoints
@@ -404,6 +433,28 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Team collaboration
   - [ ] Policy management
   - [ ] Compliance tools
+
+### 8.7 Additional Session Storage Backends
+#### 8.7.1 Additional Database Support
+    - [ ] Implement PostgreSQLStorage backend for remote database
+    - [ ] Add database connection pooling and retry logic
+    - [ ] Add configuration options
+    - [ ] Create database migration scripts
+#### 8.7.2 Cloud Storage Support 
+    - [ ] Implement S3Storage backend for object storage
+    - [ ] Implement RedisStorage backend for in-memory cache
+    - [ ] Add cloud authentication and credentials support
+    - [ ] Implement storage middleware (compression, encryption)
+    - [ ] Add multi-tier storage with caching layer
+    - [ ] Create cloud deployment documentation
+    - [ ] Add configuration options
+#### 8.7.3 Advanced Features 
+    - [ ] Add storage migration tool for backend switching
+    - [ ] Implement storage health checks and monitoring
+    - [ ] Add storage backup and restore functionality
+    - [ ] Create storage performance optimization guide
+    - [ ] Implement storage quota management
+    - [ ] Add storage backend plugin architecture
 
 ## Development Guidelines
 

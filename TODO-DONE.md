@@ -157,7 +157,7 @@ Unplanned/skipped features:
 - [x] `config show` - Display current config
 - [x] `config list` - List all config keys
 - [x] `profile list` - List available profiles
-- [x] `profile set <name>` - Switch profiles
+- [x] `profile set <n>` - Switch profiles
 - [x] Configuration changes persist to files
 
 ### 3.5 Logging and Verbosity Implementation ✅
@@ -312,3 +312,52 @@ Implementation details:
 - Markdown export includes timestamps, attachments, and proper heading structure
 - Export command validates format and handles file creation with proper error handling
 - Avoided extra output when exporting to stdout to prevent format corruption
+
+#### Session search by content ✅
+- [x] Designed search functionality with SearchResult and SearchMatch types
+- [x] Implemented SearchSessions in SessionManager with full-text search capabilities
+- [x] Added case-insensitive search across messages, prompts, names, and tags
+- [x] Added snippet extraction with configurable context (before/after)
+- [x] Implemented `/search <query>` command in REPL 
+- [x] Formatted search results with matched content highlighting
+- [x] Fixed all compilation and test issues
+- [x] Added proper search result limiting and context extraction
+- [x] Updated help documentation for search command
+
+Implementation details:
+- Created SearchResult and SearchMatch types for search results
+- Implemented searchContent function with case-insensitive matching
+- extractSnippet function provides contextual text around matches
+- Search covers message content, system prompts, session names, and tags
+- REPL command shows formatted results with timestamps and context
+
+### 4.2.1 Session Storage library abstraction ✅
+
+#### 4.2.1.1 Interface and Filesystem Implementation ✅
+- [x] Create StorageBackend interface with all session operations 
+- [x] Implement FileSystemStorage backend maintaining current behavior
+- [x] Create factory for storage backends
+- [x] Add storage configuration support in config system
+- [x] Migrate SessionManager to use StorageBackend - remove backward compatibility requirement - replace functionality
+- [x] Fix history_test.go to use new storage abstraction pattern
+- [x] Update session commands to support abstract storage
+- [x] Add unit tests for interface and filesystem implementation
+- [x] Add integration tests 
+
+#### 4.2.1.2 Database Support [add as optional compile time / build time feature to reduce dependency] ✅
+- [x] Ensure Schemas have multi-user/tenant support, default is current user
+- [x] Implement SQLiteStorage backend for local database
+- [x] Add build tags for optional database support
+- [x] Implement FTS5 fallback for systems without FTS5 support
+- [x] Add database-specific configuration options
+- [x] Update documentation for database setup
+- [x] Add performance benchmarks for database vs filesystem
+- [x] Update makefile targets, create new target for benchmarks ✅
+
+#### 4.2.1.3 default configs for session storage and cleanup ✅
+- [x] Default session storage should be filestore. ✅
+- [x] Make sure to check if sqllite is feature is compiled in/available when switching config to db/sqlite backend ✅
+- [x] refactor code so that storage is under pkg/storage or something like that so it makes sense ✅
+- [x] Removed obsolete session_filesystem.go file replaced by storage abstraction
+- [x] Created comprehensive tests for storage_manager.go and session_manager.go  
+- [x] Created comprehensive tests for adapter.go with 100% coverage

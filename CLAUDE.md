@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 4.2 - Advanced Session Features)
+## Current Status (Phase 4.6 - Fix domain layer and types)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
@@ -35,6 +35,14 @@ The project follows a library-first design where the core intelligence (LLM prov
     ✅ Phase 4.2.1.1: Interface and Filesystem Implementation - Complete
     ✅ Phase 4.2.1.2: Database Support (SQLite) - Complete
     ✅ Phase 4.2.1.3: Default session storage configuration & refactoring - Complete
+  ✅ Phase 4.2.2: Session Auto-save functionality - Complete (mostly)
+    ✅ Auto-save functionality - Complete
+    ✅ Session export formats (JSON, Markdown) - Complete
+    ✅ Session search by content - Complete
+    🔲 Session tags and metadata - Pending
+    🔲 Session branching/forking - Pending
+    🔲 Session merging - Pending
+  🚧 Phase 4.6: Fix domain layer and types - In Progress
 
 ### Recent Improvements
 - Session Storage Completion (Phase 4.2.1):
@@ -67,8 +75,16 @@ The project follows a library-first design where the core intelligence (LLM prov
     - Separated storage types from REPL types for better abstraction
     - Implemented clean adapter pattern between REPL and storage layers
     - Organized backends into separate subpackages (filesystem, sqlite)
-    - Factory pattern for backend registration and creation
-    - Improved testability and extensibility for future backends
+- Phase 4.2.1.3 Completion:
+  - Cleaned up obsolete session_filesystem.go replaced by storage abstraction
+  - Created comprehensive tests for storage_manager.go with mock backend
+  - Created comprehensive tests for session_manager.go with storage delegation
+  - Created comprehensive tests for adapter.go with 100% coverage
+  - Fixed test compilation issues and ensured all tests pass
+- Identified Architectural Issues (Phase 4.2.1.4):
+  - Discovered duplicate types between pkg/storage/types.go and pkg/repl/types.go
+  - Identified need for proper domain layer to avoid type duplication
+  - Created detailed plan for refactoring to clean architecture with domain/application/infrastructure layers
 - Completed Session Management Features (Phase 4.2):
   - Implemented auto-save functionality with timers and signal handling
   - Added session export to JSON and Markdown formats
