@@ -2,13 +2,13 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-**Current Status**: Phase 3.5 (Logging and Verbosity Implementation) Complete - Ready for Phase 3.6 (History Commands)
+**Current Status**: Phase 3 Complete - Starting Phase 4 (Advanced REPL Features)
 
 ## Phase 1: Core Foundation (Week 1) ✅
 
 ## Phase 2: Configuration and Command Foundation (Week 2) ✅
 
-## Phase 3: CLI with Kong (Week 3) - Mostly Complete (3.2, 3.2.1 partial)
+## Phase 3: CLI with Kong (Week 3) ✅ (3.2, 3.2.1 partial - REVISIT)
 
 ### 3.2 Ask Command - Partially Complete (REVISIT)
 - [ ] Pipeline support (stdin/stdout)
@@ -21,13 +21,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ### 3.5 Logging and Verbosity Implementation ✅
 
-### 3.6 History Commands
-- [ ] Implement history subcommands:
-  - [ ] `history list` - List all sessions
-  - [ ] `history show <id>` - Show session details
-  - [ ] `history delete <id>` - Delete session
-  - [ ] `history export <id> [--format=json]` - Export session
-  - [ ] `history search <term>` - Search sessions
+### 3.6 History Commands ✅
 
 
 ## Phase 4: Advanced REPL Features (Week 4)

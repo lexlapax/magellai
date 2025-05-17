@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 3.5 Complete - Moving to Phase 3.6)
+## Current Status (Phase 3.6 Complete - Moving to Phase 4)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
@@ -35,6 +35,7 @@ The project follows a library-first design where the core intelligence (LLM prov
   ✅ Phase 3.5.8: Performance and Metrics Logging - Complete  
   ✅ Phase 3.5.9: Security and Audit Logging - Complete
   ✅ Phase 3.5.10: Testing and Integration - Complete
+✅ Phase 3.6: History Commands - Complete
 
 ### Recent Improvements
 - Implemented comprehensive logging throughout the configuration, LLM provider, and session management systems
@@ -102,6 +103,15 @@ The project follows a library-first design where the core intelligence (LLM prov
 - Marked partial sections (3.2 and 3.2.1) for revisit in TODO.md
 - All tests passing, code formatted, and linted successfully
 - Phase 3.5 is now fully complete!
+- History Commands (3.6):
+  - Implemented all history subcommands (list, show, delete, export, search)
+  - Created comprehensive history command with proper metadata and validation
+  - Added tabular output for list and search commands
+  - Implemented JSON and Markdown export formats
+  - Added proper session detail display with message truncation
+  - Complete test coverage with mocked configuration directory
+  - Integrated with CLI command structure
+  - All subcommands tested and working correctly
 
 ## Architecture
 

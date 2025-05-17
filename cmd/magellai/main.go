@@ -49,6 +49,9 @@ type CLI struct {
 	Profile ProfileCmd `cmd:"" help:"Manage configuration profiles" group:"config"`
 	Alias   AliasCmd   `cmd:"" help:"Manage command aliases" group:"config"`
 
+	// Session management commands
+	History HistoryCmd `cmd:"" help:"Manage REPL session history" group:"session"`
+
 	// Shell completion command
 	InstallCompletions kongplete.InstallCompletions `cmd:"" help:"Install shell completions" group:"config"`
 }
@@ -514,6 +517,100 @@ func (a *AliasShowCmd) Run(ctx *Context) error {
 }
 
 // Context provides runtime context for commands
+// HistoryCmd handles the history command
+type HistoryCmd struct {
+	List   HistoryListCmd   `cmd:"" help:"List all sessions"`
+	Show   HistoryShowCmd   `cmd:"" help:"Show session details"`
+	Delete HistoryDeleteCmd `cmd:"" help:"Delete a session"`
+	Export HistoryExportCmd `cmd:"" help:"Export a session"`
+	Search HistorySearchCmd `cmd:"" help:"Search sessions by content"`
+}
+
+// HistoryListCmd lists all sessions
+type HistoryListCmd struct{}
+
+// Run executes the history list command
+func (h *HistoryListCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"list"},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "history", exec)
+}
+
+// HistoryShowCmd shows session details
+type HistoryShowCmd struct {
+	SessionID string `arg:"" required:"" help:"Session ID to show"`
+}
+
+// Run executes the history show command
+func (h *HistoryShowCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"show", h.SessionID},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "history", exec)
+}
+
+// HistoryDeleteCmd deletes a session
+type HistoryDeleteCmd struct {
+	SessionID string `arg:"" required:"" help:"Session ID to delete"`
+}
+
+// Run executes the history delete command
+func (h *HistoryDeleteCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"delete", h.SessionID},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "history", exec)
+}
+
+// HistoryExportCmd exports a session
+type HistoryExportCmd struct {
+	SessionID string `arg:"" required:"" help:"Session ID to export"`
+	Format    string `default:"json" enum:"json,markdown" help:"Export format"`
+}
+
+// Run executes the history export command
+func (h *HistoryExportCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"export", h.SessionID},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	exec.Flags.Set("format", h.Format)
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "history", exec)
+}
+
+// HistorySearchCmd searches sessions
+type HistorySearchCmd struct {
+	Query string `arg:"" required:"" help:"Search query"`
+}
+
+// Run executes the history search command
+func (h *HistorySearchCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"search", h.Query},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "history", exec)
+}
+
 type Context struct {
 	*kong.Context
 	Registry *command.Registry
@@ -656,6 +753,12 @@ func main() {
 	chatCmd := core.NewChatCommand(cfg)
 	if err := registry.Register(chatCmd); err != nil {
 		logger.Error("failed to register chat command", "error", err)
+		os.Exit(1)
+	}
+
+	historyCmd := core.NewHistoryCommand()
+	if err := registry.Register(historyCmd); err != nil {
+		logger.Error("failed to register history command", "error", err)
 		os.Exit(1)
 	}
 

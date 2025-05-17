@@ -294,6 +294,22 @@ This document contains all completed sections from the original TODO.md file for
 - [x] Verified performance impact is minimal
 - [x] Extended internal/logging/logger_test.go with new test functions
 - [x] Created pkg/llm/sanitization_test.go for API key sanitization testing
+
+### 3.6 History Commands ✅
+- [x] Implement history subcommands:
+  - [x] `history list` - List all sessions
+  - [x] `history show <id>` - Show session details
+  - [x] `history delete <id>` - Delete session
+  - [x] `history export <id> [--format=json]` - Export session
+  - [x] `history search <term>` - Search sessions
+- [x] Created pkg/command/core/history.go with complete implementation
+- [x] Created pkg/command/core/history_test.go with comprehensive tests
+- [x] Created pkg/command/core/history_test_helper.go for test support
+- [x] Updated cmd/magellai/main.go to include history command
+- [x] Registered history command in command registry
+- [x] Added HistoryCmd and its subcommands to CLI structure
+- [x] Tested all subcommands (list, show, delete, export, search) - working correctly
+- [x] Fixed linting errors and ensured all tests pass
   - [x] Moved InstallCompletions command to config group for better organization
 
 ### 3.3 Chat Command & REPL Foundation ✅
