@@ -237,3 +237,129 @@ func (c *Config) notifyWatchers() {
 		go watcher()
 	}
 }
+
+// GetPrimaryConfigFile returns the path to the primary configuration file
+func (c *Config) GetPrimaryConfigFile() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Try user config first
+	userConfig := expandPath(filepath.Join(UserConfigDir, UserConfigFile))
+	if _, err := os.Stat(userConfig); err == nil {
+		return userConfig
+	}
+
+	// Try project config
+	projectConfig := c.findProjectConfig()
+	if projectConfig != "" {
+		return projectConfig
+	}
+
+	// Fallback to system config
+	if _, err := os.Stat(SystemConfigPath); err == nil {
+		return SystemConfigPath
+	}
+
+	// Default to user config path even if it doesn't exist
+	return userConfig
+}
+
+// Reload reloads the configuration from all sources
+func (c *Config) Reload() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Create a new koanf instance and store the old one
+	oldKoanf := c.koanf
+	c.koanf = koanf.New(".")
+
+	// Load defaults first
+	if err := c.loadDefaults(); err != nil {
+		c.koanf = oldKoanf
+		return err
+	}
+
+	// Load system config if exists
+	_ = c.loadFile(SystemConfigPath)
+
+	// Load user config
+	userConfig := expandPath(filepath.Join(UserConfigDir, UserConfigFile))
+	_ = c.loadFile(userConfig)
+
+	// Load project config (search upward from current directory)
+	if projectConfig := c.findProjectConfig(); projectConfig != "" {
+		_ = c.loadFile(projectConfig)
+	}
+
+	// Load environment variables
+	if err := c.koanf.Load(env.Provider(ConfigEnvPrefix, ".", func(s string) string {
+		s = strings.ToLower(strings.TrimPrefix(s, ConfigEnvPrefix))
+		s = strings.ReplaceAll(s, "_", ".")
+		return s
+	}), nil); err != nil {
+		c.koanf = oldKoanf
+		return fmt.Errorf("failed to load environment variables: %w", err)
+	}
+
+	// Apply profile overrides if a profile is set
+	if c.profile != "" {
+		if err := c.applyProfile(c.profile); err != nil {
+			c.koanf = oldKoanf
+			return fmt.Errorf("failed to apply profile: %w", err)
+		}
+	}
+
+	c.notifyWatchers()
+	return nil
+}
+
+// loadDefaults loads the default configuration
+func (c *Config) loadDefaults() error {
+	return c.koanf.Load(confmap.Provider(c.defaults, "."), nil)
+}
+
+// DeleteKey deletes a configuration key
+func (c *Config) DeleteKey(key string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Check if key exists
+	if !c.koanf.Exists(key) {
+		return fmt.Errorf("key not found: %s", key)
+	}
+
+	// koanf doesn't have direct delete support, so we need to work around it
+	// Get all config, delete the key, and reload
+	allConfig := c.koanf.All()
+	deleteNestedKey(allConfig, key)
+
+	// Create new koanf instance with updated config
+	newKoanf := koanf.New(".")
+	if err := newKoanf.Load(confmap.Provider(allConfig, "."), nil); err != nil {
+		return fmt.Errorf("failed to reload config after delete: %w", err)
+	}
+
+	c.koanf = newKoanf
+	c.notifyWatchers()
+	return nil
+}
+
+// deleteNestedKey deletes a nested key from a map
+func deleteNestedKey(m map[string]interface{}, key string) {
+	parts := strings.Split(key, ".")
+	if len(parts) == 1 {
+		delete(m, key)
+		return
+	}
+
+	current := m
+	for i := 0; i < len(parts)-1; i++ {
+		if next, ok := current[parts[i]].(map[string]interface{}); ok {
+			current = next
+		} else {
+			return // Key path doesn't exist
+		}
+	}
+
+	delete(current, parts[len(parts)-1])
+}

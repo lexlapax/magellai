@@ -169,7 +169,7 @@ func TestConfigCommand_Execute(t *testing.T) {
 			setupConfig: func(c *config.Config) {
 				require.NoError(t, c.SetValue("profiles.test", map[string]interface{}{}))
 			},
-			expectedError: "profile deletion not implemented",
+			expectedOutput: "Deleted profile: test",
 		},
 		{
 			name:          "delete profile without name",
@@ -370,8 +370,9 @@ func TestConfigCommand_ProfileOperations(t *testing.T) {
 		Data: make(map[string]interface{}),
 	}
 	err = cmd.Execute(ctx, exec)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "profile deletion not implemented")
+	require.NoError(t, err)
+	output = exec.Data["output"].(string)
+	assert.Equal(t, "Deleted profile: test", output)
 }
 
 func TestConfigCommand_FormatSettings(t *testing.T) {

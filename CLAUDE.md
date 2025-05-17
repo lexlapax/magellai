@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Starting Phase 3.4)
+## Current Status (Completed Phase 3.4)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
@@ -23,17 +23,17 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 3.2: Ask Command - Complete
 ✅ Phase 3.2.1: CLI Help System Improvements - Complete
 ✅ Phase 3.3: Chat Command & REPL Foundation - Complete
+✅ Phase 3.4: Configuration Commands (using koanf) - Complete
 
 ### Recent Improvements
-- Implemented full REPL system with conversation and session management
-- Created interactive chat command with persistence
-- Added conversation history with message roles
-- Implemented session save/load/resume functionality
-- Added REPL commands (/save, /load, /reset, /exit, /help)
-- Implemented special commands (:model, :stream, :temperature, etc.)
-- Created multi-line input support
-- Added attachment support for multimodal content
-- Full test coverage for REPL components
+- Implemented full configuration command system with koanf
+- Added config subcommands (set, get, list, edit, validate, export, import)
+- Implemented profile management (create, switch, delete, export)
+- Added config edit command that opens configuration in user's editor
+- Implemented profile deletion with safety checks
+- Added configuration reload after editing
+- Fixed namespace conflicts in imports
+- All tests passing for configuration commands
 
 ## Architecture
 

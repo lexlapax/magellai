@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	osExec "os/exec"
 	"sort"
 	"strings"
 
@@ -59,6 +61,8 @@ func (c *ConfigCommand) Execute(ctx context.Context, exec *command.ExecutionCont
 			return fmt.Errorf("config import: %w - filename required", command.ErrMissingArgument)
 		}
 		return c.importConfig(ctx, exec, exec.Args[1])
+	case "edit":
+		return c.editConfig(ctx, exec)
 	case "profiles":
 		if len(exec.Args) < 2 {
 			return c.listProfiles(ctx, exec)
@@ -84,6 +88,7 @@ Subcommands:
   validate           Validate the current configuration
   export             Export configuration to stdout
   import <file>      Import configuration from file
+  edit               Open configuration in editor
   profiles           Manage configuration profiles
     list             List all profiles
     switch <name>    Switch to a profile
@@ -253,6 +258,51 @@ func (c *ConfigCommand) importConfig(ctx context.Context, exec *command.Executio
 	return nil
 }
 
+// editConfig opens the configuration file in the user's editor
+func (c *ConfigCommand) editConfig(ctx context.Context, exec *command.ExecutionContext) error {
+	// Get the primary config file path
+	configFile := c.config.GetPrimaryConfigFile()
+	if configFile == "" {
+		return fmt.Errorf("no configuration file found")
+	}
+
+	// Get the editor from environment or use a default
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = os.Getenv("VISUAL")
+	}
+	if editor == "" {
+		// Try common editors
+		for _, e := range []string{"vim", "vi", "nano", "emacs", "code", "subl"} {
+			if _, err := osExec.LookPath(e); err == nil {
+				editor = e
+				break
+			}
+		}
+	}
+	if editor == "" {
+		return fmt.Errorf("no editor found - set $EDITOR or $VISUAL environment variable")
+	}
+
+	// Execute the editor
+	cmd := osExec.Command(editor, configFile)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to open editor: %w", err)
+	}
+
+	// Reload the configuration after editing
+	if err := c.config.Reload(); err != nil {
+		return fmt.Errorf("failed to reload configuration: %w", err)
+	}
+
+	exec.Data["output"] = fmt.Sprintf("Configuration edited and reloaded: %s", configFile)
+	return nil
+}
+
 // handleProfileCommand handles profile subcommands
 func (c *ConfigCommand) handleProfileCommand(ctx context.Context, exec *command.ExecutionContext, args []string) error {
 	if len(args) == 0 {
@@ -383,14 +433,29 @@ func (c *ConfigCommand) createProfile(ctx context.Context, exec *command.Executi
 
 // deleteProfile deletes a profile
 func (c *ConfigCommand) deleteProfile(ctx context.Context, exec *command.ExecutionContext, name string) error {
+	// Don't allow deleting the default profile
+	if name == "default" {
+		return fmt.Errorf("cannot delete the default profile")
+	}
+
+	// Check if this is the current profile
+	currentProfile := c.config.GetString("profile.current")
+	if currentProfile == name {
+		return fmt.Errorf("cannot delete the currently active profile")
+	}
+
 	key := fmt.Sprintf("profiles.%s", name)
 	if !c.config.Exists(key) {
 		return fmt.Errorf("profile '%s' not found", name)
 	}
 
-	// TODO: Config package needs a way to delete keys
-	// For now, we'll return an error
-	return fmt.Errorf("profile deletion not implemented")
+	// Delete the profile
+	if err := c.config.DeleteKey(key); err != nil {
+		return fmt.Errorf("failed to delete profile: %w", err)
+	}
+
+	exec.Data["output"] = fmt.Sprintf("Deleted profile: %s", name)
+	return nil
 }
 
 // exportProfile exports a specific profile

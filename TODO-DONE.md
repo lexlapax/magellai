@@ -267,3 +267,18 @@ This document contains all completed sections from the original TODO.md file for
   - [x] Support `--attach` for initial files
   - [x] Launch REPL with proper initialization
   - [x] Pass configuration to REPL
+
+### 3.4 Configuration Commands (using koanf) ✅
+- [x] Implement config subcommands:
+  - [x] `config set <key> <value>` - Set configuration value using koanf
+  - [x] `config get <key>` - Get configuration value via koanf
+  - [x] `config list` - List all settings from koanf
+  - [x] `config edit` - Open config in editor
+  - [x] `config validate` - Validate configuration
+  - [x] `config export` - Export current config
+  - [x] `config import <file>` - Import configuration
+  - [x] `config profiles list` - List profiles
+  - [x] `config profiles create <n>` - Create profile
+  - [x] `config profiles delete <n>` - Delete profile
+  - [x] `config profiles export <n>` - Export profile
+  - [x] `config profiles switch <n>` - Switch active profile

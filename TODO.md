@@ -1,11 +1,12 @@
 # Magellai Implementation TODO List
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
+
 ## Phase 1: Core Foundation (Week 1) ✅
 
 ## Phase 2: Configuration and Command Foundation (Week 2) ✅
 
-## Phase 3: CLI with Kong (Week 3) - Partially Complete
+## Phase 3: CLI with Kong (Week 3) ✅
 
 ### 3.2 Ask Command - Partially Complete
 - [ ] Pipeline support (stdin/stdout)
@@ -15,23 +16,6 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Add custom help formatter for more control
   - [ ] Integrate Kong help with core help system for unified behavior
   - [ ] Add support for hiding commands with --all flag
-
-### 3.3 Chat Command & REPL Foundation ✅
-
-### 3.4 Configuration Commands (using koanf)
-- [ ] Implement config subcommands:
-  - [ ] `config set <key> <value>` - Set configuration value using koanf
-  - [ ] `config get <key>` - Get configuration value via koanf
-  - [ ] `config list` - List all settings from koanf
-  - [ ] `config edit` - Open config in editor
-  - [ ] `config validate` - Validate configuration
-  - [ ] `config export` - Export current config
-  - [ ] `config import <file>` - Import configuration
-  - [ ] `config profiles list` - List profiles
-  - [ ] `config profiles create <n>` - Create profile
-  - [ ] `config profiles delete <n>` - Delete profile
-  - [ ] `config profiles export <n>` - Export profile
-  - [ ] `config profiles switch <n>` - Switch active profile
 
 ### 3.5 History Commands
 - [ ] Implement history subcommands:
