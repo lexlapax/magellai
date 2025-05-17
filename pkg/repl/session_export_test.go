@@ -13,6 +13,7 @@ import (
 
 	schemadomain "github.com/lexlapax/go-llms/pkg/schema/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
+	"github.com/lexlapax/magellai/pkg/storage"
 )
 
 func TestSessionExport(t *testing.T) {
@@ -59,7 +60,7 @@ func TestSessionExport(t *testing.T) {
 		}
 
 		// Verify JSON structure
-		var exportedSession Session
+		var exportedSession storage.Session
 		if err := json.Unmarshal(buf.Bytes(), &exportedSession); err != nil {
 			t.Fatalf("Failed to unmarshal exported JSON: %v", err)
 		}
@@ -71,8 +72,8 @@ func TestSessionExport(t *testing.T) {
 		if exportedSession.Name != session.Name {
 			t.Errorf("Expected session name %s, got %s", session.Name, exportedSession.Name)
 		}
-		if len(exportedSession.Conversation.Messages) != 4 {
-			t.Errorf("Expected 4 messages, got %d", len(exportedSession.Conversation.Messages))
+		if len(exportedSession.Messages) != 4 {
+			t.Errorf("Expected 4 messages, got %d", len(exportedSession.Messages))
 		}
 	})
 

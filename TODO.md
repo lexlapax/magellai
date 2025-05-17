@@ -46,7 +46,58 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ### 4.2.1.3 default configs for session storage and cleanup ✅
     - [x] Default session storage should be filestore. ✅
     - [x] Make sure to check if sqllite is feature is compiled in/available when switching config to db/sqlite backend ✅
-    - [ ] refactor code so that storage is under pkg/storage or something like that so it makes sense
+    - [x] refactor code so that storage is under pkg/storage or something like that so it makes sense ✅
+    - [x] Removed obsolete session_filesystem.go file replaced by storage abstraction
+    - [x] Created comprehensive tests for storage_manager.go and session_manager.go  
+    - [x] Created comprehensive tests for adapter.go with 100% coverage
+
+### 4.2.1.4 Fix domain layer and types
+    - [ ] Create domain layer package structure
+        - [ ] Create new package `pkg/session/` as the domain layer
+        - [ ] Create `pkg/session/types.go` for shared domain types
+        - [ ] Add package documentation explaining domain layer purpose
+    
+    - [ ] Identify and consolidate shared types
+        - [ ] Move `SessionInfo` type from both packages to `pkg/session/types.go`
+        - [ ] Move `SearchResult` type from both packages to `pkg/session/types.go`
+        - [ ] Move `SearchMatch` type from both packages to `pkg/session/types.go`
+        - [ ] Analyze `Session` type differences and create unified domain model
+        - [ ] Create common `Message` type in domain layer
+        - [ ] Decide on attachment strategy (use `llm.Attachment` or create domain type)
+    
+    - [ ] Refactor storage package
+        - [ ] Remove duplicate types from `pkg/storage/types.go`
+        - [ ] Import shared types from `pkg/session/`
+        - [ ] Keep only storage-specific types (e.g., database models if needed)
+        - [ ] Update storage interfaces to use domain types
+        - [ ] Update all storage implementations (filesystem, sqlite) to use domain types
+    
+    - [ ] Refactor REPL package
+        - [ ] Remove duplicate types from `pkg/repl/types.go`
+        - [ ] Import shared types from `pkg/session/`
+        - [ ] Keep only REPL-specific types (e.g., `Conversation`)
+        - [ ] Update REPL code to use domain types
+        - [ ] Analyze if `pkg/repl/adapter.go` is still needed after refactoring
+    
+    - [ ] Update type conversions
+        - [ ] Eliminate unnecessary conversions between duplicate types
+        - [ ] Simplify or remove adapter layer if no longer needed
+        - [ ] Update `StorageManager` to work directly with domain types
+        - [ ] Update `SessionManager` to work directly with domain types
+    
+    - [ ] Update tests for new structure
+        - [ ] Create tests for domain types in `pkg/session/types_test.go`
+        - [ ] Update storage package tests to use domain types
+        - [ ] Update REPL package tests to use domain types
+        - [ ] Remove or update adapter tests as needed
+        - [ ] Ensure all existing tests still pass after refactoring
+    
+    - [ ] Documentation and cleanup
+        - [ ] Update package documentation to reflect new architecture
+        - [ ] Create architecture diagram showing domain/application/infrastructure layers
+        - [ ] Document type ownership and responsibilities
+        - [ ] Remove obsolete code and comments
+        - [ ] Update README or contributing guide with new structure
 
 ### 4.2.2 Session Auto-save functionality
 - [ ] Enhance session management:

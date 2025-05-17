@@ -9,6 +9,8 @@ import (
 
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/repl"
+	"github.com/lexlapax/magellai/pkg/storage"
+	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,15 +43,15 @@ func TestHistoryCommand_ExecuteList(t *testing.T) {
 	cleanup := setupTestConfig(tmpDir)
 	defer cleanup()
 
-	// Create a session manager with storage backend
+	// Create a storage manager with filesystem backend
 	sessionsDir := filepath.Join(tmpDir, ".config", "magellai", "sessions")
-	storage, err := repl.CreateStorageBackend(repl.FileSystemStorage, map[string]interface{}{
+	storageManager, err := repl.CreateStorageManager(storage.FileSystemBackend, storage.Config{
 		"base_dir": sessionsDir,
 	})
 	require.NoError(t, err)
 
-	manager, err := repl.NewSessionManager(storage)
-	require.NoError(t, err)
+	// Create session manager wrapping storage manager
+	manager := &repl.SessionManager{StorageManager: storageManager}
 	require.NotNil(t, manager)
 
 	// Create and save a test session
@@ -93,15 +95,15 @@ func TestHistoryCommand_ExecuteShow(t *testing.T) {
 	cleanup := setupTestConfig(tmpDir)
 	defer cleanup()
 
-	// Create a session manager with storage backend
+	// Create a storage manager with filesystem backend
 	sessionsDir := filepath.Join(tmpDir, ".config", "magellai", "sessions")
-	storage, err := repl.CreateStorageBackend(repl.FileSystemStorage, map[string]interface{}{
+	storageManager, err := repl.CreateStorageManager(storage.FileSystemBackend, storage.Config{
 		"base_dir": sessionsDir,
 	})
 	require.NoError(t, err)
 
-	manager, err := repl.NewSessionManager(storage)
-	require.NoError(t, err)
+	// Create session manager wrapping storage manager
+	manager := &repl.SessionManager{StorageManager: storageManager}
 	require.NotNil(t, manager)
 
 	// Create and save a test session

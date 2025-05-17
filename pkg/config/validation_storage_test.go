@@ -8,7 +8,9 @@ import (
 
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/v2"
-	"github.com/lexlapax/magellai/pkg/repl"
+	"github.com/lexlapax/magellai/pkg/storage"
+	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
+	_ "github.com/lexlapax/magellai/pkg/storage/sqlite"     // Register SQLite backend
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +53,7 @@ func TestValidateStorageBackend(t *testing.T) {
 				}
 			},
 			// This will succeed if SQLite is compiled in, fail otherwise
-			expectError: !repl.IsStorageBackendAvailable(repl.SQLiteStorage),
+			expectError: !storage.IsBackendAvailable(storage.SQLiteBackend),
 			errorField:  "session.storage.type",
 		},
 		{
@@ -78,7 +80,7 @@ func TestValidateStorageBackend(t *testing.T) {
 				koanf:    koanf.New("."),
 				defaults: testConfig,
 			}
-			
+
 			// Load the test configuration
 			require.NoError(t, config.koanf.Load(confmap.Provider(testConfig, "."), nil))
 
@@ -106,11 +108,18 @@ func TestValidateStorageBackend(t *testing.T) {
 }
 
 func TestGetAvailableBackends(t *testing.T) {
-	backends := repl.GetAvailableBackends()
-	
+	backends := storage.GetAvailableBackends()
+
 	// Filesystem should always be available
-	assert.Contains(t, backends, repl.FileSystemStorage)
-	
+	found := false
+	for _, b := range backends {
+		if b == storage.FileSystemBackend {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "FileSystemBackend should always be available")
+
 	// SQLite may or may not be available depending on build tags
 	t.Logf("Available backends: %v", backends)
 }

@@ -2,21 +2,19 @@ package repl
 
 import (
 	"testing"
+
+	"github.com/lexlapax/magellai/pkg/storage"
+	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
 )
 
 // createTestSessionManager creates a SessionManager with a filesystem backend for testing
 func createTestSessionManager(t *testing.T, baseDir string) *SessionManager {
-	storage, err := CreateStorageBackend(FileSystemStorage, map[string]interface{}{
+	storageManager, err := CreateStorageManager(storage.FileSystemBackend, storage.Config{
 		"base_dir": baseDir,
 	})
 	if err != nil {
-		t.Fatalf("Failed to create storage backend: %v", err)
+		t.Fatalf("Failed to create storage manager: %v", err)
 	}
 
-	manager, err := NewSessionManager(storage)
-	if err != nil {
-		t.Fatalf("Failed to create session manager: %v", err)
-	}
-
-	return manager
+	return &SessionManager{StorageManager: storageManager}
 }

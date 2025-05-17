@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/lexlapax/magellai/internal/logging"
-	"github.com/lexlapax/magellai/pkg/repl"
+	"github.com/lexlapax/magellai/pkg/storage"
 )
 
 // ValidationError represents a configuration validation error
@@ -216,19 +216,19 @@ func (c *Config) validateSessionConfig() []ValidationError {
 	storageType := c.GetString("session.storage.type")
 	if storageType != "" {
 		// Check if the storage backend is available
-		if !repl.IsStorageBackendAvailable(repl.StorageType(storageType)) {
-			availableBackends := repl.GetAvailableBackends()
+		if !storage.IsBackendAvailable(storage.BackendType(storageType)) {
+			availableBackends := storage.GetAvailableBackends()
 			errors = append(errors, ValidationError{
 				Field: "session.storage.type",
 				Value: storageType,
-				Error: fmt.Sprintf("storage backend '%s' is not available. Available backends: %v", 
+				Error: fmt.Sprintf("storage backend '%s' is not available. Available backends: %v",
 					storageType, availableBackends),
 			})
 		}
 
 		// Validate storage-specific settings
-		switch repl.StorageType(storageType) {
-		case repl.FileSystemStorage:
+		switch storage.BackendType(storageType) {
+		case storage.FileSystemBackend:
 			// Validate filesystem storage settings
 			baseDir := c.GetString("session.storage.settings.base_dir")
 			if baseDir != "" {
@@ -241,7 +241,7 @@ func (c *Config) validateSessionConfig() []ValidationError {
 					})
 				}
 			}
-		case repl.SQLiteStorage:
+		case storage.SQLiteBackend:
 			// Validate SQLite storage settings
 			dbPath := c.GetString("session.storage.settings.db_path")
 			if dbPath != "" {

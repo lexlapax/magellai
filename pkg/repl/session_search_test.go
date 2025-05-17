@@ -11,6 +11,65 @@ import (
 	"github.com/lexlapax/magellai/pkg/llm"
 )
 
+// extractSnippet is a test helper function to extract a snippet of text around a search query
+func extractSnippet(content, query string, contextRadius int) string {
+	lowerContent := strings.ToLower(content)
+	lowerQuery := strings.ToLower(query)
+
+	idx := strings.Index(lowerContent, lowerQuery)
+	if idx == -1 {
+		if len(content) <= contextRadius*2 {
+			return content
+		}
+		return content[:contextRadius*2] + "..."
+	}
+
+	start := idx - contextRadius
+	end := idx + len(query) + contextRadius
+
+	prefix := ""
+	suffix := ""
+
+	if start < 0 {
+		start = 0
+	} else {
+		prefix = "..."
+	}
+
+	if end > len(content) {
+		end = len(content)
+	} else {
+		suffix = "..."
+	}
+
+	snippet := content[start:end]
+
+	// Adjust to word boundaries
+	if start > 0 && start < len(content) && content[start-1] != ' ' {
+		// Move start back to word boundary
+		for i := start; i > 0; i-- {
+			if content[i-1] == ' ' {
+				start = i
+				snippet = content[start:end]
+				break
+			}
+		}
+	}
+
+	if end < len(content) && end > 0 && content[end-1] != ' ' {
+		// Move end forward to word boundary
+		for i := end; i < len(content); i++ {
+			if i >= len(content) || content[i] == ' ' {
+				end = i
+				snippet = content[start:end]
+				break
+			}
+		}
+	}
+
+	return prefix + snippet + suffix
+}
+
 func TestSearchSessions(t *testing.T) {
 	// Create temporary directory for testing
 	tmpDir, err := os.MkdirTemp("", "session-search-test")

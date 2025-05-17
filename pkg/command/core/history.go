@@ -14,6 +14,7 @@ import (
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/repl"
+	"github.com/lexlapax/magellai/pkg/storage"
 )
 
 // HistoryCommand implements the history command
@@ -54,46 +55,44 @@ func (c *HistoryCommand) Execute(ctx context.Context, exec *command.ExecutionCon
 		return fmt.Errorf("failed to get config paths: %v", err)
 	}
 
-	// Create storage backend using filesystem
-	storage, err := repl.CreateStorageBackend(repl.FileSystemStorage, map[string]interface{}{
+	// Create storage manager using filesystem backend
+	manager, err := repl.CreateStorageManager(storage.FileSystemBackend, storage.Config{
 		"base_dir": paths.Sessions,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create storage backend: %v", err)
+		return fmt.Errorf("failed to create storage manager: %v", err)
 	}
 
-	manager, err := repl.NewSessionManager(storage)
-	if err != nil {
-		return fmt.Errorf("failed to create session manager: %v", err)
-	}
+	// Create session manager wrapping storage manager
+	sessionManager := &repl.SessionManager{StorageManager: manager}
 
 	switch c.subcommand {
 	case "list":
-		return c.executeList(ctx, exec, manager)
+		return c.executeList(ctx, exec, sessionManager)
 	case "show":
 		if len(exec.Args) < 2 {
 			return fmt.Errorf("session ID required for show command")
 		}
 		c.sessionID = exec.Args[1]
-		return c.executeShow(ctx, exec, manager)
+		return c.executeShow(ctx, exec, sessionManager)
 	case "delete":
 		if len(exec.Args) < 2 {
 			return fmt.Errorf("session ID required for delete command")
 		}
 		c.sessionID = exec.Args[1]
-		return c.executeDelete(ctx, exec, manager)
+		return c.executeDelete(ctx, exec, sessionManager)
 	case "export":
 		if len(exec.Args) < 2 {
 			return fmt.Errorf("session ID required for export command")
 		}
 		c.sessionID = exec.Args[1]
-		return c.executeExport(ctx, exec, manager)
+		return c.executeExport(ctx, exec, sessionManager)
 	case "search":
 		if len(exec.Args) < 2 {
 			return fmt.Errorf("search term required for search command")
 		}
 		c.searchTerm = strings.Join(exec.Args[1:], " ")
-		return c.executeSearch(ctx, exec, manager)
+		return c.executeSearch(ctx, exec, sessionManager)
 	default:
 		return fmt.Errorf("unknown subcommand: %s", c.subcommand)
 	}

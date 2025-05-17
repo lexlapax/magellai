@@ -15,6 +15,9 @@ import (
 
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/llm"
+	"github.com/lexlapax/magellai/pkg/storage"
+	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
+	_ "github.com/lexlapax/magellai/pkg/storage/sqlite"     // Register SQLite backend
 )
 
 // ConfigInterface defines the minimal interface needed for configuration
@@ -98,19 +101,16 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 		}
 	}
 
-	storage, err := CreateStorageBackend(StorageType(storageType), storageConfig)
+	// Create storage using the new storage package
+	backend, err := CreateStorageManager(storage.BackendType(storageType), storage.Config(storageConfig))
 	if err != nil {
 		logging.LogError(err, "Failed to create storage backend", "type", storageType)
 		return nil, fmt.Errorf("failed to create storage backend: %w", err)
 	}
 
-	// Create session manager
+	// Create session manager (backend is a StorageManager, not a Backend)
 	logging.LogDebug("Creating session manager")
-	manager, err := NewSessionManager(storage)
-	if err != nil {
-		logging.LogError(err, "Failed to create session manager")
-		return nil, fmt.Errorf("failed to create session manager: %w", err)
-	}
+	manager := &SessionManager{StorageManager: backend}
 
 	var session *Session
 	if opts.SessionID != "" {

@@ -10,6 +10,8 @@ import (
 
 	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/lexlapax/magellai/pkg/repl"
+	"github.com/lexlapax/magellai/pkg/storage"
+	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
 )
 
 func ExampleSessionManager_ExportSession() {
@@ -20,18 +22,16 @@ func ExampleSessionManager_ExportSession() {
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Create a session manager
-	storage, err := repl.CreateStorageBackend(repl.FileSystemStorage, map[string]interface{}{
+	// Create a storage manager
+	storageManager, err := repl.CreateStorageManager(storage.FileSystemBackend, storage.Config{
 		"base_dir": tempDir,
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	manager, err := repl.NewSessionManager(storage)
-	if err != nil {
-		panic(err)
-	}
+	// Create session manager
+	manager := &repl.SessionManager{StorageManager: storageManager}
 
 	// Create a new session
 	session, err := manager.NewSession("Example Chat")
