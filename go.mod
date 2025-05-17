@@ -8,11 +8,9 @@ require (
 	github.com/knadh/koanf/providers/confmap v1.0.0
 	github.com/knadh/koanf/providers/env v1.1.0
 	github.com/knadh/koanf/providers/file v1.2.0
-	github.com/knadh/koanf/providers/posflag v1.0.0
 	github.com/knadh/koanf/providers/rawbytes v1.0.0
 	github.com/knadh/koanf/v2 v2.2.0
-	github.com/lexlapax/go-llms v0.2.1
-	github.com/spf13/pflag v1.0.6
+	github.com/lexlapax/go-llms v0.2.4
 	github.com/stretchr/testify v1.10.0
 	github.com/willabides/kongplete v0.4.0
 )
@@ -32,6 +30,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/riywo/loginshell v0.0.0-20200815045211-7d26008be1ab // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

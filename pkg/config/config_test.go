@@ -4,7 +4,6 @@
 package config
 
 import (
-	"github.com/spf13/pflag"
 	"testing"
 )
 
@@ -135,31 +134,25 @@ func TestParseProviderModel(t *testing.T) {
 	}
 }
 
-func TestCommandLineFlags(t *testing.T) {
+func TestCommandLineOverrides(t *testing.T) {
 	err := Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize config: %v", err)
 	}
 
-	// Create test flags
-	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
-	flags.String("config", "", "Config file")
-	flags.String("profile", "test", "Profile name")
-	flags.Int("verbosity", 2, "Verbosity level")
-
-	// Parse test flags
-	err = flags.Parse([]string{"--profile=test", "--verbosity=2"})
-	if err != nil {
-		t.Fatalf("Failed to parse flags: %v", err)
+	// Create test command-line overrides as a map
+	cmdlineOverrides := map[string]interface{}{
+		"profile": "test",
+		"verbosity": 2,
 	}
 
-	// Load with flags
-	err = Manager.Load(flags)
+	// Load with command-line overrides
+	err = Manager.Load(cmdlineOverrides)
 	if err != nil {
-		t.Fatalf("Failed to load config with flags: %v", err)
+		t.Fatalf("Failed to load config with command-line overrides: %v", err)
 	}
 
-	// Check if flag values are accessible
+	// Check if override values are accessible
 	profile := Manager.GetString("profile")
 	if profile != "test" {
 		t.Errorf("Expected profile to be 'test', got %s", profile)

@@ -15,10 +15,8 @@ import (
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/v2"
 	"github.com/lexlapax/magellai/internal/logging"
-	"github.com/spf13/pflag"
 )
 
 const (
@@ -70,7 +68,7 @@ func Init() error {
 }
 
 // Load loads configuration from all sources in precedence order
-func (c *Config) Load(flags *pflag.FlagSet) error {
+func (c *Config) Load(cmdlineOverrides map[string]interface{}) error {
 	start := time.Now()
 	logging.LogInfo("Loading configuration from all sources")
 
@@ -112,12 +110,12 @@ func (c *Config) Load(flags *pflag.FlagSet) error {
 		return fmt.Errorf("failed to load environment variables: %w", err)
 	}
 
-	// 6. Load command-line flags (if provided)
-	if flags != nil {
-		logging.LogDebug("Loading command-line flags")
-		if err := c.koanf.Load(posflag.Provider(flags, ".", c.koanf), nil); err != nil {
-			logging.LogError(err, "Failed to load command-line flags")
-			return fmt.Errorf("failed to load command-line flags: %w", err)
+	// 6. Load command-line overrides (if provided)
+	if len(cmdlineOverrides) > 0 {
+		logging.LogDebug("Loading command-line configuration overrides")
+		if err := c.koanf.Load(confmap.Provider(cmdlineOverrides, "."), nil); err != nil {
+			logging.LogError(err, "Failed to load command-line overrides")
+			return fmt.Errorf("failed to load command-line overrides: %w", err)
 		}
 	}
 
