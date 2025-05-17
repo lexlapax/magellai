@@ -30,11 +30,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 #### 3.5.5 REPL Operations Logging (pkg/repl/) ✅
 
-#### 3.5.6 File Operations Logging (internal/configdir/)
-- [ ] Directory creation (DEBUG)
-- [ ] Default config creation (INFO)
-- [ ] Project config discovery (DEBUG)
-- [ ] File read/write operations (DEBUG)
+#### 3.5.6 File Operations Logging (internal/configdir/) ✅
 
 #### 3.5.7 User-Facing Operations Logging
 - [ ] Model changes (INFO)

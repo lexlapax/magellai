@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	
+	"github.com/lexlapax/magellai/internal/logging"
 )
 
 const (
@@ -42,8 +44,11 @@ func GetPaths() (Paths, error) {
 
 // EnsureDirectories creates all necessary configuration directories
 func EnsureDirectories() error {
+	logging.LogDebug("Ensuring configuration directories exist")
+	
 	paths, err := GetPaths()
 	if err != nil {
+		logging.LogError(err, "Failed to get configuration paths")
 		return err
 	}
 
@@ -56,11 +61,15 @@ func EnsureDirectories() error {
 	}
 
 	for _, dir := range dirs {
+		logging.LogDebug("Creating directory", "path", dir)
 		if err := os.MkdirAll(dir, DirPermission); err != nil {
+			logging.LogError(err, "Failed to create directory", "path", dir)
 			return fmt.Errorf("creating directory %s: %w", dir, err)
 		}
+		logging.LogDebug("Directory created or already exists", "path", dir)
 	}
 
+	logging.LogDebug("All configuration directories ensured")
 	return nil
 }
 
@@ -75,18 +84,25 @@ func ConfigFile() (string, error) {
 
 // CreateDefaultConfig creates a default configuration file if it doesn't exist
 func CreateDefaultConfig() error {
+	logging.LogDebug("Creating default configuration file")
+	
 	configPath, err := ConfigFile()
 	if err != nil {
+		logging.LogError(err, "Failed to get configuration file path")
 		return err
 	}
 
 	// Check if config already exists
 	if _, err := os.Stat(configPath); err == nil {
+		logging.LogDebug("Configuration file already exists", "path", configPath)
 		return nil // Config already exists
 	}
 
+	logging.LogInfo("Creating default configuration file", "path", configPath)
+
 	// Ensure base directory exists
 	if err := EnsureDirectories(); err != nil {
+		logging.LogError(err, "Failed to ensure directories before creating config")
 		return err
 	}
 
@@ -142,33 +158,48 @@ aliases:
   claude: "ask --model anthropic/claude-3-opus"
 `
 
-	return os.WriteFile(configPath, []byte(defaultConfig), FilePermission)
+	logging.LogDebug("Writing default configuration", "path", configPath)
+	if err := os.WriteFile(configPath, []byte(defaultConfig), FilePermission); err != nil {
+		logging.LogError(err, "Failed to write default configuration", "path", configPath)
+		return err
+	}
+	logging.LogInfo("Default configuration file created", "path", configPath)
+	return nil
 }
 
 // ProjectConfigFile looks for a project-specific configuration file
 // It searches upward from the current directory for .magellai.yaml
 func ProjectConfigFile() (string, error) {
+	logging.LogDebug("Looking for project configuration file")
+	
 	cwd, err := os.Getwd()
 	if err != nil {
+		logging.LogError(err, "Failed to get current directory")
 		return "", fmt.Errorf("getting current directory: %w", err)
 	}
+
+	logging.LogDebug("Starting project config search", "startDir", cwd)
 
 	// Walk up the directory tree looking for .magellai.yaml
 	dir := cwd
 	for {
 		configPath := filepath.Join(dir, ".magellai.yaml")
+		logging.LogDebug("Checking for project config", "path", configPath)
 		if _, err := os.Stat(configPath); err == nil {
+			logging.LogInfo("Found project configuration file", "path", configPath)
 			return configPath, nil
 		}
 
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			// Reached the root
+			logging.LogDebug("Reached root directory without finding project config")
 			break
 		}
 		dir = parent
 	}
 
+	logging.LogDebug("No project configuration file found")
 	return "", nil // No project config found
 }
 

@@ -30,8 +30,8 @@ The project follows a library-first design where the core intelligence (LLM prov
   ✅ Phase 3.5.3: Session Management Logging - Complete
   ✅ Phase 3.5.4: Command Execution Logging - Complete
   ✅ Phase 3.5.5: REPL Operations Logging - Complete
-  ⏳ Phase 3.5.6: File Operations Logging - Next (internal/configdir/)
-  ☐ Phase 3.5.7: User-Facing Operations Logging - Pending  
+  ✅ Phase 3.5.6: File Operations Logging - Complete
+  🚧 Phase 3.5.7: User-Facing Operations Logging - Next  
   ☐ Phase 3.5.8: Performance and Metrics Logging - Pending
   ☐ Phase 3.5.9: Security and Audit Logging - Pending
   ☐ Phase 3.5.10: Testing and Integration - Pending
@@ -61,12 +61,18 @@ The project follows a library-first design where the core intelligence (LLM prov
   - INFO level for model switching and session start/end
   - DEBUG level for user input processing, command handling, and message processing
   - Complete logging for special commands and all REPL operations
+- File Operations logging (3.5.6):
+  - INFO level for default configuration file creation
+  - DEBUG level for directory creation, project config discovery, and file I/O operations
+  - Complete logging for all file operations in internal/configdir
+  - Added appropriate error logging for all failure scenarios
 - Fixed integration test to build test binary in bin directory for proper cleanup
 - Fixed logging infrastructure to handle nil errors gracefully
 - All operations now have appropriate logging with context
-- Completed sections 3.5.1, 3.5.2, 3.5.3, 3.5.4, and 3.5.5 of Phase 3.5
+- Completed sections 3.5.1, 3.5.2, 3.5.3, 3.5.4, 3.5.5, and 3.5.6 of Phase 3.5
 - Marked partial sections (3.2 and 3.2.1) for revisit in TODO.md
 - All tests passing, code formatted, and linted successfully
+- Phase 3.5.7 (User-Facing Operations Logging) is next
 
 ## Architecture
 
