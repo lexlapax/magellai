@@ -128,13 +128,17 @@ func TestMain_E2E(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	// Build the binary
-	cmd := exec.Command("go", "build", "-o", "test-magellai", "./cmd/magellai")
+	// Build the binary in the bin directory
+	testBinary := "bin/test-magellai"
+	cmd := exec.Command("go", "build", "-o", testBinary, "./cmd/magellai")
 	cmd.Dir = "../.."
 	err := cmd.Run()
 	require.NoError(t, err)
 	defer func() {
-		_ = exec.Command("rm", "test-magellai").Run()
+		// Clean up the test binary
+		rmCmd := exec.Command("rm", testBinary)
+		rmCmd.Dir = "../.."
+		_ = rmCmd.Run()
 	}()
 
 	tests := []struct {
@@ -167,7 +171,7 @@ func TestMain_E2E(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := exec.Command("./test-magellai", tt.args...)
+			cmd := exec.Command("./bin/test-magellai", tt.args...)
 			cmd.Dir = "../.."
 
 			output, err := cmd.CombinedOutput()

@@ -17,13 +17,74 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Integrate Kong help with core help system for unified behavior
   - [ ] Add support for hiding commands with --all flag
 
-### 3.5 History Commands
+### 3.5 Logging and Verbosity Implementation - Partially Complete
+- [ ] Add comprehensive logging throughout the codebase:
+
+#### 3.5.1 Configuration Logging (pkg/config/) ✅
+
+#### 3.5.2 LLM Provider Logging (pkg/llm/) ✅
+
+#### 3.5.3 Session Management Logging (pkg/repl/) ✅
+- [x] Session creation/restoration (INFO)
+- [x] Session save/load operations (INFO)
+- [x] Session search operations (DEBUG)
+- [x] Session deletion (INFO)
+- [x] Session export operations (INFO)
+- [x] File I/O operations (DEBUG)
+
+#### 3.5.4 Command Execution Logging (pkg/command/)
+- [ ] Command execution start/end (DEBUG)
+- [ ] Command validation (DEBUG)
+- [ ] Pre/post execution hooks (DEBUG)
+- [ ] Command errors (ERROR)
+- [ ] Command registry operations (DEBUG)
+
+#### 3.5.5 REPL Operations Logging (pkg/repl/)
+- [ ] User input processing (DEBUG)
+- [ ] Command handling (DEBUG)
+- [ ] Special command processing (DEBUG)
+- [ ] Message processing (DEBUG)
+- [ ] Model switching (INFO)
+
+#### 3.5.6 File Operations Logging (internal/configdir/)
+- [ ] Directory creation (DEBUG)
+- [ ] Default config creation (INFO)
+- [ ] Project config discovery (DEBUG)
+- [ ] File read/write operations (DEBUG)
+
+#### 3.5.7 User-Facing Operations Logging
+- [ ] Model changes (INFO)
+- [ ] Profile switches (INFO)
+- [ ] Command invocations (INFO)
+- [ ] Session starts/ends (INFO)
+- [ ] Configuration changes (INFO)
+
+#### 3.5.8 Performance and Metrics Logging
+- [ ] Configuration load time (DEBUG)
+- [ ] LLM response time (DEBUG)
+- [ ] Session operation duration (DEBUG)
+- [ ] Command execution time (DEBUG)
+
+#### 3.5.9 Security and Audit Logging
+- [ ] API key usage (DEBUG - sanitized)
+- [ ] Configuration modifications (INFO)
+- [ ] File access attempts (DEBUG)
+- [ ] Error conditions (ERROR)
+
+#### 3.5.10 Testing and Integration
+- [ ] Add logging tests to verify output
+- [ ] Test different verbosity levels
+- [ ] Ensure sensitive data is not logged
+- [ ] Verify performance impact is minimal
+
+### 3.6 History Commands
 - [ ] Implement history subcommands:
   - [ ] `history list` - List all sessions
   - [ ] `history show <id>` - Show session details
   - [ ] `history delete <id>` - Delete session
   - [ ] `history export <id> [--format=json]` - Export session
   - [ ] `history search <term>` - Search sessions
+
 
 ## Phase 4: Advanced REPL Features (Week 4)
 

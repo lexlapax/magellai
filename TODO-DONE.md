@@ -282,3 +282,33 @@ This document contains all completed sections from the original TODO.md file for
   - [x] `config profiles delete <n>` - Delete profile
   - [x] `config profiles export <n>` - Export profile
   - [x] `config profiles switch <n>` - Switch active profile
+
+## Phase 3: CLI with Kong (Week 3) - Continued
+
+### 3.5 Logging and Verbosity Implementation (Partial)
+
+#### 3.5.1 Configuration Logging (pkg/config/) ✅
+- [x] Configuration manager initialization (INFO)
+- [x] Configuration loading process (INFO) 
+- [x] Configuration file discovery (DEBUG)
+- [x] Profile loading and switching (INFO)
+- [x] Configuration validation errors (WARN/ERROR)
+- [x] Key deletion operations (INFO)
+- [x] File watch operations (DEBUG)
+
+#### 3.5.2 LLM Provider Logging (pkg/llm/) ✅
+- [x] Provider initialization (INFO)
+- [x] Model selection and capabilities (INFO)
+- [x] API key resolution (DEBUG)
+- [x] Option building process (DEBUG)
+- [x] API request/response (DEBUG)
+- [x] Streaming operations (DEBUG)
+- [x] Error conditions (ERROR)
+
+#### 3.5.3 Session Management Logging (pkg/repl/) ✅
+- [x] Session creation/restoration (INFO)
+- [x] Session save/load operations (INFO)
+- [x] Session search operations (DEBUG)
+- [x] Session deletion (INFO)
+- [x] Session export operations (INFO)
+- [x] File I/O operations (DEBUG)

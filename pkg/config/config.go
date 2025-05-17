@@ -16,7 +16,7 @@ import (
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/v2"
-	// "github.com/lexlapax/magellai/internal/logging"
+	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/spf13/pflag"
 )
 
@@ -49,6 +49,8 @@ var Manager *Config
 
 // Init initializes the configuration manager
 func Init() error {
+	logging.LogInfo("Initializing configuration manager")
+
 	Manager = &Config{
 		koanf:    koanf.New("."),
 		defaults: getDefaultConfig(),
@@ -57,60 +59,76 @@ func Init() error {
 	// Get current working directory for project config search
 	cwd, err := os.Getwd()
 	if err != nil {
-		// logging.Warn("Failed to get current directory", "error", err)
+		logging.LogWarn("Failed to get current directory", "error", err)
 		cwd = "."
 	}
 	Manager.currentDir = cwd
 
+	logging.LogDebug("Configuration manager initialized", "currentDir", cwd)
 	return nil
 }
 
 // Load loads configuration from all sources in precedence order
 func (c *Config) Load(flags *pflag.FlagSet) error {
+	logging.LogInfo("Loading configuration from all sources")
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	// 1. Load defaults
+	logging.LogDebug("Loading default configuration")
 	if err := c.koanf.Load(confmap.Provider(c.defaults, "."), nil); err != nil {
+		logging.LogError(err, "Failed to load defaults")
 		return fmt.Errorf("failed to load defaults: %w", err)
 	}
 
 	// 2. Load system config if exists
+	logging.LogDebug("Loading system configuration", "path", SystemConfigPath)
 	_ = c.loadFile(SystemConfigPath) // Ignore error if file doesn't exist
 
 	// 3. Load user config
 	userConfig := expandPath(filepath.Join(UserConfigDir, UserConfigFile))
+	logging.LogDebug("Loading user configuration", "path", userConfig)
 	_ = c.loadFile(userConfig) // Ignore error if file doesn't exist
 
 	// 4. Load project config (search upward from current directory)
+	logging.LogDebug("Searching for project configuration")
 	if projectConfig := c.findProjectConfig(); projectConfig != "" {
+		logging.LogInfo("Found project configuration", "path", projectConfig)
 		_ = c.loadFile(projectConfig) // Ignore error if file doesn't exist
 	}
 
 	// 5. Load environment variables
+	logging.LogDebug("Loading environment variables", "prefix", ConfigEnvPrefix)
 	if err := c.koanf.Load(env.Provider(ConfigEnvPrefix, ".", func(s string) string {
 		// Convert MAGELLAI_PROVIDER_API_KEY to provider.api_key
 		s = strings.ToLower(strings.TrimPrefix(s, ConfigEnvPrefix))
 		s = strings.ReplaceAll(s, "_", ".")
 		return s
 	}), nil); err != nil {
+		logging.LogError(err, "Failed to load environment variables")
 		return fmt.Errorf("failed to load environment variables: %w", err)
 	}
 
 	// 6. Load command-line flags (if provided)
 	if flags != nil {
+		logging.LogDebug("Loading command-line flags")
 		if err := c.koanf.Load(posflag.Provider(flags, ".", c.koanf), nil); err != nil {
+			logging.LogError(err, "Failed to load command-line flags")
 			return fmt.Errorf("failed to load command-line flags: %w", err)
 		}
 	}
 
 	// Apply profile overrides if a profile is set
 	if c.profile != "" {
+		logging.LogInfo("Applying profile overrides", "profile", c.profile)
 		if err := c.applyProfile(c.profile); err != nil {
+			logging.LogError(err, "Failed to apply profile", "profile", c.profile)
 			return fmt.Errorf("failed to apply profile: %w", err)
 		}
 	}
 
+	logging.LogInfo("Configuration loading completed successfully")
 	return nil
 }
 
@@ -125,27 +143,35 @@ func (c *Config) LoadFile(path string) error {
 func (c *Config) loadFile(path string) error {
 	expandedPath := expandPath(path)
 
+	logging.LogDebug("Attempting to load configuration file", "path", path, "expandedPath", expandedPath)
+
 	// Check if file exists
 	if _, err := os.Stat(expandedPath); os.IsNotExist(err) {
+		logging.LogDebug("Configuration file not found", "path", expandedPath)
 		return err
 	}
 
 	// Load the file
 	if err := c.koanf.Load(file.Provider(expandedPath), yaml.Parser()); err != nil {
+		logging.LogError(err, "Failed to load config file", "path", expandedPath)
 		return fmt.Errorf("failed to load config file %s: %w", path, err)
 	}
 
-	// logging.Debug("Loaded config file", "path", expandedPath)
+	logging.LogDebug("Loaded config file successfully", "path", expandedPath)
 	return nil
 }
 
 // findProjectConfig searches for a project config file starting from current directory
 func (c *Config) findProjectConfig() string {
+	logging.LogDebug("Searching for project configuration file", "startDir", c.currentDir, "filename", ProjectConfigFile)
+
 	dir := c.currentDir
 	for {
 		configPath := filepath.Join(dir, ProjectConfigFile)
+		logging.LogDebug("Checking for project config", "path", configPath)
+
 		if _, err := os.Stat(configPath); err == nil {
-			// logging.Debug("Found project config", "path", configPath)
+			logging.LogDebug("Found project config", "path", configPath)
 			return configPath
 		}
 
@@ -161,17 +187,29 @@ func (c *Config) findProjectConfig() string {
 
 // SetProfile sets the active profile
 func (c *Config) SetProfile(profile string) error {
+	logging.LogInfo("Switching to profile", "profile", profile)
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.profile = profile
-	return c.applyProfile(profile)
+	err := c.applyProfile(profile)
+	if err != nil {
+		logging.LogError(err, "Failed to set profile", "profile", profile)
+		return err
+	}
+
+	logging.LogInfo("Successfully switched to profile", "profile", profile)
+	return nil
 }
 
 // applyProfile applies profile-specific overrides (not thread-safe)
 func (c *Config) applyProfile(profile string) error {
+	logging.LogDebug("Applying profile configuration", "profile", profile)
+
 	profileKey := fmt.Sprintf("profiles.%s", profile)
 	if !c.koanf.Exists(profileKey) {
+		logging.LogWarn("Profile not found", "profile", profile)
 		return fmt.Errorf("profile '%s' not found", profile)
 	}
 
@@ -180,10 +218,11 @@ func (c *Config) applyProfile(profile string) error {
 
 	// Merge profile config over current config
 	if err := c.koanf.Merge(profileConfig); err != nil {
+		logging.LogError(err, "Failed to merge profile configuration", "profile", profile)
 		return fmt.Errorf("failed to apply profile '%s': %w", profile, err)
 	}
 
-	// logging.Debug("Applied profile", "profile", profile)
+	logging.LogDebug("Applied profile successfully", "profile", profile)
 	return nil
 }
 
@@ -224,10 +263,13 @@ func expandPath(path string) string {
 
 // Watch enables configuration file watching
 func (c *Config) Watch(callback func()) {
+	logging.LogDebug("Adding configuration watcher")
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.watchers = append(c.watchers, callback)
+	logging.LogDebug("Configuration watcher added", "totalWatchers", len(c.watchers))
 	// TODO: Implement file watching using fsnotify
 }
 
@@ -266,6 +308,8 @@ func (c *Config) GetPrimaryConfigFile() string {
 
 // Reload reloads the configuration from all sources
 func (c *Config) Reload() error {
+	logging.LogInfo("Reloading configuration from all sources")
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -275,6 +319,7 @@ func (c *Config) Reload() error {
 
 	// Load defaults first
 	if err := c.loadDefaults(); err != nil {
+		logging.LogError(err, "Failed to reload defaults")
 		c.koanf = oldKoanf
 		return err
 	}
@@ -304,12 +349,14 @@ func (c *Config) Reload() error {
 	// Apply profile overrides if a profile is set
 	if c.profile != "" {
 		if err := c.applyProfile(c.profile); err != nil {
+			logging.LogError(err, "Failed to apply profile during reload", "profile", c.profile)
 			c.koanf = oldKoanf
 			return fmt.Errorf("failed to apply profile: %w", err)
 		}
 	}
 
 	c.notifyWatchers()
+	logging.LogInfo("Configuration reload completed successfully")
 	return nil
 }
 
@@ -320,11 +367,14 @@ func (c *Config) loadDefaults() error {
 
 // DeleteKey deletes a configuration key
 func (c *Config) DeleteKey(key string) error {
+	logging.LogInfo("Deleting configuration key", "key", key)
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	// Check if key exists
 	if !c.koanf.Exists(key) {
+		logging.LogWarn("Key not found for deletion", "key", key)
 		return fmt.Errorf("key not found: %s", key)
 	}
 
@@ -336,11 +386,14 @@ func (c *Config) DeleteKey(key string) error {
 	// Create new koanf instance with updated config
 	newKoanf := koanf.New(".")
 	if err := newKoanf.Load(confmap.Provider(allConfig, "."), nil); err != nil {
+		logging.LogError(err, "Failed to reload config after delete", "key", key)
 		return fmt.Errorf("failed to reload config after delete: %w", err)
 	}
 
 	c.koanf = newKoanf
 	c.notifyWatchers()
+
+	logging.LogInfo("Successfully deleted configuration key", "key", key)
 	return nil
 }
 

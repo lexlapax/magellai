@@ -166,7 +166,9 @@ func LogError(err error, msg string, args ...any) {
 	if _, file, line, ok := runtime.Caller(1); ok {
 		args = append(args, "file", file, "line", line)
 	}
-	args = append(args, "error", err.Error())
+	if err != nil {
+		args = append(args, "error", err.Error())
+	}
 	logger.Error(msg, args...)
 }
 

@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	
+	"github.com/lexlapax/magellai/internal/logging"
 )
 
 // No need to seed rand as of Go 1.20
@@ -35,11 +37,15 @@ type SessionManager struct {
 
 // NewSessionManager creates a new session manager with the given storage directory
 func NewSessionManager(storageDir string) (*SessionManager, error) {
+	logging.LogDebug("Creating session manager", "storageDir", storageDir)
+	
 	// Ensure storage directory exists
 	if err := os.MkdirAll(storageDir, 0755); err != nil {
+		logging.LogError(err, "Failed to create storage directory", "storageDir", storageDir)
 		return nil, fmt.Errorf("failed to create storage directory: %w", err)
 	}
 
+	logging.LogDebug("Session manager created successfully", "storageDir", storageDir)
 	return &SessionManager{
 		StorageDir: storageDir,
 	}, nil
@@ -49,8 +55,10 @@ func NewSessionManager(storageDir string) (*SessionManager, error) {
 func (sm *SessionManager) NewSession(name string) *Session {
 	now := time.Now()
 	sessionID := generateSessionID()
+	
+	logging.LogInfo("Creating new session", "id", sessionID, "name", name)
 
-	return &Session{
+	session := &Session{
 		ID:           sessionID,
 		Name:         name,
 		Conversation: NewConversation(sessionID),
@@ -59,57 +67,78 @@ func (sm *SessionManager) NewSession(name string) *Session {
 		Updated:      now,
 		Metadata:     make(map[string]interface{}),
 	}
+	
+	logging.LogDebug("Session created successfully", "id", sessionID, "name", name)
+	return session
 }
 
 // SaveSession persists a session to disk
 func (sm *SessionManager) SaveSession(session *Session) error {
 	session.Updated = time.Now()
+	
+	logging.LogInfo("Saving session", "id", session.ID, "name", session.Name)
 
 	// Create session file path
 	filename := fmt.Sprintf("%s.json", session.ID)
 	filepath := filepath.Join(sm.StorageDir, filename)
+	
+	logging.LogDebug("Writing session file", "path", filepath)
 
 	// Marshal session to JSON
 	data, err := json.MarshalIndent(session, "", "  ")
 	if err != nil {
+		logging.LogError(err, "Failed to marshal session", "id", session.ID)
 		return fmt.Errorf("failed to marshal session: %w", err)
 	}
 
 	// Write to file
 	if err := os.WriteFile(filepath, data, 0644); err != nil {
+		logging.LogError(err, "Failed to write session file", "path", filepath)
 		return fmt.Errorf("failed to write session file: %w", err)
 	}
 
+	logging.LogInfo("Session saved successfully", "id", session.ID, "path", filepath)
 	return nil
 }
 
 // LoadSession loads a session from disk by ID
 func (sm *SessionManager) LoadSession(id string) (*Session, error) {
+	logging.LogInfo("Loading session", "id", id)
+	
 	filename := fmt.Sprintf("%s.json", id)
 	filepath := filepath.Join(sm.StorageDir, filename)
+	
+	logging.LogDebug("Reading session file", "path", filepath)
 
 	// Read file
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		if os.IsNotExist(err) {
+			logging.LogDebug("Session not found", "id", id)
 			return nil, fmt.Errorf("session not found: %s", id)
 		}
+		logging.LogError(err, "Failed to read session file", "path", filepath)
 		return nil, fmt.Errorf("failed to read session file: %w", err)
 	}
 
 	// Unmarshal session
 	var session Session
 	if err := json.Unmarshal(data, &session); err != nil {
+		logging.LogError(err, "Failed to unmarshal session", "id", id)
 		return nil, fmt.Errorf("failed to unmarshal session: %w", err)
 	}
 
+	logging.LogInfo("Session loaded successfully", "id", id, "name", session.Name)
 	return &session, nil
 }
 
 // ListSessions returns a list of all available sessions
 func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
+	logging.LogDebug("Listing sessions", "storageDir", sm.StorageDir)
+	
 	entries, err := os.ReadDir(sm.StorageDir)
 	if err != nil {
+		logging.LogError(err, "Failed to read storage directory", "storageDir", sm.StorageDir)
 		return nil, fmt.Errorf("failed to read storage directory: %w", err)
 	}
 
@@ -124,11 +153,13 @@ func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
 		filepath := filepath.Join(sm.StorageDir, entry.Name())
 		data, err := os.ReadFile(filepath)
 		if err != nil {
+			logging.LogDebug("Failed to read session file", "path", filepath, "error", err)
 			continue
 		}
 
 		var session Session
 		if err := json.Unmarshal(data, &session); err != nil {
+			logging.LogDebug("Failed to unmarshal session", "path", filepath, "error", err)
 			continue
 		}
 
@@ -144,26 +175,34 @@ func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
 		sessions = append(sessions, info)
 	}
 
+	logging.LogDebug("Listed sessions", "count", len(sessions))
 	return sessions, nil
 }
 
 // DeleteSession removes a session from disk
 func (sm *SessionManager) DeleteSession(id string) error {
+	logging.LogInfo("Deleting session", "id", id)
+	
 	filename := fmt.Sprintf("%s.json", id)
 	filepath := filepath.Join(sm.StorageDir, filename)
 
 	if err := os.Remove(filepath); err != nil {
 		if os.IsNotExist(err) {
+			logging.LogDebug("Session not found for deletion", "id", id)
 			return fmt.Errorf("session not found: %s", id)
 		}
+		logging.LogError(err, "Failed to delete session", "id", id, "path", filepath)
 		return fmt.Errorf("failed to delete session: %w", err)
 	}
 
+	logging.LogInfo("Session deleted successfully", "id", id)
 	return nil
 }
 
 // SearchSessions searches for sessions by text in messages
 func (sm *SessionManager) SearchSessions(query string) ([]*SessionInfo, error) {
+	logging.LogDebug("Searching sessions", "query", query)
+	
 	sessions, err := sm.ListSessions()
 	if err != nil {
 		return nil, err
@@ -175,6 +214,7 @@ func (sm *SessionManager) SearchSessions(query string) ([]*SessionInfo, error) {
 		// Load full session to search content
 		session, err := sm.LoadSession(info.ID)
 		if err != nil {
+			logging.LogDebug("Failed to load session for search", "id", info.ID, "error", err)
 			continue
 		}
 
@@ -201,6 +241,7 @@ func (sm *SessionManager) SearchSessions(query string) ([]*SessionInfo, error) {
 		}
 	}
 
+	logging.LogDebug("Search completed", "query", query, "matches", len(matches))
 	return matches, nil
 }
 
@@ -216,6 +257,8 @@ type SessionInfo struct {
 
 // ExportSession exports a session to a writer in the specified format
 func (sm *SessionManager) ExportSession(id string, format string, w io.Writer) error {
+	logging.LogInfo("Exporting session", "id", id, "format", format)
+	
 	session, err := sm.LoadSession(id)
 	if err != nil {
 		return err
@@ -225,18 +268,31 @@ func (sm *SessionManager) ExportSession(id string, format string, w io.Writer) e
 	case "json":
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "  ")
-		return encoder.Encode(session)
+		if err := encoder.Encode(session); err != nil {
+			logging.LogError(err, "Failed to export session as JSON", "id", id)
+			return err
+		}
+		logging.LogInfo("Session exported successfully as JSON", "id", id)
+		return nil
 
 	case "markdown":
-		return sm.exportMarkdown(session, w)
+		if err := sm.exportMarkdown(session, w); err != nil {
+			logging.LogError(err, "Failed to export session as Markdown", "id", id)
+			return err
+		}
+		logging.LogInfo("Session exported successfully as Markdown", "id", id)
+		return nil
 
 	default:
+		logging.LogWarn("Unsupported export format", "format", format)
 		return fmt.Errorf("unsupported export format: %s", format)
 	}
 }
 
 // Helper function to export session as markdown
 func (sm *SessionManager) exportMarkdown(session *Session, w io.Writer) error {
+	logging.LogDebug("Exporting session as markdown", "id", session.ID)
+	
 	fmt.Fprintf(w, "# Session: %s\n\n", session.Name)
 	fmt.Fprintf(w, "ID: %s\n", session.ID)
 	fmt.Fprintf(w, "Created: %s\n", session.Created.Format(time.RFC3339))
@@ -272,5 +328,7 @@ func (sm *SessionManager) exportMarkdown(session *Session, w io.Writer) error {
 // Helper function to generate session ID
 func generateSessionID() string {
 	// Use nanoseconds plus random component for uniqueness
-	return fmt.Sprintf("%s-%04d", time.Now().Format("20060102-150405-000000000"), rand.Intn(10000))
+	id := fmt.Sprintf("%s-%04d", time.Now().Format("20060102-150405-000000000"), rand.Intn(10000))
+	logging.LogDebug("Generated session ID", "id", id)
+	return id
 }

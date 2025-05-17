@@ -11,6 +11,7 @@ import (
 	"github.com/lexlapax/go-llms/pkg/llm/domain"
 	"github.com/lexlapax/go-llms/pkg/llm/provider"
 	schemadomain "github.com/lexlapax/go-llms/pkg/schema/domain"
+	"github.com/lexlapax/magellai/internal/logging"
 )
 
 // Provider is our adapter interface that wraps go-llms domain.Provider
@@ -66,6 +67,8 @@ type providerAdapter struct {
 
 // NewProvider creates a provider adapter for the specified provider type
 func NewProvider(providerType, model string, apiKey ...string) (Provider, error) {
+	logging.LogInfo("Creating LLM provider", "provider", providerType, "model", model)
+	
 	var llmProvider domain.Provider
 	var err error
 
@@ -73,34 +76,43 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 	key := ""
 	if len(apiKey) > 0 {
 		key = apiKey[0]
+		logging.LogDebug("Using provided API key", "provider", providerType)
 	} else {
 		key = getAPIKeyFromEnv(providerType)
+		logging.LogDebug("Using API key from environment", "provider", providerType)
 	}
 
 	// Mock provider doesn't need an API key
 	if providerType != ProviderMock && key == "" {
+		logging.LogError(nil, "API key not provided", "provider", providerType)
 		return nil, fmt.Errorf("API key not provided for %s", providerType)
 	}
 
 	// Create the underlying go-llms provider
 	switch providerType {
 	case ProviderOpenAI:
+		logging.LogDebug("Initializing OpenAI provider", "model", model)
 		llmProvider = provider.NewOpenAIProvider(key, model)
 		err = nil
 	case ProviderAnthropic:
+		logging.LogDebug("Initializing Anthropic provider", "model", model)
 		llmProvider = provider.NewAnthropicProvider(key, model)
 		err = nil
 	case ProviderGemini:
+		logging.LogDebug("Initializing Gemini provider", "model", model)
 		llmProvider = provider.NewGeminiProvider(key, model)
 		err = nil
 	case ProviderMock:
+		logging.LogDebug("Initializing Mock provider", "model", model)
 		llmProvider = provider.NewMockProvider()
 		err = nil
 	default:
+		logging.LogError(nil, "Unsupported provider", "provider", providerType)
 		return nil, fmt.Errorf("unsupported provider: %s", providerType)
 	}
 
 	if err != nil {
+		logging.LogError(err, "Failed to create provider", "provider", providerType)
 		return nil, fmt.Errorf("failed to create provider: %w", err)
 	}
 
@@ -108,6 +120,7 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 	modelInfo, err := GetModelInfo(providerType, model)
 	if err != nil {
 		// If model not found in registry, create a basic one
+		logging.LogWarn("Model not found in registry, using defaults", "provider", providerType, "model", model)
 		modelInfo = ModelInfo{
 			Provider:     providerType,
 			Model:        model,
@@ -115,6 +128,11 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 			Description:  fmt.Sprintf("%s model %s", providerType, model),
 		}
 	}
+	
+	logging.LogInfo("Provider created successfully", 
+		"provider", providerType, 
+		"model", model, 
+		"capabilities", fmt.Sprintf("%+v", modelInfo.Capabilities))
 
 	return &providerAdapter{
 		provider:  llmProvider,
@@ -124,16 +142,28 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 
 // getAPIKeyFromEnv retrieves API key from environment variables
 func getAPIKeyFromEnv(provider string) string {
+	logging.LogDebug("Looking for API key in environment", "provider", provider)
+	
+	var envVar string
 	switch provider {
 	case ProviderOpenAI:
-		return os.Getenv("OPENAI_API_KEY")
+		envVar = "OPENAI_API_KEY"
 	case ProviderAnthropic:
-		return os.Getenv("ANTHROPIC_API_KEY")
+		envVar = "ANTHROPIC_API_KEY"
 	case ProviderGemini:
-		return os.Getenv("GEMINI_API_KEY")
+		envVar = "GEMINI_API_KEY"
 	default:
+		logging.LogDebug("No environment variable mapping for provider", "provider", provider)
 		return ""
 	}
+	
+	key := os.Getenv(envVar)
+	if key != "" {
+		logging.LogDebug("Found API key in environment", "provider", provider, "envVar", envVar)
+	} else {
+		logging.LogDebug("API key not found in environment", "provider", provider, "envVar", envVar)
+	}
+	return key
 }
 
 // getModelCapabilities returns capabilities based on known models
@@ -167,12 +197,24 @@ func getModelCapabilities(provider, model string) []ModelCapability {
 
 // Generate produces text from a prompt
 func (p *providerAdapter) Generate(ctx context.Context, prompt string, options ...ProviderOption) (string, error) {
+	logging.LogDebug("Generating response", "model", p.modelInfo.Model, "promptLength", len(prompt))
+	
 	llmOptions := p.buildLLMOptions(options...)
-	return p.provider.Generate(ctx, prompt, llmOptions...)
+	response, err := p.provider.Generate(ctx, prompt, llmOptions...)
+	
+	if err != nil {
+		logging.LogError(err, "Failed to generate response", "model", p.modelInfo.Model)
+		return "", err
+	}
+	
+	logging.LogDebug("Response generated successfully", "model", p.modelInfo.Model, "responseLength", len(response))
+	return response, nil
 }
 
 // GenerateMessage produces a response from messages
 func (p *providerAdapter) GenerateMessage(ctx context.Context, messages []Message, options ...ProviderOption) (*Response, error) {
+	logging.LogDebug("Generating message response", "model", p.modelInfo.Model, "messageCount", len(messages))
+	
 	// Convert our messages to go-llms messages
 	llmMessages := make([]domain.Message, len(messages))
 	for i, msg := range messages {
@@ -182,15 +224,22 @@ func (p *providerAdapter) GenerateMessage(ctx context.Context, messages []Messag
 	llmOptions := p.buildLLMOptions(options...)
 	llmResponse, err := p.provider.GenerateMessage(ctx, llmMessages, llmOptions...)
 	if err != nil {
+		logging.LogError(err, "Failed to generate message response", "model", p.modelInfo.Model)
 		return nil, err
 	}
 
 	// Convert go-llms response to our response type
-	return &Response{
+	response := &Response{
 		Content: llmResponse.Content,
 		Model:   p.modelInfo.Model,
 		Usage:   nil, // go-llms doesn't provide usage info in the basic Response
-	}, nil
+	}
+	
+	logging.LogDebug("Message response generated successfully", 
+		"model", p.modelInfo.Model, 
+		"responseLength", len(response.Content))
+	
+	return response, nil
 }
 
 // GenerateWithSchema produces structured output conforming to a schema
@@ -201,9 +250,12 @@ func (p *providerAdapter) GenerateWithSchema(ctx context.Context, prompt string,
 
 // Stream streams responses token by token
 func (p *providerAdapter) Stream(ctx context.Context, prompt string, options ...ProviderOption) (<-chan StreamChunk, error) {
+	logging.LogDebug("Starting streaming response", "model", p.modelInfo.Model, "promptLength", len(prompt))
+	
 	llmOptions := p.buildLLMOptions(options...)
 	llmStream, err := p.provider.Stream(ctx, prompt, llmOptions...)
 	if err != nil {
+		logging.LogError(err, "Failed to start streaming", "model", p.modelInfo.Model)
 		return nil, err
 	}
 
@@ -272,6 +324,8 @@ func (p *providerAdapter) GetModelInfo() ModelInfo {
 
 // buildLLMOptions converts our options to go-llms options
 func (p *providerAdapter) buildLLMOptions(options ...ProviderOption) []domain.Option {
+	logging.LogDebug("Building LLM options", "model", p.modelInfo.Model)
+	
 	config := &providerConfig{}
 	for _, opt := range options {
 		opt(config)
@@ -280,12 +334,15 @@ func (p *providerAdapter) buildLLMOptions(options ...ProviderOption) []domain.Op
 	var llmOptions []domain.Option
 
 	if config.temperature != nil {
+		logging.LogDebug("Setting temperature", "value", *config.temperature)
 		llmOptions = append(llmOptions, domain.WithTemperature(*config.temperature))
 	}
 	if config.maxTokens != nil {
+		logging.LogDebug("Setting max tokens", "value", *config.maxTokens)
 		llmOptions = append(llmOptions, domain.WithMaxTokens(*config.maxTokens))
 	}
 	if len(config.stopSequences) > 0 {
+		logging.LogDebug("Setting stop sequences", "count", len(config.stopSequences))
 		llmOptions = append(llmOptions, domain.WithStopSequences(config.stopSequences))
 	}
 	if config.topP != nil {

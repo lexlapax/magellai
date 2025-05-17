@@ -6,6 +6,8 @@ package config
 import (
 	"fmt"
 	"os"
+
+	"github.com/lexlapax/magellai/internal/logging"
 )
 
 // ValidationError represents a configuration validation error
@@ -17,6 +19,8 @@ type ValidationError struct {
 
 // Validate validates the configuration
 func (c *Config) Validate() error {
+	logging.LogDebug("Starting configuration validation")
+
 	var errors []ValidationError
 
 	// Validate log configuration
@@ -50,9 +54,17 @@ func (c *Config) Validate() error {
 	}
 
 	if len(errors) > 0 {
+		for _, err := range errors {
+			logging.LogWarn("Configuration validation error",
+				"field", err.Field,
+				"value", err.Value,
+				"error", err.Error)
+		}
+		logging.LogError(nil, "Configuration validation failed", "errorCount", len(errors))
 		return fmt.Errorf("configuration validation failed: %v", errors)
 	}
 
+	logging.LogDebug("Configuration validation completed successfully")
 	return nil
 }
 

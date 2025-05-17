@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Completed Phase 3.4)
+## Current Status (Working on Phase 3.5)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
@@ -24,16 +24,31 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 3.2.1: CLI Help System Improvements - Complete
 ✅ Phase 3.3: Chat Command & REPL Foundation - Complete
 ✅ Phase 3.4: Configuration Commands (using koanf) - Complete
+🚧 Phase 3.5: Logging and Verbosity Implementation - In Progress
+  ✅ Phase 3.5.1: Configuration Logging - Complete
+  ✅ Phase 3.5.2: LLM Provider Logging - Complete
+  ✅ Phase 3.5.3: Session Management Logging - Complete
 
 ### Recent Improvements
-- Implemented full configuration command system with koanf
-- Added config subcommands (set, get, list, edit, validate, export, import)
-- Implemented profile management (create, switch, delete, export)
-- Added config edit command that opens configuration in user's editor
-- Implemented profile deletion with safety checks
-- Added configuration reload after editing
-- Fixed namespace conflicts in imports
-- All tests passing for configuration commands
+- Implemented comprehensive logging throughout the configuration, LLM provider, and session management systems
+- Configuration logging (3.5.1):
+  - INFO level for initialization, loading, and profile switches
+  - DEBUG level for file discovery and detailed operations
+  - WARN level for non-critical issues and validation errors
+  - ERROR level for critical failures
+- LLM Provider logging (3.5.2):
+  - INFO level for provider initialization and model selection
+  - DEBUG level for API key resolution, option building, and API operations
+  - ERROR level for provider creation failures and API errors
+  - Complete logging for streaming operations
+- Session Management logging (3.5.3):
+  - INFO level for session creation, save/load, deletion, and export operations
+  - DEBUG level for file I/O operations, search operations, and session listing
+  - Complete coverage of all session lifecycle events
+- Fixed integration test to build test binary in bin directory for proper cleanup
+- Fixed logging infrastructure to handle nil errors gracefully
+- All operations now have appropriate logging with context
+- Completed sections 3.5.1, 3.5.2, and 3.5.3 of Phase 3.5
 
 ## Architecture
 
