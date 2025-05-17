@@ -271,7 +271,7 @@ func TestCLI_AskCommand(t *testing.T) {
 		{
 			name:    "ask without prompt",
 			args:    []string{"ask"},
-			wantErr: true,
+			wantErr: false, // No longer errors at parse time since prompt is optional
 		},
 	}
 
@@ -288,7 +288,12 @@ func TestCLI_AskCommand(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, "ask <prompt>", ctx.Command())
+			// Command format changes based on whether prompt is provided
+			if cli.Ask.Prompt == "" {
+				assert.Equal(t, "ask", ctx.Command())
+			} else {
+				assert.Equal(t, "ask <prompt>", ctx.Command())
+			}
 			assert.Equal(t, tt.want, cli.Ask)
 		})
 	}

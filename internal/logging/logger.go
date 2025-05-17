@@ -186,3 +186,17 @@ func LogInfo(msg string, args ...any) {
 func LogWarn(msg string, args ...any) {
 	GetLogger().Warn(msg, args...)
 }
+
+// SetLogLevel sets the global log level by re-initializing the logger
+func SetLogLevel(level string) error {
+	// Get current configuration
+	config := LogConfig{
+		Level:      level,
+		Format:     "text", // Preserve current format
+		OutputPath: "stderr", // Preserve current output
+		AddSource:  false,
+	}
+	
+	// Re-initialize with new level
+	return Initialize(config)
+}

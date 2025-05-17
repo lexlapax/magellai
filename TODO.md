@@ -2,45 +2,23 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-**Current Status**: Phase 3 Complete - Starting Phase 4 (Advanced REPL Features)
+**Current Status**: Phase 4 In Progress - Advanced REPL Features
 
 ## Phase 1: Core Foundation (Week 1) ✅
 
 ## Phase 2: Configuration and Command Foundation (Week 2) ✅
 
-## Phase 3: CLI with Kong (Week 3) ✅ (3.2, 3.2.1 partial - REVISIT)
+## Phase 3: CLI with Kong (Week 3) ✅
 
-### 3.2 Ask Command - Partially Complete (REVISIT)
-- [ ] Pipeline support (stdin/stdout)
-
-### 3.2.1 CLI Help System Improvements - Partially Complete (REVISIT)
-- [ ] Future improvements (if needed):
-  - [ ] Add custom help formatter for more control
-  - [ ] Integrate Kong help with core help system for unified behavior
-  - [ ] Add support for hiding commands with --all flag
+### 3.2 Ask Command ✅
 
 ### 3.5 Logging and Verbosity Implementation ✅
 
 ### 3.6 History Commands ✅
 
-
 ## Phase 4: Advanced REPL Features (Week 4)
 
-### 4.1 Extended REPL Commands
-- [ ] Implement additional REPL commands in `pkg/repl/commands.go`:
-  - [ ] `:model <provider/name>` - Switch model
-  - [ ] `:stream on|off` - Toggle streaming
-  - [ ] `:verbosity <level>` - Set verbosity
-  - [ ] `:output <format>` - Set output format
-  - [ ] `:temperature <value>` - Set temperature
-  - [ ] `:max_tokens <value>` - Set max tokens
-  - [ ] `:profile <n>` - Switch profile
-  - [ ] `:attach <file>` - Add attachment
-  - [ ] `:attach-remove <file>` - Remove attachment
-  - [ ] `:attach-list` - List attachments
-  - [ ] `:system` - System prompt (by itself is system show, with argument is system set)
-  - [ ] `/config show` - Display current config
-  - [ ] `/config set <key> <value>` - Set config value
+### 4.1 Extended REPL Commands ✅
 
 ### 4.2 Advanced Session Features
 - [ ] Enhance session management:
@@ -269,7 +247,13 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ## Phase 8: Advanced Features (Post-MVP)
 
-### 8.1 Additional Scripting Engines
+### 8.1 CLI Help System Advanced Improvements
+- [ ] Future improvements for CLI help system:
+  - [ ] Add custom help formatter for more control
+  - [ ] Integrate Kong help with core help system for unified behavior
+  - [ ] Add support for hiding commands with --all flag
+
+### 8.2 Additional Scripting Engines
 - [ ] Goja (JavaScript) support
   - [ ] Runtime integration
   - [ ] API bindings
@@ -279,7 +263,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] API bindings
   - [ ] Example scripts
 
-### 8.2 Go Plugin Support
+### 8.3 Go Plugin Support
 - [ ] Native Go plugin interface
   - [ ] Plugin loading mechanism
   - [ ] API stability guarantees
@@ -287,7 +271,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Migration guide from binary plugins
   - [ ] Security considerations
 
-### 8.3 Web Interface
+### 8.4 Web Interface
 - [ ] HTTP API server
   - [ ] RESTful endpoints
   - [ ] WebSocket support for streaming
@@ -299,7 +283,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Plugin management
   - [ ] Session history
 
-### 8.4 Advanced REPL Features
+### 8.5 Advanced REPL Features
 - [ ] Enhanced REPL capabilities:
   - [ ] Syntax highlighting
   - [ ] Command history search
@@ -308,7 +292,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Auto-suggestions
   - [ ] Rich media rendering
 
-### 8.5 Enterprise Features
+### 8.6 Enterprise Features
 - [ ] Enterprise enhancements:
   - [ ] SAML/OIDC authentication
   - [ ] Audit logging

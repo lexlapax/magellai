@@ -20,7 +20,7 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 2.5: Core Commands Implementation - Complete
 ✅ Phase 2.6: Models inventory file - Complete
 ✅ Phase 3.1: CLI Structure Setup - Complete
-✅ Phase 3.2: Ask Command - Complete (pipeline support pending)
+✅ Phase 3.2: Ask Command - Complete
 ✅ Phase 3.2.1: CLI Help System Improvements - Complete (future enhancements pending)
 ✅ Phase 3.3: Chat Command & REPL Foundation - Complete
 ✅ Phase 3.4: Configuration Commands (using koanf) - Complete
@@ -36,36 +36,26 @@ The project follows a library-first design where the core intelligence (LLM prov
   ✅ Phase 3.5.9: Security and Audit Logging - Complete
   ✅ Phase 3.5.10: Testing and Integration - Complete
 ✅ Phase 3.6: History Commands - Complete
+✅ Phase 4.1: Extended REPL Commands - Complete
+🚧 Phase 4.2: Advanced Session Features - Starting Next
 
 ### Recent Improvements
-- Implemented comprehensive logging throughout the configuration, LLM provider, and session management systems
-- Configuration logging (3.5.1):
-  - INFO level for initialization, loading, and profile switches
-  - DEBUG level for file discovery and detailed operations
-  - WARN level for non-critical issues and validation errors
-  - ERROR level for critical failures
-- LLM Provider logging (3.5.2):
-  - INFO level for provider initialization and model selection
-  - DEBUG level for API key resolution, option building, and API operations
-  - ERROR level for provider creation failures and API errors
-  - Complete logging for streaming operations
-- Session Management logging (3.5.3):
-  - INFO level for session creation, save/load, deletion, and export operations
-  - DEBUG level for file I/O operations, search operations, and session listing
-  - Complete coverage of all session lifecycle events
-- Command Execution logging (3.5.4):
-  - INFO level for command execution
-  - DEBUG level for command execution start/end, validation, and registry operations
-  - ERROR level for command failures and validation errors
-  - Complete logging for pre/post execution hooks
-- REPL Operations logging (3.5.5):
-  - INFO level for model switching and session start/end
-  - DEBUG level for user input processing, command handling, and message processing
-  - Complete logging for special commands and all REPL operations
-- File Operations logging (3.5.6):
-  - INFO level for default configuration file creation
-  - DEBUG level for directory creation, project config discovery, and file I/O operations
-  - Complete logging for all file operations in internal/configdir
+- Implemented extended REPL commands (Phase 4.1):
+  - Added special commands for model switching, streaming, verbosity, output format
+  - Added temperature and max_tokens controls
+  - Added profile switching and attachment management
+  - Added system prompt management
+  - Added /config show and /config set commands
+  - Created comprehensive tests for all new commands
+  - Updated help display with all new commands
+  - Fixed logging infrastructure to support verbosity changes
+  - Added SetLogLevel function to logging package
+- Previously completed:
+  - History commands (Phase 3.6) with list, show, delete, export, search
+  - Comprehensive logging (Phase 3.5) across all components
+  - Chat command and REPL foundation (Phase 3.3)
+  - Ask command with pipeline support (Phase 3.2)
+  - Configuration commands with koanf integration (Phase 3.4)
   - Added appropriate error logging for all failure scenarios
 - User-Facing Operations logging (3.5.7):
   - INFO level for model changes with before/after values

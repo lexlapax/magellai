@@ -228,6 +228,18 @@ This document contains all completed sections from the original TODO.md file for
   - [x] Used Kong's `NoExpandSubcommands` option for clean display
 - [x] Added all configuration commands
 
+### 3.2 Ask Command ✅
+- [x] Pipeline support (stdin/stdout)
+  - Made prompt argument optional in Kong CLI definition
+  - Added stdin detection logic when no prompt provided
+  - Combined stdin and prompt when both provided
+  - Added comprehensive tests for pipeline support
+  - Tested with real examples:
+    - Simple queries through pipe
+    - File content through pipe
+    - JSON data processing
+    - Combined stdin with command-line prompt
+
 ### 3.5 Logging and Verbosity Implementation ✅
 
 #### 3.5.1 Configuration Logging (pkg/config/) ✅
@@ -426,3 +438,25 @@ This document contains all completed sections from the original TODO.md file for
 - [x] Configuration modifications (INFO)
 - [x] File access attempts (DEBUG)
 - [x] Error conditions (ERROR)
+
+## Phase 4: Advanced REPL Features (Week 4)
+
+### 4.1 Extended REPL Commands ✅
+- [x] Implement additional REPL commands in `pkg/repl/commands.go`:
+  - [x] `:model <provider/name>` - Switch model
+  - [x] `:stream on|off` - Toggle streaming
+  - [x] `:verbosity <level>` - Set verbosity
+  - [x] `:output <format>` - Set output format
+  - [x] `:temperature <value>` - Set temperature
+  - [x] `:max_tokens <value>` - Set max tokens
+  - [x] `:profile <n>` - Switch profile
+  - [x] `:attach <file>` - Add attachment
+  - [x] `:attach-remove <file>` - Remove attachment
+  - [x] `:attach-list` - List attachments
+  - [x] `:system` - System prompt (by itself is system show, with argument is system set)
+  - [x] `/config show` - Display current config
+  - [x] `/config set <key> <value>` - Set config value
+- [x] Created comprehensive tests in `pkg/repl/commands_extended_test.go`
+- [x] Updated help display with all new commands
+- [x] Fixed logging infrastructure to support verbosity changes
+- [x] Added SetLogLevel function to logging package

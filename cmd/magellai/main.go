@@ -96,7 +96,7 @@ func (v *VersionCmd) Run(ctx *Context) error {
 
 // AskCmd handles the ask command
 type AskCmd struct {
-	Prompt         string   `arg:"" required:"" help:"The prompt to send to the LLM"`
+	Prompt         string   `arg:"" optional:"" help:"The prompt to send to the LLM (reads from stdin if not provided)"`
 	Model          string   `short:"m" help:"Model to use (provider/model format)"`
 	Attach         []string `short:"a" help:"Files to attach to the prompt"`
 	Stream         bool     `help:"Enable streaming response"`
@@ -108,9 +108,37 @@ type AskCmd struct {
 
 // Run executes the ask command
 func (a *AskCmd) Run(ctx *Context) error {
+	var prompt string
+	var stdinData string
+	
+	// Check if stdin has data (not a terminal)
+	if stat, _ := os.Stdin.Stat(); (stat.Mode() & os.ModeCharDevice) == 0 {
+		// Read from stdin
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("failed to read from stdin: %w", err)
+		}
+		stdinData = string(data)
+	}
+	
+	// Handle prompt logic
+	if a.Prompt != "" && stdinData != "" {
+		// Both provided - combine them
+		prompt = stdinData + "\n\n" + a.Prompt
+	} else if a.Prompt != "" {
+		// Only command line prompt
+		prompt = a.Prompt
+	} else if stdinData != "" {
+		// Only stdin data
+		prompt = stdinData
+	} else {
+		// Neither provided
+		return fmt.Errorf("no prompt provided (use argument or pipe data to stdin)")
+	}
+	
 	// Convert Kong command to our command system
 	exec := &command.ExecutionContext{
-		Args:    []string{a.Prompt},
+		Args:    []string{prompt},
 		Flags:   command.NewFlags(nil),
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,

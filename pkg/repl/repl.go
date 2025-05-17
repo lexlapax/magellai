@@ -365,6 +365,22 @@ func (r *REPL) handleCommand(cmd string) error {
 		return r.attachFile(args)
 	case "/attachments":
 		return r.listAttachments()
+	case "/config":
+		if len(args) == 0 {
+			return fmt.Errorf("usage: /config show|set <key> <value>")
+		}
+		subcommand := args[0]
+		switch subcommand {
+		case "show":
+			return r.showConfig()
+		case "set":
+			if len(args) < 2 {
+				return fmt.Errorf("usage: /config set <key> <value>")
+			}
+			return r.setConfig(args[1:])
+		default:
+			return fmt.Errorf("unknown config subcommand: %s", subcommand)
+		}
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}
@@ -399,6 +415,27 @@ func (r *REPL) handleSpecialCommand(cmd string) error {
 	case ":multiline":
 		logging.LogDebug("Toggling multiline")
 		return r.toggleMultiline()
+	case ":verbosity":
+		logging.LogDebug("Setting verbosity", "args", args)
+		return r.setVerbosity(args)
+	case ":output":
+		logging.LogDebug("Setting output format", "args", args)
+		return r.setOutput(args)
+	case ":profile":
+		logging.LogDebug("Switching profile", "args", args)
+		return r.switchProfile(args)
+	case ":attach":
+		logging.LogDebug("Attaching file", "args", args)
+		return r.attachFile(args)
+	case ":attach-remove":
+		logging.LogDebug("Removing attachment", "args", args)
+		return r.removeAttachment(args)
+	case ":attach-list":
+		logging.LogDebug("Listing attachments")
+		return r.listAttachments()
+	case ":system":
+		logging.LogDebug("Setting system prompt", "args", args)
+		return r.setSystemPrompt(args)
 	default:
 		logging.LogDebug("Unknown special command", "command", command)
 		return fmt.Errorf("unknown special command: %s", command)
@@ -425,12 +462,21 @@ COMMANDS:
   /sessions          List all sessions
   /attach <file>     Attach a file to the next message
   /attachments       List current attachments
+  /config show       Display current configuration
+  /config set <k> <v> Set configuration value
 
 SPECIAL COMMANDS:
-  :model <name>      Switch to a different model
+  :model <name>         Switch to a different model
   :stream on/off     Toggle streaming mode
+  :verbosity <level> Set verbosity (debug, info, warn, error)
+  :output <format>   Set output format (text, json, yaml, markdown)
   :temperature <n>   Set generation temperature (0.0-2.0)
   :max_tokens <n>    Set maximum response tokens
+  :profile <n>       Switch to a different profile
+  :attach <file>     Add attachment for next message
+  :attach-remove <f> Remove a pending attachment
+  :attach-list       List all pending attachments
+  :system [prompt]   Set or show system prompt
   :multiline         Toggle multi-line input mode
 
 Type your message and press Enter to send.

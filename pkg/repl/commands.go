@@ -332,6 +332,209 @@ func (r *REPL) toggleMultiline() error {
 	return nil
 }
 
+// verbosity sets the verbosity level
+func (r *REPL) setVerbosity(args []string) error {
+	if len(args) == 0 {
+		// Show current verbosity
+		level := r.config.GetString("verbosity")
+		fmt.Fprintf(r.writer, "Current verbosity: %s\n", level)
+		return nil
+	}
+
+	level := strings.ToLower(args[0])
+	validLevels := []string{"debug", "info", "warn", "error"}
+	isValid := false
+	for _, valid := range validLevels {
+		if level == valid {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		return fmt.Errorf("invalid verbosity level: %s (valid: debug, info, warn, error)", level)
+	}
+
+	if err := r.config.SetValue("verbosity", level); err != nil {
+		return fmt.Errorf("failed to set verbosity: %w", err)
+	}
+
+	// Update the logger with new verbosity level
+	if err := logging.SetLogLevel(level); err != nil {
+		return fmt.Errorf("failed to update logger: %w", err)
+	}
+	
+	fmt.Fprintf(r.writer, "Verbosity set to: %s\n", level)
+	return nil
+}
+
+// setOutput sets the output format
+func (r *REPL) setOutput(args []string) error {
+	if len(args) == 0 {
+		// Show current output format
+		format := r.config.GetString("output_format")
+		if format == "" {
+			format = "text"
+		}
+		fmt.Fprintf(r.writer, "Current output format: %s\n", format)
+		return nil
+	}
+
+	format := strings.ToLower(args[0])
+	validFormats := []string{"text", "json", "yaml", "markdown"}
+	isValid := false
+	for _, valid := range validFormats {
+		if format == valid {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		return fmt.Errorf("invalid output format: %s (valid: text, json, yaml, markdown)", format)
+	}
+
+	if err := r.config.SetValue("output_format", format); err != nil {
+		return fmt.Errorf("failed to set output format: %w", err)
+	}
+
+	fmt.Fprintf(r.writer, "Output format set to: %s\n", format)
+	return nil
+}
+
+// switchProfile switches to a different profile
+func (r *REPL) switchProfile(args []string) error {
+	if len(args) == 0 {
+		// Show current profile
+		profile := r.config.GetString("profile")
+		if profile == "" {
+			profile = "default"
+		}
+		fmt.Fprintf(r.writer, "Current profile: %s\n", profile)
+		return nil
+	}
+
+	profile := args[0]
+	
+	// Check if profile exists
+	profiles := r.config.GetString("available_profiles")
+	if profiles != "" {
+		availableProfiles := strings.Split(profiles, ",")
+		found := false
+		for _, p := range availableProfiles {
+			if strings.TrimSpace(p) == profile {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("profile '%s' not found", profile)
+		}
+	}
+
+	if err := r.config.SetValue("profile", profile); err != nil {
+		return fmt.Errorf("failed to switch profile: %w", err)
+	}
+
+	fmt.Fprintf(r.writer, "Switched to profile: %s\n", profile)
+	fmt.Fprintln(r.writer, "Note: Some settings may require a restart to take effect.")
+	return nil
+}
+
+// removeAttachment removes a pending attachment
+func (r *REPL) removeAttachment(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("attachment filename required")
+	}
+
+	filename := args[0]
+	
+	attachments, ok := r.session.Metadata["pending_attachments"].([]llm.Attachment)
+	if !ok || len(attachments) == 0 {
+		fmt.Fprintln(r.writer, "No pending attachments.")
+		return nil
+	}
+
+	// Find and remove the attachment
+	var newAttachments []llm.Attachment
+	found := false
+	for _, att := range attachments {
+		if filepath.Base(att.FilePath) == filename {
+			found = true
+			continue
+		}
+		newAttachments = append(newAttachments, att)
+	}
+
+	if !found {
+		return fmt.Errorf("attachment '%s' not found", filename)
+	}
+
+	r.session.Metadata["pending_attachments"] = newAttachments
+	fmt.Fprintf(r.writer, "Removed attachment: %s\n", filename)
+	return nil
+}
+
+// showConfig displays the current configuration
+func (r *REPL) showConfig() error {
+	// Show relevant configuration values
+	fmt.Fprintln(r.writer, "Current configuration:")
+	fmt.Fprintf(r.writer, "  model: %s\n", r.session.Conversation.Model)
+	fmt.Fprintf(r.writer, "  stream: %v\n", r.config.GetBool("stream"))
+	fmt.Fprintf(r.writer, "  temperature: %.2f\n", r.session.Conversation.Temperature)
+	fmt.Fprintf(r.writer, "  max_tokens: %d\n", r.session.Conversation.MaxTokens)
+	fmt.Fprintf(r.writer, "  verbosity: %s\n", r.config.GetString("verbosity"))
+	fmt.Fprintf(r.writer, "  output_format: %s\n", r.config.GetString("output_format"))
+	fmt.Fprintf(r.writer, "  profile: %s\n", r.config.GetString("profile"))
+	
+	return nil
+}
+
+// setConfig sets a configuration value
+func (r *REPL) setConfig(args []string) error {
+	if len(args) < 2 {
+		return fmt.Errorf("usage: /config set <key> <value>")
+	}
+
+	key := args[0]
+	value := strings.Join(args[1:], " ")
+
+	// Handle different value types
+	switch key {
+	case "stream":
+		boolVal := strings.ToLower(value) == "true" || value == "1" || strings.ToLower(value) == "on"
+		if err := r.config.SetValue(key, boolVal); err != nil {
+			return fmt.Errorf("failed to set %s: %w", key, err)
+		}
+	case "temperature":
+		floatVal, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return fmt.Errorf("invalid float value for %s: %w", key, err)
+		}
+		if floatVal < 0.0 || floatVal > 2.0 {
+			return fmt.Errorf("temperature must be between 0.0 and 2.0")
+		}
+		r.session.Conversation.Temperature = floatVal
+	case "max_tokens":
+		intVal, err := strconv.Atoi(value)
+		if err != nil {
+			return fmt.Errorf("invalid integer value for %s: %w", key, err)
+		}
+		if intVal < 1 {
+			return fmt.Errorf("max_tokens must be positive")
+		}
+		r.session.Conversation.MaxTokens = intVal
+	default:
+		// For all other keys, store as string
+		if err := r.config.SetValue(key, value); err != nil {
+			return fmt.Errorf("failed to set %s: %w", key, err)
+		}
+	}
+
+	fmt.Fprintf(r.writer, "Set %s = %s\n", key, value)
+	return nil
+}
+
 // Helper function to capitalize first letter
 func title(s string) string {
 	if s == "" {
