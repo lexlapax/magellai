@@ -1,6 +1,9 @@
 # Magellai Implementation TODO List
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
+## Phase 1: Core Foundation (Week 1) ✅
+
+## Phase 2: Configuration and Command Foundation (Week 2) ✅
 
 ## Phase 3: CLI with Kong (Week 3) - Partially Complete
 
@@ -13,36 +16,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Integrate Kong help with core help system for unified behavior
   - [ ] Add support for hiding commands with --all flag
 
-### 3.3 Chat Command & REPL Foundation
-- [ ] Create REPL foundation in `pkg/repl/`
-  - [ ] Implement conversation management (`pkg/repl/conversation.go`)
-    - [ ] Message history with roles (user/assistant/system)
-    - [ ] Context management and token counting
-    - [ ] Message attachments support
-    - [ ] Conversation reset functionality
-  - [ ] Implement session management (`pkg/repl/session.go`)
-    - [ ] Session metadata (ID, timestamps, model)
-    - [ ] Configuration state persistence
-    - [ ] Save/load/resume functionality
-    - [ ] Session listing and searching
-  - [ ] Create REPL interface (`pkg/repl/repl.go`)
-    - [ ] Interactive command loop
-    - [ ] Prompt handling with multi-line support
-    - [ ] Command mode (/) vs conversation mode
-    - [ ] History support (arrow keys)
-  - [ ] Implement REPL commands (`pkg/repl/commands.go`)
-    - [ ] `/save [name]` - Save current session
-    - [ ] `/load <id>` - Load previous session
-    - [ ] `/reset` - Clear conversation
-    - [ ] `/exit` - Exit REPL
-    - [ ] `/help` - Show REPL commands
-- [ ] Implement `chat` CLI command
-  - [ ] Create chat command in CLI
-  - [ ] Support `--resume <id>` flag
-  - [ ] Support `--model` flag
-  - [ ] Support `--attach` for initial files
-  - [ ] Launch REPL with proper initialization
-  - [ ] Pass configuration to REPL
+### 3.3 Chat Command & REPL Foundation ✅
 
 ### 3.4 Configuration Commands (using koanf)
 - [ ] Implement config subcommands:

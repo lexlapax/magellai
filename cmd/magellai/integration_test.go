@@ -108,7 +108,9 @@ func TestIntegration_BasicE2E(t *testing.T) {
 	cmd := exec.Command("go", "run", "./cmd/magellai", "version")
 	cmd.Dir = "../.."
 	output, err := cmd.CombinedOutput()
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Command failed with error: %v\nOutput: %s", err, string(output))
+	}
 	assert.Contains(t, string(output), "magellai version")
 
 	// Test help
@@ -203,6 +205,8 @@ func TestCLI_CommandRegistration(t *testing.T) {
 		core.NewAliasCommand(cfg),
 		core.NewHelpCommand(registry, cfg),
 		core.NewVersionCommand("dev", "none", "unknown"),
+		core.NewAskCommand(cfg),
+		core.NewChatCommand(cfg),
 	}
 
 	for _, cmd := range commands {
@@ -219,14 +223,4 @@ func TestCLI_CommandRegistration(t *testing.T) {
 		})
 	}
 
-	// Verify stub commands can be registered
-	t.Run("stub commands", func(t *testing.T) {
-		err := RegisterStubCommands(registry)
-		assert.NoError(t, err)
-
-		// Check chat command (ask is no longer a stub)
-		chat, err := registry.Get("chat")
-		assert.NoError(t, err)
-		assert.NotNil(t, chat)
-	})
 }

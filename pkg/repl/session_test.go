@@ -1,0 +1,330 @@
+package repl
+
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/lexlapax/magellai/pkg/llm"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func setupTestSessionManager(t *testing.T) (*SessionManager, func()) {
+	tempDir, err := os.MkdirTemp("", "magellai-session-test")
+	require.NoError(t, err)
+
+	sm, err := NewSessionManager(tempDir)
+	require.NoError(t, err)
+
+	cleanup := func() {
+		os.RemoveAll(tempDir)
+	}
+
+	return sm, cleanup
+}
+
+func TestNewSessionManager(t *testing.T) {
+	tempDir := filepath.Join(os.TempDir(), "magellai-test-"+time.Now().Format("20060102150405"))
+	defer os.RemoveAll(tempDir)
+
+	sm, err := NewSessionManager(tempDir)
+	require.NoError(t, err)
+	assert.Equal(t, tempDir, sm.StorageDir)
+
+	// Check directory was created
+	info, err := os.Stat(tempDir)
+	require.NoError(t, err)
+	assert.True(t, info.IsDir())
+}
+
+func TestSessionManager_NewSession(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	session := sm.NewSession("Test Session")
+
+	assert.NotEmpty(t, session.ID)
+	assert.Equal(t, "Test Session", session.Name)
+	assert.NotNil(t, session.Conversation)
+	assert.Equal(t, session.ID, session.Conversation.ID)
+	assert.NotZero(t, session.Created)
+	assert.Equal(t, session.Created, session.Updated)
+	assert.NotNil(t, session.Config)
+	assert.NotNil(t, session.Metadata)
+}
+
+func TestSessionManager_SaveAndLoadSession(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	// Create and setup a session
+	session := sm.NewSession("Test Session")
+	session.Tags = []string{"test", "demo"}
+	session.Config["model"] = "gpt-4"
+	session.Conversation.AddMessage("user", "Hello", nil)
+	session.Conversation.AddMessage("assistant", "Hi there!", nil)
+
+	// Save session
+	err := sm.SaveSession(session)
+	require.NoError(t, err)
+
+	// Load session
+	loaded, err := sm.LoadSession(session.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, session.ID, loaded.ID)
+	assert.Equal(t, session.Name, loaded.Name)
+	assert.Equal(t, session.Tags, loaded.Tags)
+	assert.Equal(t, session.Config["model"], loaded.Config["model"])
+	assert.Len(t, loaded.Conversation.Messages, 2)
+	assert.Equal(t, "Hello", loaded.Conversation.Messages[0].Content)
+	assert.Equal(t, "Hi there!", loaded.Conversation.Messages[1].Content)
+}
+
+func TestSessionManager_LoadSessionNotFound(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	_, err := sm.LoadSession("nonexistent-id")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "session not found")
+}
+
+func TestSessionManager_ListSessions(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	// Create multiple sessions
+	session1 := sm.NewSession("Session 1")
+	session1.Tags = []string{"work"}
+	session1.Conversation.AddMessage("user", "First message", nil)
+	err := sm.SaveSession(session1)
+	require.NoError(t, err)
+
+	time.Sleep(1000 * time.Millisecond) // Ensure different timestamps
+
+	session2 := sm.NewSession("Session 2")
+	session2.Tags = []string{"personal"}
+	session2.Conversation.AddMessage("user", "Second message", nil)
+	session2.Conversation.AddMessage("assistant", "Response", nil)
+	err = sm.SaveSession(session2)
+	require.NoError(t, err)
+
+	// List sessions
+	sessions, err := sm.ListSessions()
+	require.NoError(t, err)
+	assert.Len(t, sessions, 2)
+
+	// Find sessions by ID
+	var info1, info2 *SessionInfo
+	for _, info := range sessions {
+		if info.ID == session1.ID {
+			info1 = info
+		} else if info.ID == session2.ID {
+			info2 = info
+		}
+	}
+
+	require.NotNil(t, info1)
+	require.NotNil(t, info2)
+
+	assert.Equal(t, "Session 1", info1.Name)
+	assert.Equal(t, []string{"work"}, info1.Tags)
+	assert.Equal(t, 1, info1.MessageCount)
+
+	assert.Equal(t, "Session 2", info2.Name)
+	assert.Equal(t, []string{"personal"}, info2.Tags)
+	assert.Equal(t, 2, info2.MessageCount)
+}
+
+func TestSessionManager_DeleteSession(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	// Create and save a session
+	session := sm.NewSession("To Delete")
+	err := sm.SaveSession(session)
+	require.NoError(t, err)
+
+	// Verify it exists
+	loaded, err := sm.LoadSession(session.ID)
+	require.NoError(t, err)
+	assert.Equal(t, session.ID, loaded.ID)
+
+	// Delete it
+	err = sm.DeleteSession(session.ID)
+	require.NoError(t, err)
+
+	// Verify it's gone
+	_, err = sm.LoadSession(session.ID)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "session not found")
+}
+
+func TestSessionManager_DeleteSessionNotFound(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	err := sm.DeleteSession("nonexistent-id")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "session not found")
+}
+
+func TestSessionManager_SearchSessions(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	// Create sessions with different content
+	session1 := sm.NewSession("Project Discussion")
+	session1.Tags = []string{"work", "project"}
+	session1.Conversation.AddMessage("user", "Let's discuss the new project", nil)
+	session1.Conversation.AddMessage("assistant", "Sure, what aspects would you like to cover?", nil)
+	err := sm.SaveSession(session1)
+	require.NoError(t, err)
+
+	time.Sleep(100 * time.Millisecond)
+
+	session2 := sm.NewSession("Personal Chat")
+	session2.Tags = []string{"personal"}
+	session2.Conversation.AddMessage("user", "Tell me a joke", nil)
+	session2.Conversation.AddMessage("assistant", "Why did the chicken cross the road?", nil)
+	err = sm.SaveSession(session2)
+	require.NoError(t, err)
+
+	time.Sleep(100 * time.Millisecond)
+
+	session3 := sm.NewSession("Code Review")
+	session3.Tags = []string{"work", "code"}
+	session3.Conversation.AddMessage("user", "Review this code for me", nil)
+	err = sm.SaveSession(session3)
+	require.NoError(t, err)
+
+	// First let's list all sessions to see if they were saved properly
+	allSessions, err := sm.ListSessions()
+	require.NoError(t, err)
+	t.Logf("Found %d sessions:", len(allSessions))
+	for _, s := range allSessions {
+		t.Logf("  - ID: %s, Name: %s", s.ID, s.Name)
+	}
+
+	// Search for "project"
+	results, err := sm.SearchSessions("project")
+	require.NoError(t, err)
+	t.Logf("Search for 'project' returned %d results", len(results))
+	require.Len(t, results, 1)
+	assert.Equal(t, session1.ID, results[0].ID)
+
+	// Search for "code"
+	results, err = sm.SearchSessions("code")
+	require.NoError(t, err)
+	assert.Len(t, results, 1)
+	assert.Equal(t, session3.ID, results[0].ID)
+
+	// Search for "chicken"
+	results, err = sm.SearchSessions("chicken")
+	require.NoError(t, err)
+	assert.Len(t, results, 1)
+	assert.Equal(t, session2.ID, results[0].ID)
+
+	// Search in session names
+	results, err = sm.SearchSessions("personal")
+	require.NoError(t, err)
+	assert.Len(t, results, 1)
+	assert.Equal(t, session2.ID, results[0].ID)
+}
+
+func TestSessionManager_ExportSessionJSON(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	// Create and save a session
+	session := sm.NewSession("Export Test")
+	session.Tags = []string{"test"}
+	session.Conversation.AddMessage("user", "Hello", nil)
+	session.Conversation.AddMessage("assistant", "Hi!", nil)
+	err := sm.SaveSession(session)
+	require.NoError(t, err)
+
+	// Export as JSON
+	var buf bytes.Buffer
+	err = sm.ExportSession(session.ID, "json", &buf)
+	require.NoError(t, err)
+
+	// Verify JSON content
+	output := buf.String()
+	assert.Contains(t, output, `"name": "Export Test"`)
+	assert.Contains(t, output, `"role": "user"`)
+	assert.Contains(t, output, `"content": "Hello"`)
+	assert.Contains(t, output, `"role": "assistant"`)
+	assert.Contains(t, output, `"content": "Hi!"`)
+}
+
+func TestSessionManager_ExportSessionMarkdown(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	// Create and save a session
+	session := sm.NewSession("Markdown Export")
+	session.Tags = []string{"test", "export"}
+	session.Conversation.AddMessage("user", "What is Go?", nil)
+	session.Conversation.AddMessage("assistant", "Go is a programming language.", nil)
+	err := sm.SaveSession(session)
+	require.NoError(t, err)
+
+	// Export as Markdown
+	var buf bytes.Buffer
+	err = sm.ExportSession(session.ID, "markdown", &buf)
+	require.NoError(t, err)
+
+	// Verify Markdown content
+	output := buf.String()
+	assert.Contains(t, output, "# Session: Markdown Export")
+	assert.Contains(t, output, "Tags: test, export")
+	assert.Contains(t, output, "### User")
+	assert.Contains(t, output, "What is Go?")
+	assert.Contains(t, output, "### Assistant")
+	assert.Contains(t, output, "Go is a programming language.")
+}
+
+func TestSessionManager_ExportSessionUnsupportedFormat(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	session := sm.NewSession("Test")
+	err := sm.SaveSession(session)
+	require.NoError(t, err)
+
+	var buf bytes.Buffer
+	err = sm.ExportSession(session.ID, "xml", &buf)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported export format")
+}
+
+func TestSessionManager_ExportSessionWithAttachments(t *testing.T) {
+	sm, cleanup := setupTestSessionManager(t)
+	defer cleanup()
+
+	// Create session with attachments
+	session := sm.NewSession("Attachments Test")
+	attachments := []llm.Attachment{
+		{Type: llm.AttachmentTypeImage, Content: "base64data", MimeType: "image/jpeg"},
+		{Type: llm.AttachmentTypeText, Content: "base64text", MimeType: "text/plain"},
+	}
+	session.Conversation.AddMessage("user", "Check these files", attachments)
+	err := sm.SaveSession(session)
+	require.NoError(t, err)
+
+	// Export as Markdown
+	var buf bytes.Buffer
+	err = sm.ExportSession(session.ID, "markdown", &buf)
+	require.NoError(t, err)
+
+	// Verify attachments are included
+	output := buf.String()
+	assert.Contains(t, output, "Attachments:")
+	assert.Contains(t, output, "- image_attachment (image/jpeg)")
+	assert.Contains(t, output, "- text_attachment (text/plain)")
+}

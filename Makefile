@@ -1,6 +1,6 @@
 # ABOUTME: Makefile for building, testing, and managing the Magellai project
 # ABOUTME: Provides commands for building, testing, linting, and documentation
-.PHONY: all build test test-integration test-all test-race test-coverage clean install fmt lint vet help docker-build docker-test release-build release docs
+.PHONY: all build test test-integration test-all test-race test-coverage clean clean-cache clean-testcache clean-modcache clean-all install fmt lint vet help docker-build docker-test release-build release docs
 
 # Build variables
 BINARY_NAME=magellai
@@ -93,6 +93,25 @@ clean:
 	@echo "Cleaning..."
 	$(GO_CLEAN)
 	rm -rf $(BUILD_DIR)/* coverage.out coverage.html
+
+## clean-cache: Clean Go build cache
+clean-cache:
+	@echo "Cleaning Go build cache..."
+	$(GO_CLEAN) -cache
+
+## clean-testcache: Clean Go test cache
+clean-testcache:
+	@echo "Cleaning Go test cache..."
+	$(GO_CLEAN) -testcache
+
+## clean-modcache: Clean Go module cache
+clean-modcache:
+	@echo "Cleaning Go module cache..."
+	$(GO_CLEAN) -modcache
+
+## clean-all: Clean everything (artifacts, build cache, test cache, module cache)
+clean-all: clean clean-cache clean-testcache clean-modcache
+	@echo "All caches and artifacts cleaned"
 
 ## deps: Manage dependencies
 deps:

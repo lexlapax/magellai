@@ -118,9 +118,9 @@ func TestCLI_ParseArgs(t *testing.T) {
 			wantCommand: "chat",
 		},
 		{
-			name:        "config list",
-			args:        []string{"config", "list"},
-			wantCommand: "config list",
+			name:        "config show",
+			args:        []string{"config", "show"},
+			wantCommand: "config show",
 		},
 		{
 			name:        "global flags with command",
@@ -356,9 +356,9 @@ func TestCLI_ConfigCommand(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "config list",
-			args: []string{"config", "list"},
-			want: "config list",
+			name: "config show",
+			args: []string{"config", "show"},
+			want: "config show",
 		},
 		{
 			name: "config get",

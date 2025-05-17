@@ -653,9 +653,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Register stub commands (temporary implementations)
-	if err := RegisterStubCommands(registry); err != nil {
-		logger.Error("failed to register stub commands", "error", err)
+	chatCmd := core.NewChatCommand(cfg)
+	if err := registry.Register(chatCmd); err != nil {
+		logger.Error("failed to register chat command", "error", err)
 		os.Exit(1)
 	}
 
