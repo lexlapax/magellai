@@ -32,18 +32,25 @@ type CLI struct {
 	Verbosity   int    `short:"v" type:"counter" help:"Increase verbosity level"`
 	Output      string `short:"o" enum:"text,json,markdown" default:"text" help:"Output format"`
 	ConfigFile  string `short:"c" type:"path" help:"Config file to use"`
-	Profile     string `help:"Configuration profile to use"`
+	ProfileName string `name:"profile" help:"Configuration profile to use"`
 	NoColor     bool   `help:"Disable color output"`
 	ShowVersion bool   `name:"version" help:"Show version information"`
 
 	// Subcommands
-	Version VersionCmd `cmd:"" help:"Show version information"`
-	Ask     AskCmd     `cmd:"" help:"Send a one-shot query to the LLM"`
-	Chat    ChatCmd    `cmd:"" help:"Start an interactive chat session"`
-	Config  ConfigCmd  `cmd:"" help:"Manage configuration"`
+	Ask  AskCmd  `cmd:"" help:"Send a one-shot query to the LLM" group:"core"`
+	Chat ChatCmd `cmd:"" help:"Start an interactive chat session" group:"core"`
 
-	// Hidden completion command
-	InstallCompletions kongplete.InstallCompletions `cmd:"" help:"Install shell completions"`
+	// Help command
+	Version VersionCmd `cmd:"" help:"Show version information" group:"info"`
+
+	// Configuration commands
+	Config  ConfigCmd  `cmd:"" help:"Manage configuration" group:"config"`
+	Model   ModelCmd   `cmd:"" help:"Manage LLM models" group:"config"`
+	Profile ProfileCmd `cmd:"" help:"Manage configuration profiles" group:"config"`
+	Alias   AliasCmd   `cmd:"" help:"Manage command aliases" group:"config"`
+
+	// Shell completion command
+	InstallCompletions kongplete.InstallCompletions `cmd:"" help:"Install shell completions" group:"config"`
 }
 
 // VersionCmd handles the version command
@@ -171,16 +178,17 @@ func (c *ChatCmd) Run(ctx *Context) error {
 
 // ConfigCmd handles the config command
 type ConfigCmd struct {
-	List     ConfigListCmd     `cmd:"" help:"List configuration settings"`
-	Get      ConfigGetCmd      `cmd:"" help:"Get a configuration value"`
+	// Subcommands with brief descriptions
+	Show     ConfigShowCmd     `cmd:"" help:"Show all configuration settings"`
+	Get      ConfigGetCmd      `cmd:"" help:"Get a specific value"`
 	Set      ConfigSetCmd      `cmd:"" help:"Set a configuration value"`
-	Validate ConfigValidateCmd `cmd:"" help:"Validate configuration"`
+	Validate ConfigValidateCmd `cmd:"" help:"Validate configuration file"`
 }
 
-// ConfigListCmd handles config list
-type ConfigListCmd struct{}
+// ConfigShowCmd handles config show
+type ConfigShowCmd struct{}
 
-func (c *ConfigListCmd) Run(ctx *Context) error {
+func (c *ConfigShowCmd) Run(ctx *Context) error {
 	exec := &command.ExecutionContext{
 		Args:    []string{"list"},
 		Flags:   command.NewFlags(nil),
@@ -238,6 +246,273 @@ func (c *ConfigValidateCmd) Run(ctx *Context) error {
 	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
 }
 
+// ModelCmd handles the model command
+type ModelCmd struct {
+	List   ModelListCmd   `cmd:"" help:"List available models"`
+	Info   ModelInfoCmd   `cmd:"" help:"Show model information"`
+	Select ModelSelectCmd `cmd:"" help:"Select default model"`
+}
+
+// ModelListCmd handles model list
+type ModelListCmd struct {
+	Provider   string `help:"Filter by provider"`
+	Capability string `help:"Filter by capability"`
+}
+
+func (m *ModelListCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"list"},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	if m.Provider != "" {
+		exec.Flags.Set("provider", m.Provider)
+	}
+	if m.Capability != "" {
+		exec.Flags.Set("capability", m.Capability)
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "model", exec)
+}
+
+// ModelInfoCmd handles model info
+type ModelInfoCmd struct {
+	Model string `arg:"" required:"" help:"Model to show info for"`
+}
+
+func (m *ModelInfoCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"info", m.Model},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "model", exec)
+}
+
+// ModelSelectCmd handles model select
+type ModelSelectCmd struct {
+	Model string `arg:"" required:"" help:"Model to select"`
+}
+
+func (m *ModelSelectCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"select", m.Model},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "model", exec)
+}
+
+// ProfileCmd handles the profile command
+type ProfileCmd struct {
+	List   ProfileListCmd   `cmd:"" help:"List all profiles"`
+	Create ProfileCreateCmd `cmd:"" help:"Create a new profile"`
+	Switch ProfileSwitchCmd `cmd:"" help:"Switch to a profile"`
+	Show   ProfileShowCmd   `cmd:"" help:"Show profile details"`
+	Update ProfileUpdateCmd `cmd:"" help:"Update a profile"`
+	Delete ProfileDeleteCmd `cmd:"" help:"Delete a profile"`
+}
+
+// ProfileListCmd handles profile list
+type ProfileListCmd struct{}
+
+func (p *ProfileListCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"list"},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "profile", exec)
+}
+
+// ProfileCreateCmd handles profile create
+type ProfileCreateCmd struct {
+	Name        string `arg:"" required:"" help:"Profile name"`
+	Provider    string `help:"Provider name"`
+	Model       string `help:"Model name"`
+	Description string `help:"Profile description"`
+}
+
+func (p *ProfileCreateCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"create", p.Name},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	if p.Provider != "" {
+		exec.Flags.Set("provider", p.Provider)
+	}
+	if p.Model != "" {
+		exec.Flags.Set("model", p.Model)
+	}
+	if p.Description != "" {
+		exec.Flags.Set("description", p.Description)
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "profile", exec)
+}
+
+// ProfileSwitchCmd handles profile switch
+type ProfileSwitchCmd struct {
+	Name string `arg:"" required:"" help:"Profile to switch to"`
+}
+
+func (p *ProfileSwitchCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"switch", p.Name},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "profile", exec)
+}
+
+// ProfileShowCmd handles profile show
+type ProfileShowCmd struct {
+	Name string `arg:"" help:"Profile to show (default: current)"`
+}
+
+func (p *ProfileShowCmd) Run(ctx *Context) error {
+	args := []string{"show"}
+	if p.Name != "" {
+		args = append(args, p.Name)
+	}
+	exec := &command.ExecutionContext{
+		Args:    args,
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "profile", exec)
+}
+
+// ProfileUpdateCmd handles profile update
+type ProfileUpdateCmd struct {
+	Name   string   `arg:"" required:"" help:"Profile to update"`
+	Config []string `arg:"" required:"" help:"Configuration values (key=value)"`
+}
+
+func (p *ProfileUpdateCmd) Run(ctx *Context) error {
+	args := []string{"update", p.Name}
+	args = append(args, p.Config...)
+	exec := &command.ExecutionContext{
+		Args:    args,
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "profile", exec)
+}
+
+// ProfileDeleteCmd handles profile delete
+type ProfileDeleteCmd struct {
+	Name string `arg:"" required:"" help:"Profile to delete"`
+}
+
+func (p *ProfileDeleteCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"delete", p.Name},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "profile", exec)
+}
+
+// AliasCmd handles the alias command
+type AliasCmd struct {
+	Add    AliasAddCmd    `cmd:"" help:"Add an alias"`
+	Remove AliasRemoveCmd `cmd:"" help:"Remove an alias"`
+	List   AliasListCmd   `cmd:"" help:"List all aliases"`
+	Show   AliasShowCmd   `cmd:"" help:"Show alias details"`
+}
+
+// AliasAddCmd handles alias add
+type AliasAddCmd struct {
+	Name    string   `arg:"" required:"" help:"Alias name"`
+	Command []string `arg:"" required:"" help:"Command to alias"`
+	Scope   string   `help:"Alias scope (cli, repl, all)"`
+}
+
+func (a *AliasAddCmd) Run(ctx *Context) error {
+	args := []string{"add", a.Name}
+	args = append(args, a.Command...)
+	exec := &command.ExecutionContext{
+		Args:    args,
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	if a.Scope != "" {
+		exec.Flags.Set("scope", a.Scope)
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "alias", exec)
+}
+
+// AliasRemoveCmd handles alias remove
+type AliasRemoveCmd struct {
+	Name string `arg:"" required:"" help:"Alias to remove"`
+}
+
+func (a *AliasRemoveCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"remove", a.Name},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "alias", exec)
+}
+
+// AliasListCmd handles alias list
+type AliasListCmd struct {
+	Scope string `help:"Filter by scope (cli, repl, all)"`
+}
+
+func (a *AliasListCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"list"},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	if a.Scope != "" {
+		exec.Flags.Set("scope", a.Scope)
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "alias", exec)
+}
+
+// AliasShowCmd handles alias show
+type AliasShowCmd struct {
+	Name string `arg:"" required:"" help:"Alias to show"`
+}
+
+func (a *AliasShowCmd) Run(ctx *Context) error {
+	exec := &command.ExecutionContext{
+		Args:    []string{"show", a.Name},
+		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "alias", exec)
+}
+
 // Context provides runtime context for commands
 type Context struct {
 	*kong.Context
@@ -257,7 +532,9 @@ func main() {
 		kong.Description("A command-line interface for interacting with Large Language Models"),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
-			Compact: true,
+			Compact:             true,
+			Summary:             true,
+			NoExpandSubcommands: true,
 		}),
 	)
 
@@ -313,9 +590,9 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	if cli.Profile != "" {
-		if err := cfg.SetProfile(cli.Profile); err != nil {
-			logger.Error("Failed to set profile", "profile", cli.Profile, "error", err)
+	if cli.ProfileName != "" {
+		if err := cfg.SetProfile(cli.ProfileName); err != nil {
+			logger.Error("Failed to set profile", "profile", cli.ProfileName, "error", err)
 			os.Exit(1)
 		}
 	}

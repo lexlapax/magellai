@@ -221,7 +221,7 @@ func TestCLI_GlobalFlags(t *testing.T) {
 			assert.Equal(t, tt.wantFlags.verbosity, cli.Verbosity)
 			assert.Equal(t, tt.wantFlags.output, cli.Output)
 			assert.Equal(t, tt.wantFlags.configFile, cli.ConfigFile)
-			assert.Equal(t, tt.wantFlags.profile, cli.Profile)
+			assert.Equal(t, tt.wantFlags.profile, cli.ProfileName)
 			assert.Equal(t, tt.wantFlags.noColor, cli.NoColor)
 		})
 	}

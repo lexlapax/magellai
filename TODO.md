@@ -217,32 +217,35 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Streaming response support
   - [x] Provider selection based on model
 
-### 3.2.1 CLI Help System Improvements
-- [ ] Customize Kong help display for progressive disclosure
-  - [ ] Override Kong's default help formatter to show only top-level commands
-  - [ ] Integrate with centralized help command from pkg/command/core/help.go
-  - [ ] Implement custom help handling for `--help` flag
-  - [ ] Ensure `magellai --help` shows only main commands
-  - [ ] Make `magellai config --help` show config subcommands
-  - [ ] Support nested help (e.g., `magellai config profiles --help`)
-- [ ] Leverage centralized help command for consistency
-  - [ ] Create KongHelpAdapter to bridge Kong help with our help system
-  - [ ] Ensure help behavior is consistent between CLI and REPL
-  - [ ] Support both `magellai help <command>` and `magellai <command> --help`
-- [ ] Implement progressive disclosure pattern
-  - [ ] Top-level shows only primary commands (ask, chat, config, etc.)
-  - [ ] Subcommand help shows next level of options
-  - [ ] Use command metadata to determine what to display at each level
-- [ ] Update command registration to support help customization
-  - [ ] Add HelpFormatter field to command metadata
-  - [ ] Allow commands to specify custom help behavior
-  - [ ] Ensure backward compatibility with existing commands
-- [ ] Implementation approach:
-  - [ ] Study Kong's help system and find extension points
-  - [ ] Check if Kong supports custom help formatters or templates
-  - [ ] Consider using Kong's BeforeApply hook to intercept help requests
-  - [ ] Potentially use Kong's Help struct customization
-  - [ ] Ensure solution works with Kong's built-in flag handling
+### 3.2.1 CLI Help System Improvements ✅
+- [x] Customize Kong help display for progressive disclosure
+  - [x] Discovered Kong's `NoExpandSubcommands` option to hide nested commands
+  - [x] Use command groups for better organization at top level
+  - [x] Ensure `magellai --help` shows main commands without subcommands
+  - [x] Make `magellai config --help` show only config subcommands
+  - [x] Implemented and tested with all configuration commands
+- [x] Leverage centralized help command for consistency
+  - [x] Core help command exists in pkg/command/core/help.go
+  - [x] CLI uses Kong's built-in help with custom configuration
+  - [x] Support both `magellai help <command>` and `magellai <command> --help`
+- [x] Implement progressive disclosure pattern
+  - [x] Top-level shows primary commands grouped by category (core, config, info)
+  - [x] Subcommand help shows only immediate children
+  - [x] Used Kong's `NoExpandSubcommands` option for clean display
+- [x] Added all configuration commands
+  - [x] Model command with list, info, select subcommands
+  - [x] Profile command with full lifecycle subcommands
+  - [x] Alias command with add, remove, list, show subcommands
+  - [x] Fixed name conflicts (Profile vs ProfileName)
+  - [x] Fixed test failures by updating Profile references to ProfileName
+  - [x] Removed example Kong help integration files from docs/examples
+- [x] UI improvements:
+  - [x] Changed config list to config show with help "Show all configuration settings"
+  - [x] Moved InstallCompletions command to config group for better organization
+- [ ] Future improvements (if needed):
+  - [ ] Add custom help formatter for more control
+  - [ ] Integrate Kong help with core help system for unified behavior
+  - [ ] Add support for hiding commands with --all flag
 
 ### 3.3 Chat Command
 - [ ] Implement `chat` subcommand

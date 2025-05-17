@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 3.2 Complete)
+## Current Status (Phase 3.2.1 Complete with UI Improvements)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
@@ -21,6 +21,7 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 2.6: Models Static Inventory - Complete
 ✅ Phase 3.1: CLI Structure Setup - Complete
 ✅ Phase 3.2: Ask Command Implementation - Complete
+✅ Phase 3.2.1: CLI Help System Improvements - Complete
 
 ### Completed Features:
 - Project structure and build system
@@ -165,6 +166,28 @@ The project follows a library-first design where the core intelligence (LLM prov
   - Deleted old pkg/magellai.go and pkg/magellai_test.go (initial ask implementations)
   - Fixed all test failures related to Flags type changes
   - Ensured all ExecutionContext instances have Flags field initialized
+
+### Phase 3.2.1 Completed:
+✅ CLI Help System Improvements
+  - Researched Kong's help system options for progressive disclosure
+  - Discovered and implemented Kong's `NoExpandSubcommands` option
+  - Successfully hides nested subcommands at the top level
+  - Implemented command groups for better organization
+  - Configured Kong help to show:
+    - Top-level: Main commands only, without their subcommands
+    - Subcommand level: Only immediate children
+  - Added all remaining CLI commands:
+    - Model command with list, info, select subcommands
+    - Profile command with create, switch, show, update, delete subcommands
+    - Alias command with add, remove, list, show subcommands
+  - Fixed naming conflicts (Profile global flag vs Profile command)
+  - Updated tests to use ProfileName instead of Profile
+  - Removed example Kong integration files from docs
+  - Achieved clean progressive disclosure where users see only relevant options at each level
+  - UI improvements:
+    - Changed `config list` to `config show` with help text "Show all configuration settings"
+    - Moved `InstallCompletions` command to config group for better organization
+  - All tests passing
 
 ### Next: Phase 3.3 - Chat Command Implementation
 Now that the ask command is complete, the next step is to implement the chat command:
