@@ -172,7 +172,7 @@ This document contains all completed sections from the original TODO.md file for
   - [x] List providers and model families
   - [x] Comprehensive unit tests
 
-## Phase 3: CLI with Kong (Week 3)
+## Phase 3: CLI with Kong (Week 3) ✅
 
 ### 3.1 CLI Structure Setup ✅
 - [x] Research best framework, since we have our own command structure - 
@@ -438,6 +438,26 @@ This document contains all completed sections from the original TODO.md file for
 - [x] Configuration modifications (INFO)
 - [x] File access attempts (DEBUG)
 - [x] Error conditions (ERROR)
+
+#### 3.5.10 Testing and Integration ✅
+- [x] Added comprehensive logging tests to verify output
+- [x] Tested different verbosity levels
+- [x] Ensured sensitive data is not logged
+- [x] Verified performance impact is minimal
+- [x] Extended internal/logging/logger_test.go with new test functions
+- [x] Created pkg/llm/sanitization_test.go for API key sanitization testing
+
+## Phase 3: CLI with Kong (Week 3) ✅
+
+Phase 3 is now complete. All core CLI functionality has been implemented including:
+- Ask command with pipeline support
+- Chat command with REPL foundation
+- History commands for session management  
+- Configuration commands with koanf integration
+- Comprehensive logging implementation across all components
+- CLI help system improvements (partial - remaining tasks moved to Phase 8.1)
+
+Note: The remaining CLI help system improvements from section 3.2.1 have been moved to Phase 8.1 as post-MVP enhancements.
 
 ## Phase 4: Advanced REPL Features (Week 4)
 

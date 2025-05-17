@@ -10,12 +10,6 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ## Phase 3: CLI with Kong (Week 3) ✅
 
-### 3.2 Ask Command ✅
-
-### 3.5 Logging and Verbosity Implementation ✅
-
-### 3.6 History Commands ✅
-
 ## Phase 4: Advanced REPL Features (Week 4)
 
 ### 4.1 Extended REPL Commands ✅
