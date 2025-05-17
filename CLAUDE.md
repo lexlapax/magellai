@@ -20,8 +20,8 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 2.5: Core Commands Implementation - Complete
 ✅ Phase 2.6: Models inventory file - Complete
 ✅ Phase 3.1: CLI Structure Setup - Complete
-✅ Phase 3.2: Ask Command - Complete
-✅ Phase 3.2.1: CLI Help System Improvements - Complete
+✅ Phase 3.2: Ask Command - Complete (pipeline support pending)
+✅ Phase 3.2.1: CLI Help System Improvements - Complete (future enhancements pending)
 ✅ Phase 3.3: Chat Command & REPL Foundation - Complete
 ✅ Phase 3.4: Configuration Commands (using koanf) - Complete
 🚧 Phase 3.5: Logging and Verbosity Implementation - In Progress
@@ -31,10 +31,10 @@ The project follows a library-first design where the core intelligence (LLM prov
   ✅ Phase 3.5.4: Command Execution Logging - Complete
   ✅ Phase 3.5.5: REPL Operations Logging - Complete
   ✅ Phase 3.5.6: File Operations Logging - Complete
-  🚧 Phase 3.5.7: User-Facing Operations Logging - Next  
-  ☐ Phase 3.5.8: Performance and Metrics Logging - Pending
-  ☐ Phase 3.5.9: Security and Audit Logging - Pending
-  ☐ Phase 3.5.10: Testing and Integration - Pending
+  ✅ Phase 3.5.7: User-Facing Operations Logging - Complete
+  🚧 Phase 3.5.8: Performance and Metrics Logging - Next
+  ⏳ Phase 3.5.9: Security and Audit Logging - Pending
+  ⏳ Phase 3.5.10: Testing and Integration - Pending
 
 ### Recent Improvements
 - Implemented comprehensive logging throughout the configuration, LLM provider, and session management systems
@@ -66,13 +66,21 @@ The project follows a library-first design where the core intelligence (LLM prov
   - DEBUG level for directory creation, project config discovery, and file I/O operations
   - Complete logging for all file operations in internal/configdir
   - Added appropriate error logging for all failure scenarios
+- User-Facing Operations logging (3.5.7):
+  - INFO level for model changes with before/after values
+  - INFO level for profile switches with before/after values
+  - INFO level for command invocations with command name and arguments
+  - INFO level for session starts/ends (already implemented)
+  - INFO level for configuration changes with keys and before/after values
+  - All user-initiated actions now have comprehensive logging
+- Fixed compilation errors related to GetProfile and len(exec.Flags)
 - Fixed integration test to build test binary in bin directory for proper cleanup
 - Fixed logging infrastructure to handle nil errors gracefully
 - All operations now have appropriate logging with context
-- Completed sections 3.5.1, 3.5.2, 3.5.3, 3.5.4, 3.5.5, and 3.5.6 of Phase 3.5
+- Completed sections 3.5.1, 3.5.2, 3.5.3, 3.5.4, 3.5.5, 3.5.6, and 3.5.7 of Phase 3.5
 - Marked partial sections (3.2 and 3.2.1) for revisit in TODO.md
 - All tests passing, code formatted, and linted successfully
-- Phase 3.5.7 (User-Facing Operations Logging) is next
+- Phase 3.5.8 (Performance and Metrics Logging) is next
 
 ## Architecture
 

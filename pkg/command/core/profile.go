@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
 )
@@ -361,6 +362,9 @@ func (p *ProfileCommand) createProfile(ctx context.Context, exec *command.Execut
 
 // switchProfile switches to a different profile
 func (p *ProfileCommand) switchProfile(ctx context.Context, exec *command.ExecutionContext, name string) error {
+	// Get current profile before switching
+	currentProfile := p.config.GetString("profile")
+	
 	// Check if profile exists
 	key := fmt.Sprintf("profiles.%s", name)
 	if !p.config.Exists(key) && name != "default" {
@@ -376,6 +380,9 @@ func (p *ProfileCommand) switchProfile(ctx context.Context, exec *command.Execut
 	if err := p.config.SetValue("profile.current", name); err != nil {
 		return fmt.Errorf("failed to update current profile: %w", err)
 	}
+	
+	// Log the profile switch
+	logging.LogInfo("Profile switched", "from", currentProfile, "to", name)
 
 	exec.Data["output"] = fmt.Sprintf("Switched to profile: %s", name)
 	return nil

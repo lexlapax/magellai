@@ -17,8 +17,8 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Integrate Kong help with core help system for unified behavior
   - [ ] Add support for hiding commands with --all flag
 
-### 3.5 Logging and Verbosity Implementation - Partially Complete
-- [ ] Add comprehensive logging throughout the codebase:
+### 3.5 Logging and Verbosity Implementation - Partially Complete (REVISIT)
+- [ ] Remaining subsections: 3.5.8, 3.5.9, 3.5.10
 
 #### 3.5.1 Configuration Logging (pkg/config/) ✅
 
@@ -32,12 +32,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 #### 3.5.6 File Operations Logging (internal/configdir/) ✅
 
-#### 3.5.7 User-Facing Operations Logging
-- [ ] Model changes (INFO)
-- [ ] Profile switches (INFO)
-- [ ] Command invocations (INFO)
-- [ ] Session starts/ends (INFO)
-- [ ] Configuration changes (INFO)
+#### 3.5.7 User-Facing Operations Logging ✅
 
 #### 3.5.8 Performance and Metrics Logging
 - [ ] Configuration load time (DEBUG)

@@ -163,7 +163,7 @@ func (e *CommandExecutor) ExecuteCommand(ctx context.Context, cmd Interface, exe
 	}
 
 	// Execute the command
-	logging.LogInfo("Executing command", "name", meta.Name, "category", meta.Category)
+	logging.LogInfo("Executing command", "name", meta.Name, "args", exec.Args)
 	err := cmd.Execute(ctx, exec)
 
 	if err != nil {

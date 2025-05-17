@@ -326,3 +326,16 @@ This document contains all completed sections from the original TODO.md file for
 - [x] Special command processing (DEBUG)
 - [x] Message processing (DEBUG)
 - [x] Model switching (INFO)
+
+#### 3.5.6 File Operations Logging (internal/configdir/) ✅
+- [x] Directory creation (DEBUG)
+- [x] Default config creation (INFO)
+- [x] Project config discovery (DEBUG)
+- [x] File read/write operations (DEBUG)
+
+#### 3.5.7 User-Facing Operations Logging ✅
+- [x] Model changes (INFO)
+- [x] Profile switches (INFO)
+- [x] Command invocations (INFO)
+- [x] Session starts/ends (INFO)
+- [x] Configuration changes (INFO)

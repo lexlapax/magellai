@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
 	"github.com/lexlapax/magellai/pkg/llm"
@@ -180,32 +181,42 @@ func (c *ConfigCommand) getConfig(ctx context.Context, exec *command.ExecutionCo
 func (c *ConfigCommand) setConfig(ctx context.Context, exec *command.ExecutionContext, key, value string) error {
 	// Handle provider/model setting specially
 	if key == "provider" {
+		previousValue := c.config.GetDefaultProvider()
 		if err := c.config.SetDefaultProvider(value); err != nil {
 			return fmt.Errorf("failed to set provider: %w", err)
 		}
+		logging.LogInfo("Configuration changed", "key", "provider", "old", previousValue, "new", value)
 		exec.Data["output"] = fmt.Sprintf("Provider set to: %s", value)
 		return nil
 	}
 
 	if key == "model" {
 		// Parse model string and set both provider and model if needed
+		previousModel := c.config.GetDefaultModel()
 		providerStr, modelStr := llm.ParseModelString(value)
 		if providerStr != "" {
+			previousProvider := c.config.GetDefaultProvider()
 			if err := c.config.SetDefaultProvider(providerStr); err != nil {
 				return fmt.Errorf("failed to set provider: %w", err)
+			}
+			if previousProvider != providerStr {
+				logging.LogInfo("Configuration changed", "key", "provider", "old", previousProvider, "new", providerStr)
 			}
 		}
 		if err := c.config.SetDefaultModel(modelStr); err != nil {
 			return fmt.Errorf("failed to set model: %w", err)
 		}
+		logging.LogInfo("Configuration changed", "key", "model", "old", previousModel, "new", value)
 		exec.Data["output"] = fmt.Sprintf("Model set to: %s", value)
 		return nil
 	}
 
 	// For other keys, use generic set
+	previousValue := c.config.GetString(key)
 	if err := c.config.SetValue(key, value); err != nil {
 		return fmt.Errorf("failed to set value: %w", err)
 	}
+	logging.LogInfo("Configuration changed", "key", key, "old", previousValue, "new", value)
 	exec.Data["output"] = fmt.Sprintf("%s set to: %s", key, value)
 	return nil
 }

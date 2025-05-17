@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
 	"github.com/lexlapax/magellai/pkg/llm"
@@ -288,6 +289,9 @@ func (c *ModelCommand) selectModel(ctx context.Context, exec *command.ExecutionC
 		return fmt.Errorf("model not found: %s", modelName)
 	}
 
+	// Get current model before making changes
+	currentModel := c.config.GetDefaultModel()
+	
 	// Update configuration
 	if err := c.config.SetDefaultProvider(provider); err != nil {
 		return fmt.Errorf("failed to set provider: %w", err)
@@ -296,6 +300,9 @@ func (c *ModelCommand) selectModel(ctx context.Context, exec *command.ExecutionC
 	if err := c.config.SetDefaultModel(modelName); err != nil {
 		return fmt.Errorf("failed to set model: %w", err)
 	}
+	
+	// Log the model change
+	logging.LogInfo("Model changed", "from", currentModel, "to", modelName)
 
 	// Format output
 	if outputFormat, ok := exec.Data["outputFormat"]; ok && outputFormat == OutputFormatJSON {
