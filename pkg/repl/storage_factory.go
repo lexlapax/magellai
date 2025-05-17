@@ -79,3 +79,28 @@ func CreateStorageBackend(storageType StorageType, config map[string]interface{}
 	DefaultFactory.SetConfig(config)
 	return DefaultFactory.CreateBackend(storageType)
 }
+
+// RegisterStorageBackend registers a storage backend factory with the default factory
+func RegisterStorageBackend(storageType StorageType, factory func(config map[string]interface{}) (StorageBackend, error)) {
+	DefaultFactory.RegisterBackend(storageType, factory)
+}
+
+// IsStorageBackendAvailable checks if a storage backend is available
+func IsStorageBackendAvailable(storageType StorageType) bool {
+	DefaultFactory.mu.RLock()
+	defer DefaultFactory.mu.RUnlock()
+	_, ok := DefaultFactory.backends[storageType]
+	return ok
+}
+
+// GetAvailableBackends returns the list of available storage backends
+func GetAvailableBackends() []StorageType {
+	DefaultFactory.mu.RLock()
+	defer DefaultFactory.mu.RUnlock()
+	
+	backends := make([]StorageType, 0, len(DefaultFactory.backends))
+	for backendType := range DefaultFactory.backends {
+		backends = append(backends, backendType)
+	}
+	return backends
+}

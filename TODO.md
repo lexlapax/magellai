@@ -33,14 +33,20 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [x] Add unit tests for interface and filesystem implementation
     - [x] Add integration tests 
 
-#### 4.2.1.2 Database Support [add as optional compile time / build time feature to reduce dependency]
-    - [ ] Implement SQLiteStorage backend for local database
-    - [ ] Implement PostgreSQLStorage backend for remote database
-    - [ ] Add database connection pooling and retry logic
-    - [ ] Create database migration scripts
-    - [ ] Add database-specific configuration options
-    - [ ] Update documentation for database setup
-    - [ ] Add performance benchmarks for database vs filesystem
+#### 4.2.1.2 Database Support [add as optional compile time / build time feature to reduce dependency] ✅
+    - [x] Ensure Schemas have multi-user/tenant support, default is current user
+    - [x] Implement SQLiteStorage backend for local database
+    - [x] Add build tags for optional database support
+    - [x] Implement FTS5 fallback for systems without FTS5 support
+    - [x] Add database-specific configuration options
+    - [x] Update documentation for database setup
+    - [x] Add performance benchmarks for database vs filesystem
+    - [x] Update makefile targets, create new target for benchmarks ✅
+
+### 4.2.1.3 default configs for session storage and cleanup ✅
+    - [x] Default session storage should be filestore. ✅
+    - [x] Make sure to check if sqllite is feature is compiled in/available when switching config to db/sqlite backend ✅
+    - [ ] refactor code so that storage is under pkg/storage or something like that so it makes sense
 
 ### 4.2.2 Session Auto-save functionality
 - [ ] Enhance session management:
@@ -297,14 +303,20 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Security considerations
 
 ### 8.5 Additional Session Storage Backends
-#### 8.5.1 Cloud Storage Support 
+#### 8.5.1 Additional Database Support
+    - [ ] Implement PostgreSQLStorage backend for remote database
+    - [ ] Add database connection pooling and retry logic
+    - [ ] Add configuration options
+    - [ ] Create database migration scripts
+#### 8.5.2 Cloud Storage Support 
     - [ ] Implement S3Storage backend for object storage
     - [ ] Implement RedisStorage backend for in-memory cache
     - [ ] Add cloud authentication and credentials support
     - [ ] Implement storage middleware (compression, encryption)
     - [ ] Add multi-tier storage with caching layer
     - [ ] Create cloud deployment documentation
-#### 8.5.2 Advanced Features 
+    - [ ] Add configuration options
+#### 8.5.3 Advanced Features 
     - [ ] Add storage migration tool for backend switching
     - [ ] Implement storage health checks and monitoring
     - [ ] Add storage backup and restore functionality

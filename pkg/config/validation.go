@@ -6,8 +6,10 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/lexlapax/magellai/internal/logging"
+	"github.com/lexlapax/magellai/pkg/repl"
 )
 
 // ValidationError represents a configuration validation error
@@ -207,6 +209,52 @@ func (c *Config) validateSessionConfig() []ValidationError {
 				Value: maxAge,
 				Error: "max_age must be >= 0",
 			})
+		}
+	}
+
+	// Validate storage configuration
+	storageType := c.GetString("session.storage.type")
+	if storageType != "" {
+		// Check if the storage backend is available
+		if !repl.IsStorageBackendAvailable(repl.StorageType(storageType)) {
+			availableBackends := repl.GetAvailableBackends()
+			errors = append(errors, ValidationError{
+				Field: "session.storage.type",
+				Value: storageType,
+				Error: fmt.Sprintf("storage backend '%s' is not available. Available backends: %v", 
+					storageType, availableBackends),
+			})
+		}
+
+		// Validate storage-specific settings
+		switch repl.StorageType(storageType) {
+		case repl.FileSystemStorage:
+			// Validate filesystem storage settings
+			baseDir := c.GetString("session.storage.settings.base_dir")
+			if baseDir != "" {
+				expandedDir := expandPath(baseDir)
+				if err := os.MkdirAll(expandedDir, 0755); err != nil {
+					errors = append(errors, ValidationError{
+						Field: "session.storage.settings.base_dir",
+						Value: baseDir,
+						Error: fmt.Sprintf("failed to create storage base directory: %v", err),
+					})
+				}
+			}
+		case repl.SQLiteStorage:
+			// Validate SQLite storage settings
+			dbPath := c.GetString("session.storage.settings.db_path")
+			if dbPath != "" {
+				expandedPath := expandPath(dbPath)
+				dbDir := filepath.Dir(expandedPath)
+				if err := os.MkdirAll(dbDir, 0755); err != nil {
+					errors = append(errors, ValidationError{
+						Field: "session.storage.settings.db_path",
+						Value: dbPath,
+						Error: fmt.Sprintf("failed to create database directory: %v", err),
+					})
+				}
+			}
 		}
 	}
 

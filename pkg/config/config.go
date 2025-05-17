@@ -245,6 +245,12 @@ func getDefaultConfig() map[string]interface{} {
 		"session": map[string]interface{}{
 			"directory": expandPath("~/.config/magellai/sessions"),
 			"autosave":  true,
+			"storage": map[string]interface{}{
+				"type": "filesystem",
+				"settings": map[string]interface{}{
+					"base_dir": expandPath("~/.config/magellai/sessions"),
+				},
+			},
 		},
 		"plugin": map[string]interface{}{
 			"directory": expandPath("~/.config/magellai/plugins"),

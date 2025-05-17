@@ -22,15 +22,25 @@ LDFLAGS=-ldflags "-X main.Version=$(VERSION)"
 # Default target
 all: build
 
-## build: Build the binary
+## build: Build the binary (default with no database support)
 build:
-	@echo "Building $(BINARY_NAME)..."
+	@echo "Building $(BINARY_NAME) (default, no database support)..."
 	$(GO_BUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/magellai/...
 
 ## build-race: Build with race detection
 build-race:
 	@echo "Building with race detection..."
 	$(GO_BUILD) -race $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-race ./cmd/magellai/...
+
+## build-sqlite: Build with SQLite database support
+build-sqlite:
+	@echo "Building with SQLite database support..."
+	$(GO_BUILD) -tags="sqlite db" $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-sqlite ./cmd/magellai/...
+
+## build-db: Build with all database support (SQLite and PostgreSQL)
+build-db:
+	@echo "Building with all database support..."
+	$(GO_BUILD) -tags="sqlite postgresql db" $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-db ./cmd/magellai/...
 
 ## install: Install the binary
 install: build
@@ -139,10 +149,29 @@ docs:
 		echo "godoc not installed. Run: go install golang.org/x/tools/cmd/godoc@latest"; \
 	fi
 
-## bench: Run benchmarks
+## bench: Run all benchmarks
 bench:
-	@echo "Running benchmarks..."
+	@echo "Running all benchmarks..."
 	$(GO_TEST) -bench=. -benchmem ./...
+
+## bench-storage: Run storage backend benchmarks
+bench-storage:
+	@echo "Running storage backend benchmarks..."
+	$(GO_TEST) -bench=. -benchmem ./pkg/repl -run=^$
+
+## bench-storage-db: Run storage backend benchmarks with database support
+bench-storage-db:
+	@echo "Running storage backend benchmarks with database support..."
+	$(GO_TEST) -tags="sqlite db" -bench=. -benchmem ./pkg/repl -run=^$
+
+## bench-compare: Compare storage backends performance
+bench-compare:
+	@echo "Comparing storage backend performance..."
+	@echo "FileSystem backend:"
+	$(GO_TEST) -bench=BenchmarkSessionSave -benchmem ./pkg/repl -run=^$ | grep -E "BenchmarkSessionSave|ns/op|B/op|allocs/op"
+	@echo ""
+	@echo "SQLite backend:"
+	$(GO_TEST) -tags="sqlite db" -bench=BenchmarkSessionSave -benchmem ./pkg/repl -run=^$ | grep -E "BenchmarkSessionSave|ns/op|B/op|allocs/op"
 
 ## release-build: Build releases for multiple platforms
 release-build:

@@ -55,3 +55,9 @@ func (b *FileSystemBackend) SearchSessions(query string) ([]*SearchResult, error
 func (b *FileSystemBackend) ExportSession(id string, format string, w io.Writer) error {
 	return b.manager.ExportSession(id, format, w)
 }
+
+// Close closes the storage backend and releases resources
+func (b *FileSystemBackend) Close() error {
+	// FileSystemBackend doesn't have any resources to release
+	return nil
+}

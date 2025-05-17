@@ -11,6 +11,7 @@ require (
 	github.com/knadh/koanf/providers/rawbytes v1.0.0
 	github.com/knadh/koanf/v2 v2.2.0
 	github.com/lexlapax/go-llms v0.2.4
+	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/stretchr/testify v1.10.0
 	github.com/willabides/kongplete v0.4.0
 )

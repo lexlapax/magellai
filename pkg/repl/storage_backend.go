@@ -13,4 +13,5 @@ type StorageBackend interface {
 	DeleteSession(id string) error
 	SearchSessions(query string) ([]*SearchResult, error)
 	ExportSession(id string, format string, w io.Writer) error
+	Close() error
 }
