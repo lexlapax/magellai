@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/llm"
 )
 
@@ -220,6 +221,7 @@ func (r *REPL) switchModel(args []string) error {
 	}
 
 	modelStr := args[0]
+	logging.LogInfo("Switching model", "from", r.session.Conversation.Model, "to", modelStr)
 
 	// Parse model string
 	parts := strings.Split(modelStr, "/")
@@ -230,8 +232,10 @@ func (r *REPL) switchModel(args []string) error {
 	modelName := parts[1]
 
 	// Create new provider
+	logging.LogDebug("Creating new provider", "provider", providerType, "model", modelName)
 	provider, err := llm.NewProvider(providerType, modelName)
 	if err != nil {
+		logging.LogError(err, "Failed to create provider for model switch", "provider", providerType, "model", modelName)
 		return fmt.Errorf("failed to create provider: %w", err)
 	}
 
@@ -240,6 +244,7 @@ func (r *REPL) switchModel(args []string) error {
 	r.session.Conversation.Model = modelStr
 	r.session.Conversation.Provider = providerType
 
+	logging.LogInfo("Model switched successfully", "model", modelStr)
 	fmt.Fprintf(r.writer, "Switched to model: %s\n", modelStr)
 	return nil
 }

@@ -28,12 +28,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 #### 3.5.4 Command Execution Logging (pkg/command/) ✅
 
-#### 3.5.5 REPL Operations Logging (pkg/repl/)
-- [ ] User input processing (DEBUG)
-- [ ] Command handling (DEBUG)
-- [ ] Special command processing (DEBUG)
-- [ ] Message processing (DEBUG)
-- [ ] Model switching (INFO)
+#### 3.5.5 REPL Operations Logging (pkg/repl/) ✅
 
 #### 3.5.6 File Operations Logging (internal/configdir/)
 - [ ] Directory creation (DEBUG)

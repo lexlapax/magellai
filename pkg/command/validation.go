@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-	
+
 	"github.com/lexlapax/magellai/internal/logging"
 )
 
@@ -72,7 +72,7 @@ func (v *Validator) ValidateFlags(flags *Flags) error {
 func (v *Validator) ValidateContext(ctx *ExecutionContext) error {
 	meta := v.cmd.Metadata()
 	logging.LogDebug("Validating execution context", "command", meta.Name)
-	
+
 	if ctx == nil {
 		logging.LogError(nil, "Execution context is nil", "command", meta.Name)
 		return fmt.Errorf("execution context is nil")

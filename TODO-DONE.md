@@ -319,3 +319,10 @@ This document contains all completed sections from the original TODO.md file for
 - [x] Pre/post execution hooks (DEBUG)
 - [x] Command errors (ERROR)
 - [x] Command registry operations (DEBUG)
+
+#### 3.5.5 REPL Operations Logging (pkg/repl/) ✅
+- [x] User input processing (DEBUG)
+- [x] Command handling (DEBUG)
+- [x] Special command processing (DEBUG)
+- [x] Message processing (DEBUG)
+- [x] Model switching (INFO)

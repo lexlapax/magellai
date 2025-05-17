@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	
+
 	"github.com/lexlapax/magellai/internal/logging"
 )
 

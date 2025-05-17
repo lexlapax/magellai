@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	
+
 	"github.com/lexlapax/magellai/internal/logging"
 )
 
@@ -38,7 +38,7 @@ type SessionManager struct {
 // NewSessionManager creates a new session manager with the given storage directory
 func NewSessionManager(storageDir string) (*SessionManager, error) {
 	logging.LogDebug("Creating session manager", "storageDir", storageDir)
-	
+
 	// Ensure storage directory exists
 	if err := os.MkdirAll(storageDir, 0755); err != nil {
 		logging.LogError(err, "Failed to create storage directory", "storageDir", storageDir)
@@ -55,7 +55,7 @@ func NewSessionManager(storageDir string) (*SessionManager, error) {
 func (sm *SessionManager) NewSession(name string) *Session {
 	now := time.Now()
 	sessionID := generateSessionID()
-	
+
 	logging.LogInfo("Creating new session", "id", sessionID, "name", name)
 
 	session := &Session{
@@ -67,7 +67,7 @@ func (sm *SessionManager) NewSession(name string) *Session {
 		Updated:      now,
 		Metadata:     make(map[string]interface{}),
 	}
-	
+
 	logging.LogDebug("Session created successfully", "id", sessionID, "name", name)
 	return session
 }
@@ -75,13 +75,13 @@ func (sm *SessionManager) NewSession(name string) *Session {
 // SaveSession persists a session to disk
 func (sm *SessionManager) SaveSession(session *Session) error {
 	session.Updated = time.Now()
-	
+
 	logging.LogInfo("Saving session", "id", session.ID, "name", session.Name)
 
 	// Create session file path
 	filename := fmt.Sprintf("%s.json", session.ID)
 	filepath := filepath.Join(sm.StorageDir, filename)
-	
+
 	logging.LogDebug("Writing session file", "path", filepath)
 
 	// Marshal session to JSON
@@ -104,10 +104,10 @@ func (sm *SessionManager) SaveSession(session *Session) error {
 // LoadSession loads a session from disk by ID
 func (sm *SessionManager) LoadSession(id string) (*Session, error) {
 	logging.LogInfo("Loading session", "id", id)
-	
+
 	filename := fmt.Sprintf("%s.json", id)
 	filepath := filepath.Join(sm.StorageDir, filename)
-	
+
 	logging.LogDebug("Reading session file", "path", filepath)
 
 	// Read file
@@ -135,7 +135,7 @@ func (sm *SessionManager) LoadSession(id string) (*Session, error) {
 // ListSessions returns a list of all available sessions
 func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
 	logging.LogDebug("Listing sessions", "storageDir", sm.StorageDir)
-	
+
 	entries, err := os.ReadDir(sm.StorageDir)
 	if err != nil {
 		logging.LogError(err, "Failed to read storage directory", "storageDir", sm.StorageDir)
@@ -182,7 +182,7 @@ func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
 // DeleteSession removes a session from disk
 func (sm *SessionManager) DeleteSession(id string) error {
 	logging.LogInfo("Deleting session", "id", id)
-	
+
 	filename := fmt.Sprintf("%s.json", id)
 	filepath := filepath.Join(sm.StorageDir, filename)
 
@@ -202,7 +202,7 @@ func (sm *SessionManager) DeleteSession(id string) error {
 // SearchSessions searches for sessions by text in messages
 func (sm *SessionManager) SearchSessions(query string) ([]*SessionInfo, error) {
 	logging.LogDebug("Searching sessions", "query", query)
-	
+
 	sessions, err := sm.ListSessions()
 	if err != nil {
 		return nil, err
@@ -258,7 +258,7 @@ type SessionInfo struct {
 // ExportSession exports a session to a writer in the specified format
 func (sm *SessionManager) ExportSession(id string, format string, w io.Writer) error {
 	logging.LogInfo("Exporting session", "id", id, "format", format)
-	
+
 	session, err := sm.LoadSession(id)
 	if err != nil {
 		return err
@@ -292,7 +292,7 @@ func (sm *SessionManager) ExportSession(id string, format string, w io.Writer) e
 // Helper function to export session as markdown
 func (sm *SessionManager) exportMarkdown(session *Session, w io.Writer) error {
 	logging.LogDebug("Exporting session as markdown", "id", session.ID)
-	
+
 	fmt.Fprintf(w, "# Session: %s\n\n", session.Name)
 	fmt.Fprintf(w, "ID: %s\n", session.ID)
 	fmt.Fprintf(w, "Created: %s\n", session.Created.Format(time.RFC3339))

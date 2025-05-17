@@ -10,7 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	
+
 	"github.com/lexlapax/magellai/internal/logging"
 )
 
@@ -64,7 +64,7 @@ type ExecutorOption func(*CommandExecutor)
 // NewExecutor creates a new command executor
 func NewExecutor(registry *Registry, opts ...ExecutorOption) *CommandExecutor {
 	logging.LogDebug("Creating new command executor", "registrySize", len(registry.commands))
-	
+
 	e := &CommandExecutor{
 		registry:      registry,
 		defaultStdin:  os.Stdin,
@@ -107,7 +107,7 @@ func WithPostExecuteHook(hook ExecutorHook) ExecutorOption {
 // Execute runs a command by name with the given context
 func (e *CommandExecutor) Execute(ctx context.Context, name string, exec *ExecutionContext) error {
 	logging.LogDebug("Executing command", "name", name, "args", exec.Args)
-	
+
 	// Get command from registry
 	cmd, err := e.registry.Get(name)
 	if err != nil {
@@ -127,7 +127,7 @@ func (e *CommandExecutor) ExecuteCommand(ctx context.Context, cmd Interface, exe
 		flagCount = len(exec.Flags.values)
 	}
 	logging.LogDebug("Starting command execution", "name", meta.Name, "args", exec.Args, "flagCount", flagCount)
-	
+
 	// Set defaults if not provided
 	if exec.Stdin == nil {
 		exec.Stdin = e.defaultStdin
@@ -165,7 +165,7 @@ func (e *CommandExecutor) ExecuteCommand(ctx context.Context, cmd Interface, exe
 	// Execute the command
 	logging.LogInfo("Executing command", "name", meta.Name, "category", meta.Category)
 	err := cmd.Execute(ctx, exec)
-	
+
 	if err != nil {
 		logging.LogError(err, "Command execution failed", "command", meta.Name)
 	} else {
@@ -309,7 +309,7 @@ func (e *CommandExecutor) ExecuteWithArgs(ctx context.Context, name string, args
 // ParseAndExecute parses command line arguments and executes the command
 func (e *CommandExecutor) ParseAndExecute(ctx context.Context, args []string) error {
 	logging.LogDebug("Parsing and executing command", "argCount", len(args))
-	
+
 	if len(args) == 0 {
 		logging.LogError(ErrMissingArgument, "No command provided")
 		return ErrMissingArgument

@@ -68,7 +68,7 @@ type providerAdapter struct {
 // NewProvider creates a provider adapter for the specified provider type
 func NewProvider(providerType, model string, apiKey ...string) (Provider, error) {
 	logging.LogInfo("Creating LLM provider", "provider", providerType, "model", model)
-	
+
 	var llmProvider domain.Provider
 	var err error
 
@@ -128,10 +128,10 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 			Description:  fmt.Sprintf("%s model %s", providerType, model),
 		}
 	}
-	
-	logging.LogInfo("Provider created successfully", 
-		"provider", providerType, 
-		"model", model, 
+
+	logging.LogInfo("Provider created successfully",
+		"provider", providerType,
+		"model", model,
 		"capabilities", fmt.Sprintf("%+v", modelInfo.Capabilities))
 
 	return &providerAdapter{
@@ -143,7 +143,7 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 // getAPIKeyFromEnv retrieves API key from environment variables
 func getAPIKeyFromEnv(provider string) string {
 	logging.LogDebug("Looking for API key in environment", "provider", provider)
-	
+
 	var envVar string
 	switch provider {
 	case ProviderOpenAI:
@@ -156,7 +156,7 @@ func getAPIKeyFromEnv(provider string) string {
 		logging.LogDebug("No environment variable mapping for provider", "provider", provider)
 		return ""
 	}
-	
+
 	key := os.Getenv(envVar)
 	if key != "" {
 		logging.LogDebug("Found API key in environment", "provider", provider, "envVar", envVar)
@@ -198,15 +198,15 @@ func getModelCapabilities(provider, model string) []ModelCapability {
 // Generate produces text from a prompt
 func (p *providerAdapter) Generate(ctx context.Context, prompt string, options ...ProviderOption) (string, error) {
 	logging.LogDebug("Generating response", "model", p.modelInfo.Model, "promptLength", len(prompt))
-	
+
 	llmOptions := p.buildLLMOptions(options...)
 	response, err := p.provider.Generate(ctx, prompt, llmOptions...)
-	
+
 	if err != nil {
 		logging.LogError(err, "Failed to generate response", "model", p.modelInfo.Model)
 		return "", err
 	}
-	
+
 	logging.LogDebug("Response generated successfully", "model", p.modelInfo.Model, "responseLength", len(response))
 	return response, nil
 }
@@ -214,7 +214,7 @@ func (p *providerAdapter) Generate(ctx context.Context, prompt string, options .
 // GenerateMessage produces a response from messages
 func (p *providerAdapter) GenerateMessage(ctx context.Context, messages []Message, options ...ProviderOption) (*Response, error) {
 	logging.LogDebug("Generating message response", "model", p.modelInfo.Model, "messageCount", len(messages))
-	
+
 	// Convert our messages to go-llms messages
 	llmMessages := make([]domain.Message, len(messages))
 	for i, msg := range messages {
@@ -234,11 +234,11 @@ func (p *providerAdapter) GenerateMessage(ctx context.Context, messages []Messag
 		Model:   p.modelInfo.Model,
 		Usage:   nil, // go-llms doesn't provide usage info in the basic Response
 	}
-	
-	logging.LogDebug("Message response generated successfully", 
-		"model", p.modelInfo.Model, 
+
+	logging.LogDebug("Message response generated successfully",
+		"model", p.modelInfo.Model,
 		"responseLength", len(response.Content))
-	
+
 	return response, nil
 }
 
@@ -251,7 +251,7 @@ func (p *providerAdapter) GenerateWithSchema(ctx context.Context, prompt string,
 // Stream streams responses token by token
 func (p *providerAdapter) Stream(ctx context.Context, prompt string, options ...ProviderOption) (<-chan StreamChunk, error) {
 	logging.LogDebug("Starting streaming response", "model", p.modelInfo.Model, "promptLength", len(prompt))
-	
+
 	llmOptions := p.buildLLMOptions(options...)
 	llmStream, err := p.provider.Stream(ctx, prompt, llmOptions...)
 	if err != nil {
@@ -325,7 +325,7 @@ func (p *providerAdapter) GetModelInfo() ModelInfo {
 // buildLLMOptions converts our options to go-llms options
 func (p *providerAdapter) buildLLMOptions(options ...ProviderOption) []domain.Option {
 	logging.LogDebug("Building LLM options", "model", p.modelInfo.Model)
-	
+
 	config := &providerConfig{}
 	for _, opt := range options {
 		opt(config)

@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/llm"
 )
 
@@ -48,6 +49,8 @@ type REPLOptions struct {
 
 // NewREPL creates a new REPL instance
 func NewREPL(opts *REPLOptions) (*REPL, error) {
+	logging.LogDebug("Creating new REPL instance", "sessionID", opts.SessionID, "model", opts.Model)
+
 	if opts.Writer == nil {
 		opts.Writer = os.Stdout
 	}
@@ -60,14 +63,18 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	if opts.StorageDir == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
+			logging.LogError(err, "Failed to get home directory")
 			return nil, fmt.Errorf("failed to get home directory: %w", err)
 		}
 		opts.StorageDir = filepath.Join(homeDir, ".config", "magellai", "sessions")
+		logging.LogDebug("Using default session storage directory", "dir", opts.StorageDir)
 	}
 
 	// Create session manager
+	logging.LogDebug("Creating session manager", "storageDir", opts.StorageDir)
 	manager, err := NewSessionManager(opts.StorageDir)
 	if err != nil {
+		logging.LogError(err, "Failed to create session manager")
 		return nil, fmt.Errorf("failed to create session manager: %w", err)
 	}
 
@@ -77,32 +84,41 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	var session *Session
 	if opts.SessionID != "" {
 		// Resume existing session
+		logging.LogInfo("Resuming existing session", "sessionID", opts.SessionID)
 		session, err = manager.LoadSession(opts.SessionID)
 		if err != nil {
+			logging.LogError(err, "Failed to load session", "sessionID", opts.SessionID)
 			return nil, fmt.Errorf("failed to load session: %w", err)
 		}
 	} else {
 		// Create new session
+		logging.LogInfo("Creating new session")
 		session = manager.NewSession("Interactive Chat")
 	}
 
 	// Override model if specified
 	modelStr := cfg.GetString("model")
 	if opts.Model != "" {
+		logging.LogDebug("Overriding model from options", "model", opts.Model)
 		modelStr = opts.Model
 	}
 
 	// Parse model string to get provider and model
+	logging.LogDebug("Parsing model string", "modelStr", modelStr)
 	parts := strings.Split(modelStr, "/")
 	if len(parts) != 2 {
+		logging.LogError(nil, "Invalid model format", "modelStr", modelStr)
 		return nil, fmt.Errorf("invalid model format, expected provider/model")
 	}
 	providerType := parts[0]
 	modelName := parts[1]
+	logging.LogDebug("Parsed model configuration", "provider", providerType, "model", modelName)
 
 	// Create provider
+	logging.LogInfo("Creating LLM provider", "provider", providerType, "model", modelName)
 	provider, err := llm.NewProvider(providerType, modelName)
 	if err != nil {
+		logging.LogError(err, "Failed to create provider", "provider", providerType, "model", modelName)
 		return nil, fmt.Errorf("failed to create provider: %w", err)
 	}
 
@@ -124,6 +140,8 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 
 // Run starts the REPL loop
 func (r *REPL) Run() error {
+	logging.LogInfo("Starting REPL session", "sessionID", r.session.ID, "model", r.session.Conversation.Model)
+
 	// Print welcome message
 	fmt.Fprintf(r.writer, "magellai chat - Interactive LLM chat (type /help for commands)\n")
 	fmt.Fprintf(r.writer, "Model: %s\n", r.session.Conversation.Model)
@@ -135,24 +153,31 @@ func (r *REPL) Run() error {
 		fmt.Fprint(r.writer, r.promptStyle)
 
 		// Read input
+		logging.LogDebug("Reading user input")
 		input, err := r.readInput()
 		if err != nil {
 			if err == io.EOF && r.exitOnEOF {
+				logging.LogInfo("EOF received, exiting REPL")
 				fmt.Fprintln(r.writer, "\nGoodbye!")
 				return nil
 			}
+			logging.LogError(err, "Read error")
 			return fmt.Errorf("read error: %w", err)
 		}
 
 		// Skip empty input
 		input = strings.TrimSpace(input)
 		if input == "" {
+			logging.LogDebug("Empty input, skipping")
 			continue
 		}
+		logging.LogDebug("Processing user input", "inputLength", len(input))
 
 		// Check for commands
 		if strings.HasPrefix(input, "/") {
+			logging.LogDebug("Processing command", "command", input)
 			if err := r.handleCommand(input); err != nil {
+				logging.LogError(err, "Command error", "command", input)
 				fmt.Fprintf(r.writer, "Error: %v\n", err)
 			}
 			continue
@@ -160,19 +185,25 @@ func (r *REPL) Run() error {
 
 		// Check for special commands (: prefix)
 		if strings.HasPrefix(input, ":") {
+			logging.LogDebug("Processing special command", "command", input)
 			if err := r.handleSpecialCommand(input); err != nil {
+				logging.LogError(err, "Special command error", "command", input)
 				fmt.Fprintf(r.writer, "Error: %v\n", err)
 			}
 			continue
 		}
 
 		// Process as conversation
+		logging.LogDebug("Processing message", "messageLength", len(input))
 		if err := r.processMessage(input); err != nil {
+			logging.LogError(err, "Message processing error")
 			fmt.Fprintf(r.writer, "Error: %v\n", err)
 		}
 
 		// Auto-save session
+		logging.LogDebug("Auto-saving session", "sessionID", r.session.ID)
 		if err := r.manager.SaveSession(r.session); err != nil {
+			logging.LogWarn("Failed to auto-save session", "sessionID", r.session.ID, "error", err)
 			fmt.Fprintf(r.writer, "Warning: Failed to auto-save session: %v\n", err)
 		}
 	}
@@ -205,17 +236,20 @@ func (r *REPL) readInput() (string, error) {
 
 // processMessage processes a user message and generates a response
 func (r *REPL) processMessage(message string) error {
+	logging.LogDebug("Processing message", "message", message)
 	// Get pending attachments
 	var attachments []llm.Attachment
 	if r.session.Metadata != nil {
 		if pending, ok := r.session.Metadata["pending_attachments"].([]llm.Attachment); ok {
 			attachments = pending
+			logging.LogDebug("Found pending attachments", "count", len(attachments))
 			// Clear pending attachments
 			delete(r.session.Metadata, "pending_attachments")
 		}
 	}
 
 	// Add user message to conversation
+	logging.LogDebug("Adding user message to conversation", "attachmentCount", len(attachments))
 	r.session.Conversation.AddMessage("user", message, attachments)
 
 	// Get conversation history
@@ -237,6 +271,7 @@ func (r *REPL) processMessage(message string) error {
 
 	// Use streaming if enabled
 	if r.config.GetBool("stream") {
+		logging.LogDebug("Using streaming mode")
 		// Start response
 		fmt.Fprint(r.writer, "\n")
 
@@ -244,25 +279,30 @@ func (r *REPL) processMessage(message string) error {
 		var fullResponse strings.Builder
 		stream, err := r.provider.StreamMessage(ctx, messages, opts...)
 		if err != nil {
+			logging.LogError(err, "Failed to start stream")
 			return fmt.Errorf("failed to start stream: %w", err)
 		}
 
 		for chunk := range stream {
 			if chunk.Error != nil {
+				logging.LogError(chunk.Error, "Stream error")
 				return fmt.Errorf("stream error: %w", chunk.Error)
 			}
 			fmt.Fprint(r.writer, chunk.Content)
 			fullResponse.WriteString(chunk.Content)
 		}
+		logging.LogDebug("Stream completed", "responseLength", fullResponse.Len())
 
 		fmt.Fprintln(r.writer, "")
 
 		// Add assistant message to conversation
 		r.session.Conversation.AddMessage("assistant", fullResponse.String(), nil)
 	} else {
+		logging.LogDebug("Using non-streaming mode")
 		// Non-streaming response
 		resp, err := r.provider.GenerateMessage(ctx, messages, opts...)
 		if err != nil {
+			logging.LogError(err, "Failed to generate message")
 			return fmt.Errorf("failed to generate response: %w", err)
 		}
 
@@ -278,6 +318,8 @@ func (r *REPL) processMessage(message string) error {
 
 // handleCommand handles REPL commands (starting with /)
 func (r *REPL) handleCommand(cmd string) error {
+	logging.LogDebug("Handling command", "cmd", cmd)
+
 	parts := strings.Fields(cmd)
 	if len(parts) == 0 {
 		return nil
@@ -285,25 +327,33 @@ func (r *REPL) handleCommand(cmd string) error {
 
 	command := strings.ToLower(parts[0])
 	args := parts[1:]
+	logging.LogDebug("Parsed command", "command", command, "argCount", len(args))
 
 	switch command {
 	case "/help":
+		logging.LogDebug("Showing help")
 		return r.showHelp()
 	case "/exit", "/quit":
+		logging.LogInfo("User requested exit")
 		// Save session before exiting
 		if err := r.manager.SaveSession(r.session); err != nil {
+			logging.LogWarn("Failed to save session on exit", "error", err)
 			fmt.Fprintf(r.writer, "Warning: Failed to save session: %v\n", err)
 		}
 		fmt.Fprintln(r.writer, "Goodbye!")
 		os.Exit(0)
 		return nil // This line is never reached but satisfies the compiler
 	case "/save":
+		logging.LogDebug("Saving session", "args", args)
 		return r.saveSession(args)
 	case "/load":
+		logging.LogDebug("Loading session", "args", args)
 		return r.loadSession(args)
 	case "/reset":
+		logging.LogDebug("Resetting conversation")
 		return r.resetConversation()
 	case "/model":
+		logging.LogDebug("Showing model")
 		return r.showModel()
 	case "/system":
 		return r.setSystemPrompt(args)
@@ -322,6 +372,8 @@ func (r *REPL) handleCommand(cmd string) error {
 
 // handleSpecialCommand handles special commands (starting with :)
 func (r *REPL) handleSpecialCommand(cmd string) error {
+	logging.LogDebug("Handling special command", "cmd", cmd)
+
 	parts := strings.Fields(cmd)
 	if len(parts) == 0 {
 		return nil
@@ -329,19 +381,26 @@ func (r *REPL) handleSpecialCommand(cmd string) error {
 
 	command := strings.ToLower(parts[0])
 	args := parts[1:]
+	logging.LogDebug("Parsed special command", "command", command, "argCount", len(args))
 
 	switch command {
 	case ":model":
+		logging.LogDebug("Switching model", "args", args)
 		return r.switchModel(args)
 	case ":stream":
+		logging.LogDebug("Toggling streaming", "args", args)
 		return r.toggleStreaming(args)
 	case ":temperature":
+		logging.LogDebug("Setting temperature", "args", args)
 		return r.setTemperature(args)
 	case ":max_tokens":
+		logging.LogDebug("Setting max tokens", "args", args)
 		return r.setMaxTokens(args)
 	case ":multiline":
+		logging.LogDebug("Toggling multiline")
 		return r.toggleMultiline()
 	default:
+		logging.LogDebug("Unknown special command", "command", command)
 		return fmt.Errorf("unknown special command: %s", command)
 	}
 }
