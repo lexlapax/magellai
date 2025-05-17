@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/confmap"
@@ -70,6 +71,7 @@ func Init() error {
 
 // Load loads configuration from all sources in precedence order
 func (c *Config) Load(flags *pflag.FlagSet) error {
+	start := time.Now()
 	logging.LogInfo("Loading configuration from all sources")
 
 	c.mu.Lock()
@@ -128,7 +130,9 @@ func (c *Config) Load(flags *pflag.FlagSet) error {
 		}
 	}
 
+	duration := time.Since(start)
 	logging.LogInfo("Configuration loading completed successfully")
+	logging.LogDebug("Configuration load time", "duration", duration)
 	return nil
 }
 

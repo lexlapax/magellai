@@ -339,3 +339,9 @@ This document contains all completed sections from the original TODO.md file for
 - [x] Command invocations (INFO)
 - [x] Session starts/ends (INFO)
 - [x] Configuration changes (INFO)
+
+#### 3.5.8 Performance and Metrics Logging ✅
+- [x] Configuration load time (DEBUG)
+- [x] LLM response time (DEBUG)
+- [x] Session operation duration (DEBUG)
+- [x] Command execution time (DEBUG)

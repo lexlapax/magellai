@@ -74,6 +74,7 @@ func (sm *SessionManager) NewSession(name string) *Session {
 
 // SaveSession persists a session to disk
 func (sm *SessionManager) SaveSession(session *Session) error {
+	start := time.Now()
 	session.Updated = time.Now()
 
 	logging.LogInfo("Saving session", "id", session.ID, "name", session.Name)
@@ -97,12 +98,15 @@ func (sm *SessionManager) SaveSession(session *Session) error {
 		return fmt.Errorf("failed to write session file: %w", err)
 	}
 
+	duration := time.Since(start)
 	logging.LogInfo("Session saved successfully", "id", session.ID, "path", filepath)
+	logging.LogDebug("Session save duration", "id", session.ID, "duration", duration)
 	return nil
 }
 
 // LoadSession loads a session from disk by ID
 func (sm *SessionManager) LoadSession(id string) (*Session, error) {
+	start := time.Now()
 	logging.LogInfo("Loading session", "id", id)
 
 	filename := fmt.Sprintf("%s.json", id)
@@ -128,12 +132,15 @@ func (sm *SessionManager) LoadSession(id string) (*Session, error) {
 		return nil, fmt.Errorf("failed to unmarshal session: %w", err)
 	}
 
+	duration := time.Since(start)
 	logging.LogInfo("Session loaded successfully", "id", id, "name", session.Name)
+	logging.LogDebug("Session load duration", "id", id, "duration", duration)
 	return &session, nil
 }
 
 // ListSessions returns a list of all available sessions
 func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
+	start := time.Now()
 	logging.LogDebug("Listing sessions", "storageDir", sm.StorageDir)
 
 	entries, err := os.ReadDir(sm.StorageDir)
@@ -175,7 +182,9 @@ func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
 		sessions = append(sessions, info)
 	}
 
+	duration := time.Since(start)
 	logging.LogDebug("Listed sessions", "count", len(sessions))
+	logging.LogDebug("Session list duration", "count", len(sessions), "duration", duration)
 	return sessions, nil
 }
 

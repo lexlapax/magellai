@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/lexlapax/go-llms/pkg/llm/domain"
 	"github.com/lexlapax/go-llms/pkg/llm/provider"
@@ -197,22 +198,26 @@ func getModelCapabilities(provider, model string) []ModelCapability {
 
 // Generate produces text from a prompt
 func (p *providerAdapter) Generate(ctx context.Context, prompt string, options ...ProviderOption) (string, error) {
+	start := time.Now()
 	logging.LogDebug("Generating response", "model", p.modelInfo.Model, "promptLength", len(prompt))
 
 	llmOptions := p.buildLLMOptions(options...)
 	response, err := p.provider.Generate(ctx, prompt, llmOptions...)
 
+	duration := time.Since(start)
 	if err != nil {
 		logging.LogError(err, "Failed to generate response", "model", p.modelInfo.Model)
 		return "", err
 	}
 
 	logging.LogDebug("Response generated successfully", "model", p.modelInfo.Model, "responseLength", len(response))
+	logging.LogDebug("LLM response time", "model", p.modelInfo.Model, "duration", duration)
 	return response, nil
 }
 
 // GenerateMessage produces a response from messages
 func (p *providerAdapter) GenerateMessage(ctx context.Context, messages []Message, options ...ProviderOption) (*Response, error) {
+	start := time.Now()
 	logging.LogDebug("Generating message response", "model", p.modelInfo.Model, "messageCount", len(messages))
 
 	// Convert our messages to go-llms messages
@@ -223,6 +228,8 @@ func (p *providerAdapter) GenerateMessage(ctx context.Context, messages []Messag
 
 	llmOptions := p.buildLLMOptions(options...)
 	llmResponse, err := p.provider.GenerateMessage(ctx, llmMessages, llmOptions...)
+	
+	duration := time.Since(start)
 	if err != nil {
 		logging.LogError(err, "Failed to generate message response", "model", p.modelInfo.Model)
 		return nil, err
@@ -238,18 +245,29 @@ func (p *providerAdapter) GenerateMessage(ctx context.Context, messages []Messag
 	logging.LogDebug("Message response generated successfully",
 		"model", p.modelInfo.Model,
 		"responseLength", len(response.Content))
+	logging.LogDebug("LLM response time", "model", p.modelInfo.Model, "duration", duration)
 
 	return response, nil
 }
 
 // GenerateWithSchema produces structured output conforming to a schema
 func (p *providerAdapter) GenerateWithSchema(ctx context.Context, prompt string, schema *schemadomain.Schema, options ...ProviderOption) (interface{}, error) {
+	start := time.Now()
 	llmOptions := p.buildLLMOptions(options...)
-	return p.provider.GenerateWithSchema(ctx, prompt, schema, llmOptions...)
+	result, err := p.provider.GenerateWithSchema(ctx, prompt, schema, llmOptions...)
+	duration := time.Since(start)
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	logging.LogDebug("Schema-based response time", "model", p.modelInfo.Model, "duration", duration)
+	return result, err
 }
 
 // Stream streams responses token by token
 func (p *providerAdapter) Stream(ctx context.Context, prompt string, options ...ProviderOption) (<-chan StreamChunk, error) {
+	start := time.Now()
 	logging.LogDebug("Starting streaming response", "model", p.modelInfo.Model, "promptLength", len(prompt))
 
 	llmOptions := p.buildLLMOptions(options...)
@@ -276,6 +294,8 @@ func (p *providerAdapter) Stream(ctx context.Context, prompt string, options ...
 				return
 			}
 		}
+		duration := time.Since(start)
+		logging.LogDebug("Streaming response completed", "model", p.modelInfo.Model, "duration", duration)
 	}()
 
 	return chunkChan, nil
@@ -283,6 +303,8 @@ func (p *providerAdapter) Stream(ctx context.Context, prompt string, options ...
 
 // StreamMessage streams responses from messages
 func (p *providerAdapter) StreamMessage(ctx context.Context, messages []Message, options ...ProviderOption) (<-chan StreamChunk, error) {
+	start := time.Now()
+	
 	// Convert our messages to go-llms messages
 	llmMessages := make([]domain.Message, len(messages))
 	for i, msg := range messages {
@@ -312,6 +334,8 @@ func (p *providerAdapter) StreamMessage(ctx context.Context, messages []Message,
 				return
 			}
 		}
+		duration := time.Since(start)
+		logging.LogDebug("Message streaming completed", "model", p.modelInfo.Model, "duration", duration)
 	}()
 
 	return chunkChan, nil

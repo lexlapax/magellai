@@ -32,8 +32,8 @@ The project follows a library-first design where the core intelligence (LLM prov
   ✅ Phase 3.5.5: REPL Operations Logging - Complete
   ✅ Phase 3.5.6: File Operations Logging - Complete
   ✅ Phase 3.5.7: User-Facing Operations Logging - Complete
-  🚧 Phase 3.5.8: Performance and Metrics Logging - Next
-  ⏳ Phase 3.5.9: Security and Audit Logging - Pending
+  ✅ Phase 3.5.8: Performance and Metrics Logging - Complete  
+  🚧 Phase 3.5.9: Security and Audit Logging - Next
   ⏳ Phase 3.5.10: Testing and Integration - Pending
 
 ### Recent Improvements
@@ -73,14 +73,21 @@ The project follows a library-first design where the core intelligence (LLM prov
   - INFO level for session starts/ends (already implemented)
   - INFO level for configuration changes with keys and before/after values
   - All user-initiated actions now have comprehensive logging
+- Performance and Metrics logging (3.5.8):
+  - DEBUG level timing for configuration load operations
+  - DEBUG level timing for LLM response generation (all methods)
+  - DEBUG level timing for session operations (save, load, list)
+  - DEBUG level timing for command execution
+  - Duration tracking for streaming operations
+  - Performance metrics for all major system operations
 - Fixed compilation errors related to GetProfile and len(exec.Flags)
 - Fixed integration test to build test binary in bin directory for proper cleanup
 - Fixed logging infrastructure to handle nil errors gracefully
 - All operations now have appropriate logging with context
-- Completed sections 3.5.1, 3.5.2, 3.5.3, 3.5.4, 3.5.5, 3.5.6, and 3.5.7 of Phase 3.5
+- Completed sections 3.5.1, 3.5.2, 3.5.3, 3.5.4, 3.5.5, 3.5.6, 3.5.7, and 3.5.8 of Phase 3.5
 - Marked partial sections (3.2 and 3.2.1) for revisit in TODO.md
 - All tests passing, code formatted, and linted successfully
-- Phase 3.5.8 (Performance and Metrics Logging) is next
+- Phase 3.5.9 (Security and Audit Logging) is next
 
 ## Architecture
 

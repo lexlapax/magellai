@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/lexlapax/magellai/internal/logging"
 )
@@ -106,6 +107,7 @@ func WithPostExecuteHook(hook ExecutorHook) ExecutorOption {
 
 // Execute runs a command by name with the given context
 func (e *CommandExecutor) Execute(ctx context.Context, name string, exec *ExecutionContext) error {
+	start := time.Now()
 	logging.LogDebug("Executing command", "name", name, "args", exec.Args)
 
 	// Get command from registry
@@ -116,7 +118,10 @@ func (e *CommandExecutor) Execute(ctx context.Context, name string, exec *Execut
 	}
 
 	// Execute the command
-	return e.ExecuteCommand(ctx, cmd, exec)
+	result := e.ExecuteCommand(ctx, cmd, exec)
+	duration := time.Since(start)
+	logging.LogDebug("Command total execution time", "name", name, "duration", duration)
+	return result
 }
 
 // ExecuteCommand runs a specific command with validation and hooks
