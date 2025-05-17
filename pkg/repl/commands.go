@@ -363,7 +363,7 @@ func (r *REPL) setVerbosity(args []string) error {
 	if err := logging.SetLogLevel(level); err != nil {
 		return fmt.Errorf("failed to update logger: %w", err)
 	}
-	
+
 	fmt.Fprintf(r.writer, "Verbosity set to: %s\n", level)
 	return nil
 }
@@ -415,7 +415,7 @@ func (r *REPL) switchProfile(args []string) error {
 	}
 
 	profile := args[0]
-	
+
 	// Check if profile exists
 	profiles := r.config.GetString("available_profiles")
 	if profiles != "" {
@@ -448,7 +448,7 @@ func (r *REPL) removeAttachment(args []string) error {
 	}
 
 	filename := args[0]
-	
+
 	attachments, ok := r.session.Metadata["pending_attachments"].([]llm.Attachment)
 	if !ok || len(attachments) == 0 {
 		fmt.Fprintln(r.writer, "No pending attachments.")
@@ -486,7 +486,7 @@ func (r *REPL) showConfig() error {
 	fmt.Fprintf(r.writer, "  verbosity: %s\n", r.config.GetString("verbosity"))
 	fmt.Fprintf(r.writer, "  output_format: %s\n", r.config.GetString("output_format"))
 	fmt.Fprintf(r.writer, "  profile: %s\n", r.config.GetString("profile"))
-	
+
 	return nil
 }
 

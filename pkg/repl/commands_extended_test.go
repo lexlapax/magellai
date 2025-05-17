@@ -53,8 +53,8 @@ func TestSetVerbosity(t *testing.T) {
 		expectMsg   string
 	}{
 		{
-			name:        "show current verbosity",
-			args:        []string{},
+			name: "show current verbosity",
+			args: []string{},
 			setupConfig: func(cfg *MockConfigInterface) {
 				cfg.values["verbosity"] = "info"
 			},
@@ -81,7 +81,7 @@ func TestSetVerbosity(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := NewMockConfig()
 			tt.setupConfig(cfg)
-			
+
 			var buf bytes.Buffer
 			r := &REPL{
 				config: cfg,
@@ -113,8 +113,8 @@ func TestSetOutput(t *testing.T) {
 		expectMsg   string
 	}{
 		{
-			name:        "show current output format",
-			args:        []string{},
+			name: "show current output format",
+			args: []string{},
 			setupConfig: func(cfg *MockConfigInterface) {
 				cfg.values["output_format"] = "json"
 			},
@@ -148,7 +148,7 @@ func TestSetOutput(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := NewMockConfig()
 			tt.setupConfig(cfg)
-			
+
 			var buf bytes.Buffer
 			r := &REPL{
 				config: cfg,
@@ -180,8 +180,8 @@ func TestSwitchProfile(t *testing.T) {
 		expectMsg   string
 	}{
 		{
-			name:        "show current profile",
-			args:        []string{},
+			name: "show current profile",
+			args: []string{},
 			setupConfig: func(cfg *MockConfigInterface) {
 				cfg.values["profile"] = "work"
 			},
@@ -196,8 +196,8 @@ func TestSwitchProfile(t *testing.T) {
 			expectMsg:   "Current profile: default\n",
 		},
 		{
-			name:        "switch to valid profile",
-			args:        []string{"personal"},
+			name: "switch to valid profile",
+			args: []string{"personal"},
 			setupConfig: func(cfg *MockConfigInterface) {
 				cfg.values["available_profiles"] = "default,work,personal"
 			},
@@ -205,8 +205,8 @@ func TestSwitchProfile(t *testing.T) {
 			expectMsg:   "Switched to profile: personal\n",
 		},
 		{
-			name:        "switch to unknown profile",
-			args:        []string{"unknown"},
+			name: "switch to unknown profile",
+			args: []string{"unknown"},
 			setupConfig: func(cfg *MockConfigInterface) {
 				cfg.values["available_profiles"] = "default,work,personal"
 			},
@@ -219,7 +219,7 @@ func TestSwitchProfile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := NewMockConfig()
 			tt.setupConfig(cfg)
-			
+
 			var buf bytes.Buffer
 			r := &REPL{
 				config: cfg,
@@ -252,8 +252,8 @@ func TestRemoveAttachment(t *testing.T) {
 		expectRemoved bool
 	}{
 		{
-			name:        "remove existing attachment",
-			args:        []string{"test.pdf"},
+			name: "remove existing attachment",
+			args: []string{"test.pdf"},
 			attachments: []llm.Attachment{
 				{FilePath: "/path/to/test.pdf", Type: llm.AttachmentTypeFile},
 				{FilePath: "/path/to/other.doc", Type: llm.AttachmentTypeFile},
@@ -263,8 +263,8 @@ func TestRemoveAttachment(t *testing.T) {
 			expectRemoved: true,
 		},
 		{
-			name:        "remove non-existent attachment",
-			args:        []string{"missing.pdf"},
+			name: "remove non-existent attachment",
+			args: []string{"missing.pdf"},
 			attachments: []llm.Attachment{
 				{FilePath: "/path/to/test.pdf", Type: llm.AttachmentTypeFile},
 			},
@@ -311,7 +311,7 @@ func TestRemoveAttachment(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expectMsg, buf.String())
-				
+
 				// Check if attachment was actually removed
 				if tt.expectRemoved {
 					remaining := r.session.Metadata["pending_attachments"].([]llm.Attachment)
@@ -481,7 +481,7 @@ func TestExtendedCommandHandling(t *testing.T) {
 		{":temperature", []string{}, true, "temperature value required"},
 		{":max_tokens", []string{}, true, "max tokens value required"},
 		{":multiline", []string{}, false, ""},
-		
+
 		// Extended commands
 		{":verbosity", []string{}, false, "Current verbosity"},
 		{":output", []string{}, false, "Current output format"},
@@ -490,7 +490,7 @@ func TestExtendedCommandHandling(t *testing.T) {
 		{":attach-remove", []string{}, true, "attachment filename required"},
 		{":attach-list", []string{}, false, ""},
 		{":system", []string{}, false, ""},
-		
+
 		// Unknown command
 		{":unknown", []string{}, true, "unknown special command"},
 	}
@@ -520,7 +520,7 @@ func TestExtendedCommandHandling(t *testing.T) {
 			}
 
 			err := r.handleSpecialCommand(cmd)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 				if tt.expectMsg != "" {
@@ -532,12 +532,12 @@ func TestExtendedCommandHandling(t *testing.T) {
 				if err != nil {
 					// Only fail if it's not an expected error
 					if !strings.Contains(err.Error(), "model name required") &&
-					   !strings.Contains(err.Error(), "file path required") &&
-					   !strings.Contains(err.Error(), "attachment filename required") {
+						!strings.Contains(err.Error(), "file path required") &&
+						!strings.Contains(err.Error(), "attachment filename required") {
 						assert.NoError(t, err)
 					}
 				}
-				
+
 				// If a specific message is expected in output, check for it
 				if tt.expectMsg != "" {
 					assert.Contains(t, buf.String(), tt.expectMsg)
@@ -550,7 +550,7 @@ func TestExtendedCommandHandling(t *testing.T) {
 func TestConfigCommand(t *testing.T) {
 	cfg := NewMockConfig()
 	cfg.values["stream"] = true
-	
+
 	var buf bytes.Buffer
 	r := &REPL{
 		config: cfg,

@@ -192,11 +192,11 @@ func SetLogLevel(level string) error {
 	// Get current configuration
 	config := LogConfig{
 		Level:      level,
-		Format:     "text", // Preserve current format
+		Format:     "text",   // Preserve current format
 		OutputPath: "stderr", // Preserve current output
 		AddSource:  false,
 	}
-	
+
 	// Re-initialize with new level
 	return Initialize(config)
 }

@@ -9,10 +9,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	
+
+	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
-	"github.com/lexlapax/magellai/internal/logging"
 )
 
 func TestAskCmd_PipelineSupport(t *testing.T) {
@@ -20,17 +20,17 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "magellai-test-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
-	
+
 	// Set up mock configuration
 	oldHome := os.Getenv("HOME")
 	os.Setenv("HOME", tmpDir)
 	defer os.Setenv("HOME", oldHome)
-	
+
 	tests := []struct {
-		name        string
-		prompt      string
-		stdin       string
-		expectError bool
+		name           string
+		prompt         string
+		stdin          string
+		expectError    bool
 		expectedPrompt string
 	}{
 		{
@@ -40,24 +40,24 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:        "prompt only",
-			prompt:      "test prompt",
-			stdin:       "",
-			expectError: false,
+			name:           "prompt only",
+			prompt:         "test prompt",
+			stdin:          "",
+			expectError:    false,
 			expectedPrompt: "test prompt",
 		},
 		{
-			name:        "stdin only",
-			prompt:      "",
-			stdin:       "stdin content",
-			expectError: false,
+			name:           "stdin only",
+			prompt:         "",
+			stdin:          "stdin content",
+			expectError:    false,
 			expectedPrompt: "stdin content",
 		},
 		{
-			name:        "both prompt and stdin",
-			prompt:      "test prompt",
-			stdin:       "stdin content",
-			expectError: false,
+			name:           "both prompt and stdin",
+			prompt:         "test prompt",
+			stdin:          "stdin content",
+			expectError:    false,
 			expectedPrompt: "stdin content\n\ntest prompt",
 		},
 	}
@@ -67,10 +67,10 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 			// Initialize config
 			err := config.Init()
 			require.NoError(t, err)
-			
+
 			// Create command registry
 			registry := command.NewRegistry()
-			
+
 			// Mock the ask command to capture the prompt
 			var capturedPrompt string
 			testCmd := &mockAskCommand{
@@ -80,7 +80,7 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 			}
 			err = registry.Register(testCmd)
 			require.NoError(t, err)
-			
+
 			// Create test context
 			var buf bytes.Buffer
 			ctx := &Context{
@@ -110,7 +110,9 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 				// Write to pipe in a goroutine
 				go func() {
 					defer w.Close()
-					w.WriteString(tt.stdin)
+					if _, err := w.WriteString(tt.stdin); err != nil {
+						t.Errorf("Failed to write to pipe: %v", err)
+					}
 				}()
 			}
 

@@ -110,7 +110,7 @@ type AskCmd struct {
 func (a *AskCmd) Run(ctx *Context) error {
 	var prompt string
 	var stdinData string
-	
+
 	// Check if stdin has data (not a terminal)
 	if stat, _ := os.Stdin.Stat(); (stat.Mode() & os.ModeCharDevice) == 0 {
 		// Read from stdin
@@ -120,7 +120,7 @@ func (a *AskCmd) Run(ctx *Context) error {
 		}
 		stdinData = string(data)
 	}
-	
+
 	// Handle prompt logic
 	if a.Prompt != "" && stdinData != "" {
 		// Both provided - combine them
@@ -135,7 +135,7 @@ func (a *AskCmd) Run(ctx *Context) error {
 		// Neither provided
 		return fmt.Errorf("no prompt provided (use argument or pipe data to stdin)")
 	}
-	
+
 	// Convert Kong command to our command system
 	exec := &command.ExecutionContext{
 		Args:    []string{prompt},
