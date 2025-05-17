@@ -247,13 +247,36 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Integrate Kong help with core help system for unified behavior
   - [ ] Add support for hiding commands with --all flag
 
-### 3.3 Chat Command
-- [ ] Implement `chat` subcommand
-  - [ ] Launch REPL mode
-  - [ ] Profile selection
-  - [ ] Session resume support (`--resume <id>`)
-  - [ ] Initial attachments support
-  - [ ] Pass control to REPL implementation
+### 3.3 Chat Command & REPL Foundation
+- [ ] Create REPL foundation in `pkg/repl/`
+  - [ ] Implement conversation management (`pkg/repl/conversation.go`)
+    - [ ] Message history with roles (user/assistant/system)
+    - [ ] Context management and token counting
+    - [ ] Message attachments support
+    - [ ] Conversation reset functionality
+  - [ ] Implement session management (`pkg/repl/session.go`)
+    - [ ] Session metadata (ID, timestamps, model)
+    - [ ] Configuration state persistence
+    - [ ] Save/load/resume functionality
+    - [ ] Session listing and searching
+  - [ ] Create REPL interface (`pkg/repl/repl.go`)
+    - [ ] Interactive command loop
+    - [ ] Prompt handling with multi-line support
+    - [ ] Command mode (/) vs conversation mode
+    - [ ] History support (arrow keys)
+  - [ ] Implement REPL commands (`pkg/repl/commands.go`)
+    - [ ] `/save [name]` - Save current session
+    - [ ] `/load <id>` - Load previous session
+    - [ ] `/reset` - Clear conversation
+    - [ ] `/exit` - Exit REPL
+    - [ ] `/help` - Show REPL commands
+- [ ] Implement `chat` CLI command
+  - [ ] Create chat command in CLI
+  - [ ] Support `--resume <id>` flag
+  - [ ] Support `--model` flag
+  - [ ] Support `--attach` for initial files
+  - [ ] Launch REPL with proper initialization
+  - [ ] Pass configuration to REPL
 
 ### 3.4 Configuration Commands (using koanf)
 - [ ] Implement config subcommands:
@@ -278,79 +301,62 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] `history export <id> [--format=json]` - Export session
   - [ ] `history search <term>` - Search sessions
 
-## Phase 4: Conversation, Session Storage & REPL (Week 4)
+## Phase 4: Advanced REPL Features (Week 4)
 
-### 4.1 Conversation Management
-- [ ] Create `pkg/conversation/conversation.go`
-  - [ ] `Conversation` struct wrapping go-llms messages
-  - [ ] Use go-llms domain.Message for history
-  - [ ] `NewConversation()` constructor
-  - [ ] `Send()` method using go-llms GenerateMessage
-  - [ ] Context management with go-llms message roles
-  - [ ] Streaming support via go-llms StreamMessage
-  - [ ] Conversation state persistence
-  - [ ] Token counting and management
-
-### 4.2 Session Storage
-- [ ] Implement session persistence in `pkg/session/`
-  - [ ] Session storage abstraction for multiple stores
-  - [ ] JSON-based storage format
-  - [ ] Save/Load conversation methods
-  - [ ] Session listing and searching
-  - [ ] File-based storage in `~/.config/magellai/sessions/`
-  - [ ] Auto-save functionality
-  - [ ] Session metadata (timestamps, model used, token counts)
-  - [ ] Unit tests for storage operations
-
-### 4.3 REPL Implementation
-- [ ] Create `pkg/repl/repl.go`
-  - [ ] Interactive loop with prompt handling
-  - [ ] Integrate with unified command system
-  - [ ] Command mode (/) vs conversation mode
-  - [ ] Multi-line input support
-  - [ ] ANSI color output when TTY
-  - [ ] Non-interactive mode detection
-  - [ ] History support (arrow keys)
-  - [ ] Tab completion for commands
-
-### 4.4 Core REPL Commands
-- [ ] Implement essential REPL commands:
-  - [ ] `/help` - Show available commands
+### 4.1 Extended REPL Commands
+- [ ] Implement additional REPL commands in `pkg/repl/commands.go`:
   - [ ] `:model <provider/name>` - Switch model
   - [ ] `:stream on|off` - Toggle streaming
-  - [ ] `:verbosity int` - set verbosity
-  - [ ] `:output <format>`
-  - [ ] `:temperature`
-  - [ ] `:max_tokens`
-  - [ ] `:profile`
-  - [ ] `:version`
-  - [ ] `:attach <file>`
-    - [ ] `:attach-remove <file>` - Remove attachment
-    - [ ] `:attach-list` - List attachments
-  - [ ] `:stream`
-  - [ ] `:format` - response formats hints
-  - [ ] `:configfile load|show` - load config or show path, different from /config
-  - [ ] `/save [name]` - Save session
-  - [ ] `/load <id>` - Load session
-  - [ ] `/reset` - Clear conversation
-  - [ ] `/exit` - Exit REPL /quit is equivalent to /exit, so is ^D
-  - [ ] `/attach <file>` - Add attachment
+  - [ ] `:verbosity <level>` - Set verbosity
+  - [ ] `:output <format>` - Set output format
+  - [ ] `:temperature <value>` - Set temperature
+  - [ ] `:max_tokens <value>` - Set max tokens
+  - [ ] `:profile <name>` - Switch profile
+  - [ ] `:attach <file>` - Add attachment
+  - [ ] `:attach-remove <file>` - Remove attachment
+  - [ ] `:attach-list` - List attachments
+  - [ ] `:system` - System prompt (by itself is system show, with argument is system set)
   - [ ] `/config show` - Display current config
   - [ ] `/config set <key> <value>` - Set config value
-  - [ ] `/profile <n>` - Switch profile
-  - [ ] `/alias list` - list aliases
-  - [ ] `/alias add <n> <command>` - create a new alias
-  - [ ] `/alias remove <n>` - remove an alias
+
+### 4.2 Advanced Session Features
+- [ ] Enhance session management:
+  - [ ] Auto-save functionality
+  - [ ] Session export formats (JSON, Markdown)
+  - [ ] Session search by content
+  - [ ] Session tags and metadata
+  - [ ] Session branching/forking
+  - [ ] Session merging
+
+### 4.3 REPL UI Enhancements
+- [ ] Improve REPL interface:
+  - [ ] Tab completion for commands
+  - [ ] Syntax highlighting for code blocks
+  - [ ] ANSI color output when TTY
+  - [ ] Non-interactive mode detection
+  - [ ] Custom prompt themes
+  - [ ] Progress indicators for streaming
+  - [ ] Rich media rendering (images, tables)
+
+### 4.4 REPL Integration with Unified Command System
+- [ ] Connect REPL to unified command system:
+  - [ ] Route REPL commands through command registry
+  - [ ] Support both `/` and `:` command prefixes
+  - [ ] Integrate with existing core commands (config, model, alias, etc.)
+  - [ ] Maintain command history across modes
+  - [ ] Support command aliases in REPL
+  - [ ] Context preservation between commands
 
 
 
-### 4.5 REPL Integration
-- [ ] Connect REPL to conversation management
-- [ ] Integrate with session storage for persistence
-- [ ] Hook up command execution to unified command system
-- [ ] Add context management across commands
-- [ ] Implement streaming display in REPL
-- [ ] Add error recovery and graceful degradation
+### 4.5 Error Handling & Recovery
+- [ ] Implement robust error handling:
+  - [ ] Graceful network error recovery
+  - [ ] Provider fallback mechanisms
+  - [ ] Session auto-recovery after crashes
+  - [ ] Partial response handling
+  - [ ] Rate limit handling
+  - [ ] Context length management
 
 ## Phase 5: Plugin System (Week 5)
 
