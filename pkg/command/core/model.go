@@ -291,7 +291,7 @@ func (c *ModelCommand) selectModel(ctx context.Context, exec *command.ExecutionC
 
 	// Get current model before making changes
 	currentModel := c.config.GetDefaultModel()
-	
+
 	// Update configuration
 	if err := c.config.SetDefaultProvider(provider); err != nil {
 		return fmt.Errorf("failed to set provider: %w", err)
@@ -300,7 +300,7 @@ func (c *ModelCommand) selectModel(ctx context.Context, exec *command.ExecutionC
 	if err := c.config.SetDefaultModel(modelName); err != nil {
 		return fmt.Errorf("failed to set model: %w", err)
 	}
-	
+
 	// Log the model change
 	logging.LogInfo("Model changed", "from", currentModel, "to", modelName)
 

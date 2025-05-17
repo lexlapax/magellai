@@ -356,6 +356,7 @@ func (p *ProfileCommand) createProfile(ctx context.Context, exec *command.Execut
 		return fmt.Errorf("failed to create profile: %w", err)
 	}
 
+	logging.LogInfo("Configuration profile created", "profile", name, "description", description)
 	exec.Data["output"] = fmt.Sprintf("Created profile: %s", name)
 	return nil
 }
@@ -364,7 +365,7 @@ func (p *ProfileCommand) createProfile(ctx context.Context, exec *command.Execut
 func (p *ProfileCommand) switchProfile(ctx context.Context, exec *command.ExecutionContext, name string) error {
 	// Get current profile before switching
 	currentProfile := p.config.GetString("profile")
-	
+
 	// Check if profile exists
 	key := fmt.Sprintf("profiles.%s", name)
 	if !p.config.Exists(key) && name != "default" {
@@ -380,7 +381,7 @@ func (p *ProfileCommand) switchProfile(ctx context.Context, exec *command.Execut
 	if err := p.config.SetValue("profile.current", name); err != nil {
 		return fmt.Errorf("failed to update current profile: %w", err)
 	}
-	
+
 	// Log the profile switch
 	logging.LogInfo("Profile switched", "from", currentProfile, "to", name)
 
@@ -485,6 +486,7 @@ func (p *ProfileCommand) copyProfile(ctx context.Context, exec *command.Executio
 		return fmt.Errorf("failed to create destination profile: %w", err)
 	}
 
+	logging.LogInfo("Configuration profile copied", "source", source, "destination", destination)
 	exec.Data["output"] = fmt.Sprintf("Copied profile '%s' to '%s'", source, destination)
 	return nil
 }

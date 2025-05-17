@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	
+
 	"github.com/lexlapax/magellai/internal/logging"
 )
 
@@ -45,7 +45,7 @@ func GetPaths() (Paths, error) {
 // EnsureDirectories creates all necessary configuration directories
 func EnsureDirectories() error {
 	logging.LogDebug("Ensuring configuration directories exist")
-	
+
 	paths, err := GetPaths()
 	if err != nil {
 		logging.LogError(err, "Failed to get configuration paths")
@@ -85,7 +85,7 @@ func ConfigFile() (string, error) {
 // CreateDefaultConfig creates a default configuration file if it doesn't exist
 func CreateDefaultConfig() error {
 	logging.LogDebug("Creating default configuration file")
-	
+
 	configPath, err := ConfigFile()
 	if err != nil {
 		logging.LogError(err, "Failed to get configuration file path")
@@ -171,7 +171,7 @@ aliases:
 // It searches upward from the current directory for .magellai.yaml
 func ProjectConfigFile() (string, error) {
 	logging.LogDebug("Looking for project configuration file")
-	
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		logging.LogError(err, "Failed to get current directory")

@@ -77,10 +77,12 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 	key := ""
 	if len(apiKey) > 0 {
 		key = apiKey[0]
-		logging.LogDebug("Using provided API key", "provider", providerType)
+		logging.LogDebug("Using provided API key", "provider", providerType, "key", sanitizeAPIKey(key))
 	} else {
 		key = getAPIKeyFromEnv(providerType)
-		logging.LogDebug("Using API key from environment", "provider", providerType)
+		if key != "" {
+			logging.LogDebug("Using API key from environment", "provider", providerType, "key", sanitizeAPIKey(key))
+		}
 	}
 
 	// Mock provider doesn't need an API key
@@ -141,6 +143,19 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 	}, nil
 }
 
+// sanitizeAPIKey sanitizes an API key for safe logging
+func sanitizeAPIKey(key string) string {
+	if len(key) <= 10 {
+		// For very short keys, just show partial
+		if len(key) > 4 {
+			return key[:2] + "..." + key[len(key)-2:]
+		}
+		return "***"
+	}
+	// Show first 6 and last 4 characters
+	return key[:6] + "..." + key[len(key)-4:]
+}
+
 // getAPIKeyFromEnv retrieves API key from environment variables
 func getAPIKeyFromEnv(provider string) string {
 	logging.LogDebug("Looking for API key in environment", "provider", provider)
@@ -160,7 +175,9 @@ func getAPIKeyFromEnv(provider string) string {
 
 	key := os.Getenv(envVar)
 	if key != "" {
-		logging.LogDebug("Found API key in environment", "provider", provider, "envVar", envVar)
+		// Sanitize key for logging - show only first 6 and last 4 characters
+		sanitizedKey := sanitizeAPIKey(key)
+		logging.LogDebug("Found API key in environment", "provider", provider, "envVar", envVar, "key", sanitizedKey)
 	} else {
 		logging.LogDebug("API key not found in environment", "provider", provider, "envVar", envVar)
 	}
@@ -228,7 +245,7 @@ func (p *providerAdapter) GenerateMessage(ctx context.Context, messages []Messag
 
 	llmOptions := p.buildLLMOptions(options...)
 	llmResponse, err := p.provider.GenerateMessage(ctx, llmMessages, llmOptions...)
-	
+
 	duration := time.Since(start)
 	if err != nil {
 		logging.LogError(err, "Failed to generate message response", "model", p.modelInfo.Model)
@@ -256,11 +273,11 @@ func (p *providerAdapter) GenerateWithSchema(ctx context.Context, prompt string,
 	llmOptions := p.buildLLMOptions(options...)
 	result, err := p.provider.GenerateWithSchema(ctx, prompt, schema, llmOptions...)
 	duration := time.Since(start)
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	logging.LogDebug("Schema-based response time", "model", p.modelInfo.Model, "duration", duration)
 	return result, err
 }
@@ -304,7 +321,7 @@ func (p *providerAdapter) Stream(ctx context.Context, prompt string, options ...
 // StreamMessage streams responses from messages
 func (p *providerAdapter) StreamMessage(ctx context.Context, messages []Message, options ...ProviderOption) (<-chan StreamChunk, error) {
 	start := time.Now()
-	
+
 	// Convert our messages to go-llms messages
 	llmMessages := make([]domain.Message, len(messages))
 	for i, msg := range messages {
