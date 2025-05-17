@@ -678,8 +678,13 @@ func main() {
 	}
 
 	// Initialize logger
+	logLevel := "info"
+	if envLevel := os.Getenv("MAGELLAI_LOG_LEVEL"); envLevel != "" {
+		logLevel = envLevel
+	}
+	
 	logConfig := logging.LogConfig{
-		Level:      "info",
+		Level:      logLevel,
 		Format:     "text",
 		OutputPath: "stderr",
 		AddSource:  false,

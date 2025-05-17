@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/lexlapax/magellai/pkg/command"
@@ -145,13 +146,31 @@ func (c *AskCommand) Execute(ctx context.Context, exec *command.ExecutionContext
 	attachments := []llm.Attachment{}
 	attachFiles := exec.Flags.GetStringSlice("attach")
 
+	// Check if the model supports file attachments
+	modelInfo := provider.GetModelInfo()
+	supportsFiles := modelInfo.Capabilities.File
+
 	for _, file := range attachFiles {
-		// Create file attachment
-		attachment := llm.Attachment{
-			Type:     llm.AttachmentTypeFile,
-			FilePath: file,
+		if supportsFiles {
+			// Create file attachment for models that support it
+			attachment := llm.Attachment{
+				Type:     llm.AttachmentTypeFile,
+				FilePath: file,
+			}
+			attachments = append(attachments, attachment)
+		} else {
+			// For models that don't support files, read the content as text
+			content, err := os.ReadFile(file)
+			if err != nil {
+				return fmt.Errorf("failed to read file %s: %w", file, err)
+			}
+			// Convert file content to text attachment
+			attachment := llm.Attachment{
+				Type:    llm.AttachmentTypeText,
+				Content: fmt.Sprintf("Content of %s:\n\n%s", file, string(content)),
+			}
+			attachments = append(attachments, attachment)
 		}
-		attachments = append(attachments, attachment)
 	}
 
 	// Add user message with prompt and attachments

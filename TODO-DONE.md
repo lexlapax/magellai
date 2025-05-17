@@ -481,4 +481,14 @@ Note: The remaining CLI help system improvements from section 3.2.1 have been mo
 - [x] Fixed logging infrastructure to support verbosity changes
 - [x] Integrated REPL commands with configuration system
 - [x] Fixed all tests and linting issues
+
+### 4.1.1 Fix logging and file attachment issues ✅
+- [x] Fixed double initialization of logger
+  - Modified GetLogger() to use once.Do for single initialization
+  - Updated DefaultConfig() to check MAGELLAI_LOG_LEVEL environment variable
+  - Logger now properly respects environment variable from startup
+- [x] Fixed file attachment handling for unsupported models
+  - Added model capability checking for file attachments
+  - Implemented fallback to read file content as text for models like GPT-3.5-turbo
+  - Successfully handles file attachments based on model capabilities
 - [x] Added SetLogLevel function to logging package

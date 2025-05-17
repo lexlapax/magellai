@@ -36,8 +36,12 @@ type LogConfig struct {
 
 // DefaultConfig returns default logging configuration
 func DefaultConfig() LogConfig {
+	level := "info"
+	if envLevel := os.Getenv("MAGELLAI_LOG_LEVEL"); envLevel != "" {
+		level = envLevel
+	}
 	return LogConfig{
-		Level:      "info",
+		Level:      level,
 		Format:     "text",
 		OutputPath: "stderr",
 		AddSource:  false,
@@ -81,20 +85,21 @@ func Initialize(config LogConfig) error {
 		output: output,
 	}
 
-	once.Do(func() {
-		defaultLogger = logger
-		slog.SetDefault(logger.Logger)
-	})
+	// Always update the default logger, don't use once.Do
+	defaultLogger = logger
+	slog.SetDefault(logger.Logger)
 
 	return nil
 }
 
 // GetLogger returns the default logger instance
 func GetLogger() *Logger {
-	if defaultLogger == nil {
-		// Initialize with default config if not already initialized
-		_ = Initialize(DefaultConfig())
-	}
+	once.Do(func() {
+		if defaultLogger == nil {
+			// Initialize with default config if not already initialized
+			_ = Initialize(DefaultConfig())
+		}
+	})
 	return defaultLogger
 }
 

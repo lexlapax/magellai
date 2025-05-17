@@ -14,6 +14,8 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ### 4.1 Extended REPL Commands ✅
 
+### 4.1.1 Fix logging and file attachment issues ✅
+
 ### 4.2 Advanced Session Features
 - [ ] Enhance session management:
   - [ ] Auto-save functionality

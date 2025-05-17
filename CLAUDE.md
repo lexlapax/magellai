@@ -37,27 +37,28 @@ The project follows a library-first design where the core intelligence (LLM prov
   ✅ Phase 3.5.10: Testing and Integration - Complete
 ✅ Phase 3.6: History Commands - Complete
 ✅ Phase 4.1: Extended REPL Commands - Complete
+✅ Phase 4.1.1: Fix logging and file attachment issues - Complete
 🚧 Phase 4.2: Advanced Session Features - In Progress
 
 ### Recent Improvements
-- Implemented extended REPL commands (Phase 4.1):
-  - Added special commands for model switching, streaming, verbosity, output format
-  - Added temperature and max_tokens controls
-  - Added profile switching and attachment management
-  - Added system prompt management
-  - Added /config show and /config set commands
-  - Created comprehensive tests for all new commands
-  - Updated help display with all new commands
-  - Fixed logging infrastructure to support verbosity changes
-  - Added SetLogLevel function to logging package
-  - Integrated REPL commands with configuration system
-  - Fixed all tests and linting issues
+- Fixed logging and file attachment issues (Phase 4.1.1):
+  - Fixed double initialization of logger
+  - Logger now properly respects MAGELLAI_LOG_LEVEL environment variable
+  - Implemented file attachment fallback for unsupported models
+  - Models without file support now receive content as text (e.g., GPT-3.5-turbo)
 - Dependency reduction (post Phase 4.1):
   - Updated go-llms from v0.2.1 to v0.2.4 (reduced dependencies by 11)
   - Removed pflag dependency from Magellai (replaced with map-based config)
   - Total reduction: 50 to 40 dependencies (20% reduction)
   - Binary size reduced from 15M to 14M (6.7% reduction)
   - All tests passing and linter compliant
+- Previously completed REPL commands (Phase 4.1):
+  - Added special commands for model switching, streaming, verbosity, output format
+  - Added temperature and max_tokens controls
+  - Added profile switching and attachment management
+  - Added system prompt management
+  - Added /config show and /config set commands
+  - Created comprehensive tests for all new commands
 - Previously completed:
   - History commands (Phase 3.6) with list, show, delete, export, search
   - Comprehensive logging (Phase 3.5) across all components
