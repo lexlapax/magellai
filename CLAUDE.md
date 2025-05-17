@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Working on Phase 4.2)
+## Current Status (Working on Phase 4.2.1.1 Complete)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2.1: Configuration Management with Koanf - Complete
@@ -39,11 +39,24 @@ The project follows a library-first design where the core intelligence (LLM prov
 ✅ Phase 4.1: Extended REPL Commands - Complete
 ✅ Phase 4.1.1: Fix logging and file attachment issues - Complete
 🚧 Phase 4.2: Advanced Session Features - In Progress
-  ✅ Phase 4.2.1: Auto-save functionality - Complete
+  🚧 Phase 4.2.1: Session Storage library abstraction - In Progress
+    ✅ Check for abstraction and provide recommendation - Complete
+    ✅ Phase 4.2.1.1: Interface and Filesystem Implementation - Complete
+  ✅ Phase 4.2.2: Auto-save functionality - Complete
   ✅ Phase 4.2.2: Session export formats (JSON/Markdown) - Complete
-  ✅ Phase 4.2.3: Session search by content - Complete
+  ✅ Phase 4.2.2: Session search by content - Complete
 
 ### Recent Improvements
+- Session Storage Abstraction (Phase 4.2.1):
+  - Created StorageBackend interface for pluggable storage implementations
+  - Implemented FileSystemBackend maintaining existing functionality
+  - Created storage factory for backend management
+  - Added storage configuration support in config system
+  - Migrated SessionManager to use storage abstraction
+  - Updated all session-related commands to use new abstraction
+  - Comprehensive test coverage for storage backend functionality
+  - Fixed all test compatibility issues with new architecture
+  - Fixed history_test.go to use new storage abstraction pattern
 - Completed Session Management Features (Phase 4.2):
   - Implemented auto-save functionality with timers and signal handling
   - Added session export to JSON and Markdown formats

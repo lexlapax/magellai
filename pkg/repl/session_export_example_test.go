@@ -21,13 +21,23 @@ func ExampleSessionManager_ExportSession() {
 	defer os.RemoveAll(tempDir)
 
 	// Create a session manager
-	manager, err := repl.NewSessionManager(tempDir)
+	storage, err := repl.CreateStorageBackend(repl.FileSystemStorage, map[string]interface{}{
+		"base_dir": tempDir,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	manager, err := repl.NewSessionManager(storage)
 	if err != nil {
 		panic(err)
 	}
 
 	// Create a new session
-	session := manager.NewSession("Example Chat")
+	session, err := manager.NewSession("Example Chat")
+	if err != nil {
+		panic(err)
+	}
 
 	// Add some conversation messages
 	session.Conversation.SetSystemPrompt("You are a helpful assistant.")

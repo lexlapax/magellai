@@ -112,6 +112,14 @@ func (a *replConfigAdapter) GetBool(key string) bool {
 	return a.cfg.GetBool(key)
 }
 
+func (a *replConfigAdapter) Get(key string) interface{} {
+	return a.cfg.Get(key)
+}
+
+func (a *replConfigAdapter) Exists(key string) bool {
+	return a.cfg.Exists(key)
+}
+
 func (a *replConfigAdapter) SetValue(key string, value interface{}) error {
 	return a.cfg.SetValue(key, value)
 }

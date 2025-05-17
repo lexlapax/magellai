@@ -20,25 +20,31 @@ func TestSearchSessions(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	// Create session manager
-	manager, err := NewSessionManager(tmpDir)
-	if err != nil {
-		t.Fatalf("Failed to create session manager: %v", err)
-	}
+	manager := createTestSessionManager(t, tmpDir)
 
 	// Create test sessions with different content
-	session1 := manager.NewSession("Test Session 1")
+	session1, err := manager.NewSession("Test Session 1")
+	if err != nil {
+		t.Fatalf("Failed to create session1: %v", err)
+	}
 	session1.Conversation.AddMessage("user", "Tell me about quantum computing", nil)
 	session1.Conversation.AddMessage("assistant", "Quantum computing uses quantum bits or qubits to process information", nil)
 	session1.Conversation.SetSystemPrompt("You are a helpful physics expert")
 	session1.Tags = []string{"physics", "quantum"}
 
-	session2 := manager.NewSession("Machine Learning Session")
+	session2, err := manager.NewSession("Machine Learning Session")
+	if err != nil {
+		t.Fatalf("Failed to create session2: %v", err)
+	}
 	session2.Conversation.AddMessage("user", "Explain neural networks", nil)
 	session2.Conversation.AddMessage("assistant", "Neural networks are computing systems inspired by biological neurons", nil)
 	session2.Conversation.SetSystemPrompt("You are an AI expert specializing in machine learning")
 	session2.Tags = []string{"AI", "neural"}
 
-	session3 := manager.NewSession("General Chat")
+	session3, err := manager.NewSession("General Chat")
+	if err != nil {
+		t.Fatalf("Failed to create session3: %v", err)
+	}
 	session3.Conversation.AddMessage("user", "What's the weather like?", nil)
 	session3.Conversation.AddMessage("assistant", "I don't have access to real-time weather data", nil)
 	session3.Tags = []string{"general", "casual"}
@@ -56,16 +62,16 @@ func TestSearchSessions(t *testing.T) {
 
 	// Test cases
 	tests := []struct {
-		name           string
-		query          string
-		expectedCount  int
+		name             string
+		query            string
+		expectedCount    int
 		expectedSessions []string // Session names that should be in results
-		checkContent   func(results []*SearchResult) error
+		checkContent     func(results []*SearchResult) error
 	}{
 		{
-			name:          "Search for quantum in messages",
-			query:         "quantum",
-			expectedCount: 1,
+			name:             "Search for quantum in messages",
+			query:            "quantum",
+			expectedCount:    1,
 			expectedSessions: []string{"Test Session 1"},
 			checkContent: func(results []*SearchResult) error {
 				if len(results[0].Matches) < 2 {
@@ -91,9 +97,9 @@ func TestSearchSessions(t *testing.T) {
 			expectedSessions: []string{"Machine Learning Session"},
 		},
 		{
-			name:          "Search in system prompts",
-			query:         "physics expert",
-			expectedCount: 1,
+			name:             "Search in system prompts",
+			query:            "physics expert",
+			expectedCount:    1,
 			expectedSessions: []string{"Test Session 1"},
 		},
 		{
@@ -103,9 +109,9 @@ func TestSearchSessions(t *testing.T) {
 			expectedSessions: []string{"Machine Learning Session"},
 		},
 		{
-			name:          "Case insensitive search",
-			query:         "QUANTUM",
-			expectedCount: 1,
+			name:             "Case insensitive search",
+			query:            "QUANTUM",
+			expectedCount:    1,
 			expectedSessions: []string{"Test Session 1"},
 		},
 		{
@@ -114,9 +120,9 @@ func TestSearchSessions(t *testing.T) {
 			expectedCount: 0,
 		},
 		{
-			name:          "Partial match",
-			query:         "comput",
-			expectedCount: 2,
+			name:             "Partial match",
+			query:            "comput",
+			expectedCount:    2,
 			expectedSessions: []string{"Test Session 1", "Machine Learning Session"},
 		},
 	}
@@ -158,11 +164,11 @@ func TestSearchSessions(t *testing.T) {
 
 func TestExtractSnippet(t *testing.T) {
 	tests := []struct {
-		name      string
-		content   string
-		query     string
-		radius    int
-		expected  string
+		name     string
+		content  string
+		query    string
+		radius   int
+		expected string
 	}{
 		{
 			name:     "Basic extraction",
@@ -227,14 +233,14 @@ func TestSearchResultsFormatting(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	// Create session manager
-	manager, err := NewSessionManager(tmpDir)
-	if err != nil {
-		t.Fatalf("Failed to create session manager: %v", err)
-	}
+	manager := createTestSessionManager(t, tmpDir)
 
 	// Create a session with attachments
-	session := manager.NewSession("Test Session")
-	
+	session, err := manager.NewSession("Test Session")
+	if err != nil {
+		t.Fatalf("Failed to create session: %v", err)
+	}
+
 	// Add message with attachment
 	attachment := llm.Attachment{
 		Type:     llm.AttachmentTypeImage,
@@ -243,7 +249,7 @@ func TestSearchResultsFormatting(t *testing.T) {
 	}
 	session.Conversation.AddMessage("user", "Here's an image about quantum physics", []llm.Attachment{attachment})
 	session.Conversation.AddMessage("assistant", "I can see the quantum physics diagram", nil)
-	
+
 	// Save session
 	if err := manager.SaveSession(session); err != nil {
 		t.Fatalf("Failed to save session: %v", err)

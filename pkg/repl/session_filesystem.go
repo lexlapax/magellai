@@ -30,13 +30,13 @@ type Session struct {
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 }
 
-// SessionManager handles session persistence and lifecycle
-type SessionManager struct {
-	StorageDir string
+// FileSessionManager handles session persistence and lifecycle using filesystem
+type FileSessionManager struct {
+	baseDir string
 }
 
-// NewSessionManager creates a new session manager with the given storage directory
-func NewSessionManager(storageDir string) (*SessionManager, error) {
+// NewFileSessionManager creates a new session manager with the given storage directory
+func NewFileSessionManager(storageDir string) (*FileSessionManager, error) {
 	logging.LogDebug("Creating session manager", "storageDir", storageDir)
 
 	// Ensure storage directory exists
@@ -46,13 +46,13 @@ func NewSessionManager(storageDir string) (*SessionManager, error) {
 	}
 
 	logging.LogDebug("Session manager created successfully", "storageDir", storageDir)
-	return &SessionManager{
-		StorageDir: storageDir,
+	return &FileSessionManager{
+		baseDir: storageDir,
 	}, nil
 }
 
 // NewSession creates a new session with a conversation
-func (sm *SessionManager) NewSession(name string) *Session {
+func (sm *FileSessionManager) NewSession(name string) *Session {
 	now := time.Now()
 	sessionID := generateSessionID()
 
@@ -73,7 +73,7 @@ func (sm *SessionManager) NewSession(name string) *Session {
 }
 
 // SaveSession persists a session to disk
-func (sm *SessionManager) SaveSession(session *Session) error {
+func (sm *FileSessionManager) SaveSession(session *Session) error {
 	start := time.Now()
 	session.Updated = time.Now()
 
@@ -81,7 +81,7 @@ func (sm *SessionManager) SaveSession(session *Session) error {
 
 	// Create session file path
 	filename := fmt.Sprintf("%s.json", session.ID)
-	filepath := filepath.Join(sm.StorageDir, filename)
+	filepath := filepath.Join(sm.baseDir, filename)
 
 	logging.LogDebug("Writing session file", "path", filepath)
 
@@ -105,12 +105,12 @@ func (sm *SessionManager) SaveSession(session *Session) error {
 }
 
 // LoadSession loads a session from disk by ID
-func (sm *SessionManager) LoadSession(id string) (*Session, error) {
+func (sm *FileSessionManager) LoadSession(id string) (*Session, error) {
 	start := time.Now()
 	logging.LogInfo("Loading session", "id", id)
 
 	filename := fmt.Sprintf("%s.json", id)
-	filepath := filepath.Join(sm.StorageDir, filename)
+	filepath := filepath.Join(sm.baseDir, filename)
 
 	logging.LogDebug("Reading session file", "path", filepath)
 
@@ -139,13 +139,13 @@ func (sm *SessionManager) LoadSession(id string) (*Session, error) {
 }
 
 // ListSessions returns a list of all available sessions
-func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
+func (sm *FileSessionManager) ListSessions() ([]*SessionInfo, error) {
 	start := time.Now()
-	logging.LogDebug("Listing sessions", "storageDir", sm.StorageDir)
+	logging.LogDebug("Listing sessions", "storageDir", sm.baseDir)
 
-	entries, err := os.ReadDir(sm.StorageDir)
+	entries, err := os.ReadDir(sm.baseDir)
 	if err != nil {
-		logging.LogError(err, "Failed to read storage directory", "storageDir", sm.StorageDir)
+		logging.LogError(err, "Failed to read storage directory", "storageDir", sm.baseDir)
 		return nil, fmt.Errorf("failed to read storage directory: %w", err)
 	}
 
@@ -157,7 +157,7 @@ func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
 		}
 
 		// Read session file to get basic info
-		filepath := filepath.Join(sm.StorageDir, entry.Name())
+		filepath := filepath.Join(sm.baseDir, entry.Name())
 		data, err := os.ReadFile(filepath)
 		if err != nil {
 			logging.LogDebug("Failed to read session file", "path", filepath, "error", err)
@@ -189,11 +189,11 @@ func (sm *SessionManager) ListSessions() ([]*SessionInfo, error) {
 }
 
 // DeleteSession removes a session from disk
-func (sm *SessionManager) DeleteSession(id string) error {
+func (sm *FileSessionManager) DeleteSession(id string) error {
 	logging.LogInfo("Deleting session", "id", id)
 
 	filename := fmt.Sprintf("%s.json", id)
-	filepath := filepath.Join(sm.StorageDir, filename)
+	filepath := filepath.Join(sm.baseDir, filename)
 
 	if err := os.Remove(filepath); err != nil {
 		if os.IsNotExist(err) {
@@ -210,8 +210,8 @@ func (sm *SessionManager) DeleteSession(id string) error {
 
 // SearchResult represents a search result with context
 type SearchResult struct {
-	Session  *SessionInfo
-	Matches  []SearchMatch
+	Session *SessionInfo
+	Matches []SearchMatch
 }
 
 // SearchMatch represents a single match with context
@@ -224,7 +224,7 @@ type SearchMatch struct {
 }
 
 // SearchSessions searches for sessions by text in messages, system prompts, names, and tags
-func (sm *SessionManager) SearchSessions(query string) ([]*SearchResult, error) {
+func (sm *FileSessionManager) SearchSessions(query string) ([]*SearchResult, error) {
 	start := time.Now()
 	logging.LogInfo("Searching sessions", "query", query)
 
@@ -324,7 +324,7 @@ type SessionInfo struct {
 }
 
 // ExportSession exports a session to a writer in the specified format
-func (sm *SessionManager) ExportSession(id string, format string, w io.Writer) error {
+func (sm *FileSessionManager) ExportSession(id string, format string, w io.Writer) error {
 	logging.LogInfo("Exporting session", "id", id, "format", format)
 
 	session, err := sm.LoadSession(id)
@@ -358,7 +358,7 @@ func (sm *SessionManager) ExportSession(id string, format string, w io.Writer) e
 }
 
 // Helper function to export session as markdown
-func (sm *SessionManager) exportMarkdown(session *Session, w io.Writer) error {
+func (sm *FileSessionManager) exportMarkdown(session *Session, w io.Writer) error {
 	logging.LogDebug("Exporting session as markdown", "id", session.ID)
 
 	fmt.Fprintf(w, "# Session: %s\n\n", session.Name)
@@ -405,7 +405,7 @@ func generateSessionID() string {
 func extractSnippet(content, query string, contextRadius int) string {
 	lowerContent := strings.ToLower(content)
 	lowerQuery := strings.ToLower(query)
-	
+
 	// Find the first occurrence of the query
 	idx := strings.Index(lowerContent, lowerQuery)
 	if idx == -1 {
@@ -415,30 +415,30 @@ func extractSnippet(content, query string, contextRadius int) string {
 		}
 		return content[:contextRadius*2] + "..."
 	}
-	
+
 	// Calculate start and end positions for the snippet
 	start := idx - contextRadius
 	end := idx + len(query) + contextRadius
-	
+
 	// Ensure we don't go out of bounds
 	prefix := ""
 	suffix := ""
-	
+
 	if start < 0 {
 		start = 0
 	} else {
 		prefix = "..."
 	}
-	
+
 	if end > len(content) {
 		end = len(content)
 	} else {
 		suffix = "..."
 	}
-	
+
 	// Extract the snippet
 	snippet := content[start:end]
-	
+
 	// If the snippet is at word boundaries, try to adjust
 	if start > 0 && !isWordBoundary(content[start-1]) {
 		// Find the previous word boundary
@@ -450,7 +450,7 @@ func extractSnippet(content, query string, contextRadius int) string {
 			}
 		}
 	}
-	
+
 	if end < len(content) && !isWordBoundary(content[end-1]) {
 		// Find the next word boundary
 		for i := end; i < len(content); i++ {
@@ -461,7 +461,7 @@ func extractSnippet(content, query string, contextRadius int) string {
 			}
 		}
 	}
-	
+
 	return prefix + strings.TrimSpace(snippet) + suffix
 }
 

@@ -41,7 +41,8 @@ func TestREPL_loadSession(t *testing.T) {
 	sessionID := repl.session.ID
 
 	// Create a new session
-	newSession := repl.manager.NewSession("New Session")
+	newSession, err := repl.manager.NewSession("New Session")
+	require.NoError(t, err)
 	repl.session = newSession
 
 	// Load the original session
@@ -110,7 +111,8 @@ func TestREPL_exportSession(t *testing.T) {
 	output.Reset()
 
 	// Test export to file
-	tempFile := filepath.Join(repl.manager.StorageDir, "export_test.json")
+	tempDir := t.TempDir()
+	tempFile := filepath.Join(tempDir, "export_test.json")
 	err = repl.exportSession([]string{"json", tempFile})
 	require.NoError(t, err)
 	assert.Contains(t, output.String(), "Session exported to:")
@@ -230,7 +232,8 @@ func TestREPL_listSessions(t *testing.T) {
 	currentID := repl.session.ID
 
 	// Create and save another session
-	session2 := repl.manager.NewSession("Another Session")
+	session2, err := repl.manager.NewSession("Another Session")
+	require.NoError(t, err)
 	session2.Tags = []string{"test", "demo"}
 	err = repl.manager.SaveSession(session2)
 	require.NoError(t, err)

@@ -39,6 +39,15 @@ func (m *MockConfigInterface) GetBool(key string) bool {
 	return false
 }
 
+func (m *MockConfigInterface) Get(key string) interface{} {
+	return m.values[key]
+}
+
+func (m *MockConfigInterface) Exists(key string) bool {
+	_, ok := m.values[key]
+	return ok
+}
+
 func (m *MockConfigInterface) SetValue(key string, value interface{}) error {
 	m.values[key] = value
 	return nil

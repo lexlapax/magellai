@@ -119,6 +119,15 @@ func (tc *testConfig) GetBool(key string) bool {
 	return false
 }
 
+func (tc *testConfig) Get(key string) interface{} {
+	return tc.values[key]
+}
+
+func (tc *testConfig) Exists(key string) bool {
+	_, ok := tc.values[key]
+	return ok
+}
+
 func (tc *testConfig) SetValue(key string, value interface{}) error {
 	tc.values[key] = value
 	return nil

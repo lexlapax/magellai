@@ -24,13 +24,13 @@ func TestSessionExport(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Create a session manager
-	manager, err := NewSessionManager(tempDir)
+	manager := createTestSessionManager(t, tempDir)
+
+	// Create a test session with some content
+	session, err := manager.NewSession("Test Export Session")
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// Create a test session with some content
-	session := manager.NewSession("Test Export Session")
 	session.Conversation.SetSystemPrompt("You are a test assistant.")
 	session.Conversation.AddMessage("user", "Test question?", nil)
 	session.Conversation.AddMessage("assistant", "Test response.", nil)
@@ -288,6 +288,15 @@ func (m *mockConfig) GetBool(key string) bool {
 		}
 	}
 	return false
+}
+
+func (m *mockConfig) Get(key string) interface{} {
+	return m.values[key]
+}
+
+func (m *mockConfig) Exists(key string) bool {
+	_, ok := m.values[key]
+	return ok
 }
 
 func (m *mockConfig) SetValue(key string, value interface{}) error {

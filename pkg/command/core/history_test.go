@@ -41,13 +41,20 @@ func TestHistoryCommand_ExecuteList(t *testing.T) {
 	cleanup := setupTestConfig(tmpDir)
 	defer cleanup()
 
-	// Create a session manager
+	// Create a session manager with storage backend
 	sessionsDir := filepath.Join(tmpDir, ".config", "magellai", "sessions")
-	manager, err := repl.NewSessionManager(sessionsDir)
+	storage, err := repl.CreateStorageBackend(repl.FileSystemStorage, map[string]interface{}{
+		"base_dir": sessionsDir,
+	})
 	require.NoError(t, err)
 
+	manager, err := repl.NewSessionManager(storage)
+	require.NoError(t, err)
+	require.NotNil(t, manager)
+
 	// Create and save a test session
-	session := manager.NewSession("test-session")
+	session, err := manager.NewSession("test-session")
+	require.NoError(t, err)
 	session.Conversation.AddMessage("user", "test message", nil)
 	err = manager.SaveSession(session)
 	require.NoError(t, err)
@@ -86,13 +93,20 @@ func TestHistoryCommand_ExecuteShow(t *testing.T) {
 	cleanup := setupTestConfig(tmpDir)
 	defer cleanup()
 
-	// Create a session manager
+	// Create a session manager with storage backend
 	sessionsDir := filepath.Join(tmpDir, ".config", "magellai", "sessions")
-	manager, err := repl.NewSessionManager(sessionsDir)
+	storage, err := repl.CreateStorageBackend(repl.FileSystemStorage, map[string]interface{}{
+		"base_dir": sessionsDir,
+	})
 	require.NoError(t, err)
 
+	manager, err := repl.NewSessionManager(storage)
+	require.NoError(t, err)
+	require.NotNil(t, manager)
+
 	// Create and save a test session
-	session := manager.NewSession("test-session")
+	session, err := manager.NewSession("test-session")
+	require.NoError(t, err)
 	session.Conversation.AddMessage("user", "test message", nil)
 	err = manager.SaveSession(session)
 	require.NoError(t, err)

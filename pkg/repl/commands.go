@@ -605,12 +605,12 @@ func (r *REPL) searchSessions(args []string) error {
 	}
 
 	fmt.Fprintf(r.writer, "Found %d sessions matching '%s':\n\n", len(results), query)
-	
+
 	for _, result := range results {
 		// Session info
 		fmt.Fprintf(r.writer, "Session: %s (%s)\n", result.Session.Name, result.Session.ID)
 		fmt.Fprintf(r.writer, "Created: %s\n", result.Session.Created.Format("2006-01-02 15:04:05"))
-		
+
 		// Show matches
 		for _, match := range result.Matches {
 			fmt.Fprintf(r.writer, "  %s: %s\n", match.Context, match.Content)

@@ -21,6 +21,8 @@ import (
 type ConfigInterface interface {
 	GetString(key string) string
 	GetBool(key string) bool
+	Get(key string) interface{}
+	Exists(key string) bool
 	SetValue(key string, value interface{}) error
 }
 
@@ -73,17 +75,42 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 		opts.StorageDir = filepath.Join(homeDir, ".config", "magellai", "sessions")
 		logging.LogDebug("Using default session storage directory", "dir", opts.StorageDir)
 	}
+	// Load current configuration
+	cfg := opts.Config
+
+	// Create storage backend
+	logging.LogDebug("Creating storage backend", "storageDir", opts.StorageDir)
+
+	// Get storage configuration from config
+	storageType := "filesystem" // Default to filesystem
+	if cfg.Exists("session.storage.type") {
+		storageType = cfg.GetString("session.storage.type")
+	}
+
+	storageConfig := make(map[string]interface{})
+	storageConfig["base_dir"] = opts.StorageDir
+	if cfg.Exists("session.storage.settings") {
+		settings := cfg.Get("session.storage.settings")
+		if m, ok := settings.(map[string]interface{}); ok {
+			for k, v := range m {
+				storageConfig[k] = v
+			}
+		}
+	}
+
+	storage, err := CreateStorageBackend(StorageType(storageType), storageConfig)
+	if err != nil {
+		logging.LogError(err, "Failed to create storage backend", "type", storageType)
+		return nil, fmt.Errorf("failed to create storage backend: %w", err)
+	}
 
 	// Create session manager
-	logging.LogDebug("Creating session manager", "storageDir", opts.StorageDir)
-	manager, err := NewSessionManager(opts.StorageDir)
+	logging.LogDebug("Creating session manager")
+	manager, err := NewSessionManager(storage)
 	if err != nil {
 		logging.LogError(err, "Failed to create session manager")
 		return nil, fmt.Errorf("failed to create session manager: %w", err)
 	}
-
-	// Load current configuration
-	cfg := opts.Config
 
 	var session *Session
 	if opts.SessionID != "" {
@@ -97,7 +124,11 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	} else {
 		// Create new session
 		logging.LogInfo("Creating new session")
-		session = manager.NewSession("Interactive Chat")
+		session, err = manager.NewSession("Interactive Chat")
+		if err != nil {
+			logging.LogError(err, "Failed to create new session")
+			return nil, fmt.Errorf("failed to create new session: %w", err)
+		}
 	}
 
 	// Override model if specified

@@ -54,7 +54,15 @@ func (c *HistoryCommand) Execute(ctx context.Context, exec *command.ExecutionCon
 		return fmt.Errorf("failed to get config paths: %v", err)
 	}
 
-	manager, err := repl.NewSessionManager(paths.Sessions)
+	// Create storage backend using filesystem
+	storage, err := repl.CreateStorageBackend(repl.FileSystemStorage, map[string]interface{}{
+		"base_dir": paths.Sessions,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create storage backend: %v", err)
+	}
+
+	manager, err := repl.NewSessionManager(storage)
 	if err != nil {
 		return fmt.Errorf("failed to create session manager: %v", err)
 	}

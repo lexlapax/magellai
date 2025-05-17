@@ -138,10 +138,18 @@ logging:
   level: info   # debug, info, warn, or error
   file: ~/.config/magellai/logs/magellai.log
 
-# Session storage
-storage:
-  sessions: ~/.config/magellai/sessions
-  plugins: ~/.config/magellai/plugins
+# Session settings
+session:
+  directory: ~/.config/magellai/sessions
+  autosave: true
+  storage:
+    type: filesystem  # Default storage backend
+    settings:
+      # Backend-specific settings (future: database connection strings, etc.)
+
+# Plugin settings
+plugin:
+  directory: ~/.config/magellai/plugins
 
 # Named profiles for different use cases
 profiles:

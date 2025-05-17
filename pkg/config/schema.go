@@ -91,6 +91,13 @@ type SessionConfig struct {
 	AutoSave    bool          `koanf:"autosave"`
 	MaxAge      time.Duration `koanf:"max_age"`
 	Compression bool          `koanf:"compression"`
+	Storage     StorageConfig `koanf:"storage"`
+}
+
+// StorageConfig represents storage backend configuration
+type StorageConfig struct {
+	Type     string                 `koanf:"type"`     // filesystem, sqlite, postgresql, etc.
+	Settings map[string]interface{} `koanf:"settings"` // Backend-specific settings
 }
 
 // PluginConfig represents plugin configuration

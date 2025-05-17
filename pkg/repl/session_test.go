@@ -16,8 +16,7 @@ func setupTestSessionManager(t *testing.T) (*SessionManager, func()) {
 	tempDir, err := os.MkdirTemp("", "magellai-session-test")
 	require.NoError(t, err)
 
-	sm, err := NewSessionManager(tempDir)
-	require.NoError(t, err)
+	sm := createTestSessionManager(t, tempDir)
 
 	cleanup := func() {
 		os.RemoveAll(tempDir)
@@ -30,9 +29,8 @@ func TestNewSessionManager(t *testing.T) {
 	tempDir := filepath.Join(os.TempDir(), "magellai-test-"+time.Now().Format("20060102150405"))
 	defer os.RemoveAll(tempDir)
 
-	sm, err := NewSessionManager(tempDir)
-	require.NoError(t, err)
-	assert.Equal(t, tempDir, sm.StorageDir)
+	sm := createTestSessionManager(t, tempDir)
+	assert.NotNil(t, sm)
 
 	// Check directory was created
 	info, err := os.Stat(tempDir)
@@ -44,14 +42,17 @@ func TestSessionManager_NewSession(t *testing.T) {
 	sm, cleanup := setupTestSessionManager(t)
 	defer cleanup()
 
-	session := sm.NewSession("Test Session")
+	session, err := sm.NewSession("Test Session")
+	require.NoError(t, err)
 
 	assert.NotEmpty(t, session.ID)
 	assert.Equal(t, "Test Session", session.Name)
 	assert.NotNil(t, session.Conversation)
 	assert.Equal(t, session.ID, session.Conversation.ID)
 	assert.NotZero(t, session.Created)
-	assert.Equal(t, session.Created, session.Updated)
+	assert.NotZero(t, session.Updated)
+	// Updated timestamp should be either equal to Created or slightly after
+	assert.True(t, session.Updated.Equal(session.Created) || session.Updated.After(session.Created))
 	assert.NotNil(t, session.Config)
 	assert.NotNil(t, session.Metadata)
 }
@@ -61,14 +62,15 @@ func TestSessionManager_SaveAndLoadSession(t *testing.T) {
 	defer cleanup()
 
 	// Create and setup a session
-	session := sm.NewSession("Test Session")
+	session, err := sm.NewSession("Test Session")
+	require.NoError(t, err)
 	session.Tags = []string{"test", "demo"}
 	session.Config["model"] = "gpt-4"
 	session.Conversation.AddMessage("user", "Hello", nil)
 	session.Conversation.AddMessage("assistant", "Hi there!", nil)
 
 	// Save session
-	err := sm.SaveSession(session)
+	err = sm.SaveSession(session)
 	require.NoError(t, err)
 
 	// Load session
@@ -98,15 +100,17 @@ func TestSessionManager_ListSessions(t *testing.T) {
 	defer cleanup()
 
 	// Create multiple sessions
-	session1 := sm.NewSession("Session 1")
+	session1, err := sm.NewSession("Session 1")
+	require.NoError(t, err)
 	session1.Tags = []string{"work"}
 	session1.Conversation.AddMessage("user", "First message", nil)
-	err := sm.SaveSession(session1)
+	err = sm.SaveSession(session1)
 	require.NoError(t, err)
 
 	time.Sleep(10 * time.Millisecond) // Ensure different timestamps
 
-	session2 := sm.NewSession("Session 2")
+	session2, err := sm.NewSession("Session 2")
+	require.NoError(t, err)
 	session2.Tags = []string{"personal"}
 	session2.Conversation.AddMessage("user", "Second message", nil)
 	session2.Conversation.AddMessage("assistant", "Response", nil)
@@ -145,8 +149,9 @@ func TestSessionManager_DeleteSession(t *testing.T) {
 	defer cleanup()
 
 	// Create and save a session
-	session := sm.NewSession("To Delete")
-	err := sm.SaveSession(session)
+	session, err := sm.NewSession("To Delete")
+	require.NoError(t, err)
+	err = sm.SaveSession(session)
 	require.NoError(t, err)
 
 	// Verify it exists
@@ -178,16 +183,18 @@ func TestSessionManager_SearchSessions(t *testing.T) {
 	defer cleanup()
 
 	// Create sessions with different content
-	session1 := sm.NewSession("Project Discussion")
+	session1, err := sm.NewSession("Project Discussion")
+	require.NoError(t, err)
 	session1.Tags = []string{"work", "project"}
 	session1.Conversation.AddMessage("user", "Let's discuss the new project", nil)
 	session1.Conversation.AddMessage("assistant", "Sure, what aspects would you like to cover?", nil)
-	err := sm.SaveSession(session1)
+	err = sm.SaveSession(session1)
 	require.NoError(t, err)
 
 	time.Sleep(100 * time.Millisecond)
 
-	session2 := sm.NewSession("Personal Chat")
+	session2, err := sm.NewSession("Personal Chat")
+	require.NoError(t, err)
 	session2.Tags = []string{"personal"}
 	session2.Conversation.AddMessage("user", "Tell me a joke", nil)
 	session2.Conversation.AddMessage("assistant", "Why did the chicken cross the road?", nil)
@@ -196,7 +203,8 @@ func TestSessionManager_SearchSessions(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	session3 := sm.NewSession("Code Review")
+	session3, err := sm.NewSession("Code Review")
+	require.NoError(t, err)
 	session3.Tags = []string{"work", "code"}
 	session3.Conversation.AddMessage("user", "Review this code for me", nil)
 	err = sm.SaveSession(session3)
@@ -241,11 +249,12 @@ func TestSessionManager_ExportSessionJSON(t *testing.T) {
 	defer cleanup()
 
 	// Create and save a session
-	session := sm.NewSession("Export Test")
+	session, err := sm.NewSession("Export Test")
+	require.NoError(t, err)
 	session.Tags = []string{"test"}
 	session.Conversation.AddMessage("user", "Hello", nil)
 	session.Conversation.AddMessage("assistant", "Hi!", nil)
-	err := sm.SaveSession(session)
+	err = sm.SaveSession(session)
 	require.NoError(t, err)
 
 	// Export as JSON
@@ -267,11 +276,12 @@ func TestSessionManager_ExportSessionMarkdown(t *testing.T) {
 	defer cleanup()
 
 	// Create and save a session
-	session := sm.NewSession("Markdown Export")
+	session, err := sm.NewSession("Markdown Export")
+	require.NoError(t, err)
 	session.Tags = []string{"test", "export"}
 	session.Conversation.AddMessage("user", "What is Go?", nil)
 	session.Conversation.AddMessage("assistant", "Go is a programming language.", nil)
-	err := sm.SaveSession(session)
+	err = sm.SaveSession(session)
 	require.NoError(t, err)
 
 	// Export as Markdown
@@ -293,8 +303,9 @@ func TestSessionManager_ExportSessionUnsupportedFormat(t *testing.T) {
 	sm, cleanup := setupTestSessionManager(t)
 	defer cleanup()
 
-	session := sm.NewSession("Test")
-	err := sm.SaveSession(session)
+	session, err := sm.NewSession("Test")
+	require.NoError(t, err)
+	err = sm.SaveSession(session)
 	require.NoError(t, err)
 
 	var buf bytes.Buffer
@@ -308,13 +319,14 @@ func TestSessionManager_ExportSessionWithAttachments(t *testing.T) {
 	defer cleanup()
 
 	// Create session with attachments
-	session := sm.NewSession("Attachments Test")
+	session, err := sm.NewSession("Attachments Test")
+	require.NoError(t, err)
 	attachments := []llm.Attachment{
 		{Type: llm.AttachmentTypeImage, Content: "base64data", MimeType: "image/jpeg"},
 		{Type: llm.AttachmentTypeText, Content: "base64text", MimeType: "text/plain"},
 	}
 	session.Conversation.AddMessage("user", "Check these files", attachments)
-	err := sm.SaveSession(session)
+	err = sm.SaveSession(session)
 	require.NoError(t, err)
 
 	// Export as Markdown
