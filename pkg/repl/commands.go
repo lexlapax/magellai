@@ -5,6 +5,7 @@ package repl
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -532,6 +533,54 @@ func (r *REPL) setConfig(args []string) error {
 	}
 
 	fmt.Fprintf(r.writer, "Set %s = %s\n", key, value)
+	return nil
+}
+
+// exportSession exports the current session to a file or stdout
+func (r *REPL) exportSession(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("usage: /export <format> [filename]")
+	}
+
+	format := strings.ToLower(args[0])
+	if format != "json" && format != "markdown" {
+		return fmt.Errorf("unsupported format: %s (valid: json, markdown)", format)
+	}
+
+	logging.LogInfo("Exporting session", "sessionID", r.session.ID, "format", format)
+
+	// Determine output destination
+	var writer io.Writer
+	var filename string
+	if len(args) > 1 {
+		filename = args[1]
+		file, err := os.Create(filename)
+		if err != nil {
+			logging.LogError(err, "Failed to create export file", "filename", filename)
+			return fmt.Errorf("failed to create file: %w", err)
+		}
+		defer file.Close()
+		writer = file
+		logging.LogDebug("Exporting to file", "filename", filename)
+	} else {
+		writer = r.writer
+		logging.LogDebug("Exporting to stdout")
+	}
+
+	// Export the session
+	if err := r.manager.ExportSession(r.session.ID, format, writer); err != nil {
+		logging.LogError(err, "Failed to export session", "sessionID", r.session.ID, "format", format)
+		return fmt.Errorf("failed to export session: %w", err)
+	}
+
+	if filename != "" {
+		fmt.Fprintf(r.writer, "Session exported to: %s\n", filename)
+		logging.LogInfo("Session exported to file", "sessionID", r.session.ID, "filename", filename, "format", format)
+	} else {
+		// Don't add extra text when exporting to stdout to avoid breaking the format
+		logging.LogInfo("Session exported to stdout", "sessionID", r.session.ID, "format", format)
+	}
+
 	return nil
 }
 

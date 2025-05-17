@@ -414,6 +414,8 @@ func (r *REPL) handleCommand(cmd string) error {
 		default:
 			return fmt.Errorf("unknown config subcommand: %s", subcommand)
 		}
+	case "/export":
+		return r.exportSession(args)
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}
@@ -497,6 +499,7 @@ COMMANDS:
   /attachments       List current attachments
   /config show       Display current configuration
   /config set <k> <v> Set configuration value
+  /export <fmt> [f]  Export session (json, markdown)
 
 SPECIAL COMMANDS:
   :model <name>         Switch to a different model

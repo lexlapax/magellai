@@ -294,3 +294,21 @@ Implementation details:
 - Change detection using session.Updated timestamp to avoid unnecessary saves
 - Proper cleanup with defer statement in Run function
 - Configuration-driven with sensible defaults (enabled by default, 5-minute interval)
+
+#### Session export formats (JSON, Markdown) ✅
+- [x] Implemented ExportSession in SessionManager with JSON and Markdown formats
+- [x] Added `/export <format> [filename]` command to REPL interface
+- [x] JSON export includes full session metadata and conversation history
+- [x] Markdown export provides readable conversation transcript with proper formatting
+- [x] Support for exporting to stdout or file
+- [x] Added comprehensive logging for export operations
+- [x] Added title casing function for role names in Markdown export
+- [x] Updated help text to include export command
+- [x] Created unit tests for export functionality
+
+Implementation details:
+- Export function in session.go handles both formats and output destinations
+- JSON export uses indented encoding for readability
+- Markdown export includes timestamps, attachments, and proper heading structure
+- Export command validates format and handles file creation with proper error handling
+- Avoided extra output when exporting to stdout to prevent format corruption

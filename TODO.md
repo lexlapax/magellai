@@ -19,7 +19,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ### 4.2 Advanced Session Features
 - [ ] Enhance session management:
   - [x] Auto-save functionality ✅
-  - [ ] Session export formats (JSON, Markdown)
+  - [x] Session export formats (JSON, Markdown) ✅
   - [ ] Session search by content
   - [ ] Session tags and metadata
   - [ ] Session branching/forking

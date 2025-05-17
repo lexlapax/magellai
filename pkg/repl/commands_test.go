@@ -1,6 +1,7 @@
 package repl
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -51,6 +52,84 @@ func TestREPL_loadSession(t *testing.T) {
 	assert.Equal(t, "Original Session", repl.session.Name)
 	assert.Len(t, repl.session.Conversation.Messages, 1)
 	assert.Contains(t, output.String(), "Loaded session: Original Session")
+}
+
+func TestREPL_exportSession(t *testing.T) {
+	repl, output, cleanup := setupTestREPL(t)
+	defer cleanup()
+
+	var err error
+
+	// Add some conversation to export
+	repl.session.Name = "Export Test Session"
+	repl.session.Conversation.SetSystemPrompt("You are a helpful assistant.")
+	repl.session.Conversation.AddMessage("user", "Hello!", nil)
+	repl.session.Conversation.AddMessage("assistant", "Hi there! How can I help you?", nil)
+
+	// Add a message with attachment
+	attachment := llm.Attachment{
+		Type:     llm.AttachmentTypeText,
+		FilePath: "test.txt",
+		MimeType: "text/plain",
+		Content:  "Test content",
+	}
+	repl.session.Conversation.AddMessage("user", "Check this file", []llm.Attachment{attachment})
+	repl.session.Conversation.AddMessage("assistant", "I've reviewed the file.", nil)
+
+	// Save the session so it can be exported
+	err = repl.manager.SaveSession(repl.session)
+	require.NoError(t, err)
+
+	// Test export to stdout (JSON)
+	err = repl.exportSession([]string{"json"})
+	require.NoError(t, err)
+	exported := output.String()
+	assert.Contains(t, exported, "Export Test Session")
+	assert.Contains(t, exported, "Hello!")
+	assert.Contains(t, exported, "Hi there!")
+
+	// Verify it's valid JSON
+	var jsonData map[string]interface{}
+	err = json.Unmarshal([]byte(exported), &jsonData)
+	if err != nil {
+		t.Logf("Invalid JSON output: %s", exported)
+	}
+	require.NoError(t, err)
+
+	output.Reset()
+
+	// Test export to stdout (Markdown)
+	err = repl.exportSession([]string{"markdown"})
+	require.NoError(t, err)
+	exported = output.String()
+	assert.Contains(t, exported, "# Session: Export Test Session")
+	assert.Contains(t, exported, "### User")
+	assert.Contains(t, exported, "### Assistant")
+	assert.Contains(t, exported, "Attachments:")
+
+	output.Reset()
+
+	// Test export to file
+	tempFile := filepath.Join(repl.manager.StorageDir, "export_test.json")
+	err = repl.exportSession([]string{"json", tempFile})
+	require.NoError(t, err)
+	assert.Contains(t, output.String(), "Session exported to:")
+
+	// Verify file was created and contains valid JSON
+	data, err := os.ReadFile(tempFile)
+	require.NoError(t, err)
+	err = json.Unmarshal(data, &jsonData)
+	require.NoError(t, err)
+
+	// Test invalid format
+	err = repl.exportSession([]string{"invalid"})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported format")
+
+	// Test no arguments
+	err = repl.exportSession([]string{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "usage:")
 }
 
 func TestREPL_loadSession_NoID(t *testing.T) {
