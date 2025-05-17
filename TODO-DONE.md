@@ -227,14 +227,73 @@ This document contains all completed sections from the original TODO.md file for
   - [x] Subcommand help shows only immediate children
   - [x] Used Kong's `NoExpandSubcommands` option for clean display
 - [x] Added all configuration commands
-  - [x] Model command with list, info, select subcommands
-  - [x] Profile command with full lifecycle subcommands
-  - [x] Alias command with add, remove, list, show subcommands
-  - [x] Fixed name conflicts (Profile vs ProfileName)
-  - [x] Fixed test failures by updating Profile references to ProfileName
-  - [x] Removed example Kong help integration files from docs/examples
-- [x] UI improvements:
-  - [x] Changed config list to config show with help "Show all configuration settings"
+
+### 3.5 Logging and Verbosity Implementation ✅
+
+#### 3.5.1 Configuration Logging (pkg/config/) ✅
+- [x] Added logging to Load function with performance timing
+- [x] INFO level for initialization, loading, and profile switches
+- [x] DEBUG level for file discovery and detailed operations
+- [x] WARN level for non-critical issues and validation errors
+- [x] ERROR level for critical failures
+- [x] Performance timing for configuration load duration
+
+#### 3.5.2 LLM Provider Logging (pkg/llm/) ✅
+- [x] INFO level for provider initialization and model selection
+- [x] DEBUG level for API key resolution, option building, and API operations
+- [x] ERROR level for provider creation failures and API errors
+- [x] Complete logging for streaming operations
+- [x] Added performance timing to all LLM operations
+- [x] Implemented API key sanitization
+
+#### 3.5.3 Session Management Logging (pkg/repl/) ✅
+- [x] INFO level for session creation, save/load, deletion, and export operations
+- [x] DEBUG level for file I/O operations, search operations, and session listing
+- [x] Complete coverage of all session lifecycle events
+- [x] Added timing to session operations (save, load, list)
+
+#### 3.5.4 Command Execution Logging (pkg/command/) ✅
+- [x] DEBUG level for command parsing and validation
+- [x] INFO level for command execution
+- [x] ERROR level for command failures
+- [x] Added timing to command execution
+
+#### 3.5.5 REPL Operations Logging (pkg/repl/) ✅
+- [x] INFO level for REPL startup/shutdown
+- [x] DEBUG level for command parsing and context updates
+- [x] Complete integration with session logging
+
+#### 3.5.6 File Operations Logging (internal/configdir/) ✅
+- [x] DEBUG level for directory creation and file operations
+- [x] ERROR level for file access failures
+- [x] Complete coverage of configuration directory operations
+
+#### 3.5.7 User-Facing Operations Logging ✅
+- [x] Consistent user-friendly messages at INFO level
+- [x] Technical details moved to DEBUG level
+- [x] Clear separation between user and technical logging
+
+#### 3.5.8 Performance and Metrics Logging ✅
+- [x] Added timing/duration logging for:
+  - Configuration load operations
+  - LLM response generation (all methods)
+  - Session operations (save, load, list)
+  - Command execution
+- [x] Performance logging at DEBUG level
+
+#### 3.5.9 Security and Audit Logging ✅
+- [x] API key sanitization with sanitizeAPIKey function
+- [x] Configuration modification logging (already existed)
+- [x] File access logging (already implemented in 3.5.6)
+- [x] Error conditions logging (already comprehensive)
+
+#### 3.5.10 Testing and Integration ✅
+- [x] Added comprehensive logging tests to verify output
+- [x] Tested different verbosity levels
+- [x] Ensured sensitive data is not logged
+- [x] Verified performance impact is minimal
+- [x] Extended internal/logging/logger_test.go with new test functions
+- [x] Created pkg/llm/sanitization_test.go for API key sanitization testing
   - [x] Moved InstallCompletions command to config group for better organization
 
 ### 3.3 Chat Command & REPL Foundation ✅
