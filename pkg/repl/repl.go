@@ -449,6 +449,33 @@ func (r *REPL) handleCommand(cmd string) error {
 		return r.exportSession(args)
 	case "/search":
 		return r.searchSessions(args)
+	case "/tags":
+		return r.listTags()
+	case "/tag":
+		return r.addTag(args)
+	case "/untag":
+		return r.removeTag(args)
+	case "/metadata":
+		return r.showMetadata()
+	case "/meta":
+		if len(args) == 0 {
+			return fmt.Errorf("usage: /meta set <key> <value> or /meta del <key>")
+		}
+		subcommand := args[0]
+		switch subcommand {
+		case "set":
+			if len(args) < 3 {
+				return fmt.Errorf("usage: /meta set <key> <value>")
+			}
+			return r.setMetadata(args[1], strings.Join(args[2:], " "))
+		case "del":
+			if len(args) < 2 {
+				return fmt.Errorf("usage: /meta del <key>")
+			}
+			return r.deleteMetadata(args[1])
+		default:
+			return fmt.Errorf("unknown meta subcommand: %s", subcommand)
+		}
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}
@@ -488,7 +515,7 @@ func (r *REPL) handleSpecialCommand(cmd string) error {
 		return r.setVerbosity(args)
 	case ":output":
 		logging.LogDebug("Setting output format", "args", args)
-		return r.setOutput(args)
+		return r.setOutputFormat(args)
 	case ":profile":
 		logging.LogDebug("Switching profile", "args", args)
 		return r.switchProfile(args)
@@ -534,6 +561,12 @@ COMMANDS:
   /config show       Display current configuration
   /config set <k> <v> Set configuration value
   /export <fmt> [f]  Export session (json, markdown)
+  /tags              List tags for current session
+  /tag <tag>         Add a tag to current session
+  /untag <tag>       Remove a tag from current session
+  /metadata          Show session metadata
+  /meta set <k> <v>  Set metadata value
+  /meta del <key>    Delete metadata key
 
 SPECIAL COMMANDS:
   :model <name>         Switch to a different model

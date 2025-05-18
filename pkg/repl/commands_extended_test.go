@@ -168,7 +168,7 @@ func TestSetOutput(t *testing.T) {
 				},
 			}
 
-			err := r.setOutput(tt.args)
+			err := r.setOutputFormat(tt.args)
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectMsg)
