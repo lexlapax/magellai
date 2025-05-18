@@ -7,8 +7,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/lexlapax/magellai/pkg/domain"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBackendType_Constants(t *testing.T) {
@@ -98,35 +98,35 @@ func TestMockBackend_Implementation(t *testing.T) {
 	var _ Backend = (*MockBackend)(nil)
 
 	mock := NewMockBackend()
-	
+
 	// Test NewSession
 	session := mock.NewSession("test")
 	assert.NotNil(t, session)
 	assert.Equal(t, "test", session.Name)
-	
+
 	// Test SaveSession
 	err := mock.SaveSession(session)
 	assert.NoError(t, err)
-	
+
 	// Test LoadSession
 	loaded, err := mock.LoadSession(session.ID)
 	assert.NoError(t, err)
 	assert.NotNil(t, loaded)
 	assert.Equal(t, session.ID, loaded.ID)
-	
+
 	// Test ListSessions
 	sessions, err := mock.ListSessions()
 	assert.NoError(t, err)
 	assert.Len(t, sessions, 1)
-	
+
 	// Test DeleteSession
 	err = mock.DeleteSession(session.ID)
 	assert.NoError(t, err)
-	
+
 	sessions, err = mock.ListSessions()
 	assert.NoError(t, err)
 	assert.Len(t, sessions, 0)
-	
+
 	// Test Close
 	err = mock.Close()
 	assert.NoError(t, err)

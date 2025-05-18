@@ -21,26 +21,26 @@ func TestStorageSession_JSONMarshal(t *testing.T) {
 	domainSession.Config["temperature"] = 0.7
 	domainSession.Config["max_tokens"] = 100
 	domainSession.Metadata["source"] = "unit-test"
-	
+
 	// Set up conversation
 	domainSession.Conversation.SetModel("openai", "gpt-4")
 	domainSession.Conversation.SetParameters(0.7, 100)
 	domainSession.Conversation.SetSystemPrompt("You are a helpful assistant")
 	domainSession.Conversation.AddMessage(*domain.NewMessage("msg-1", domain.MessageRoleUser, "Hello"))
 	domainSession.Conversation.AddMessage(*domain.NewMessage("msg-2", domain.MessageRoleAssistant, "Hi there!"))
-	
+
 	// Convert to storage session
 	storageSession := ToStorageSession(domainSession)
-	
+
 	// Test JSON marshaling
 	data, err := json.Marshal(storageSession)
 	require.NoError(t, err)
-	
+
 	// Test JSON unmarshaling
 	var unmarshaled StorageSession
 	err = json.Unmarshal(data, &unmarshaled)
 	require.NoError(t, err)
-	
+
 	// Verify data
 	assert.Equal(t, storageSession.ID, unmarshaled.ID)
 	assert.Equal(t, storageSession.Name, unmarshaled.Name)
@@ -51,7 +51,7 @@ func TestStorageSession_JSONMarshal(t *testing.T) {
 	assert.Equal(t, storageSession.SystemPrompt, unmarshaled.SystemPrompt)
 	assert.Len(t, unmarshaled.Messages, 2)
 	assert.Equal(t, storageSession.Tags, unmarshaled.Tags)
-	
+
 	// Test conversion back to domain
 	convertedBack := ToDomainSession(&unmarshaled)
 	assert.NotNil(t, convertedBack)
@@ -79,7 +79,7 @@ func TestDomainMessage_Conversion(t *testing.T) {
 	attachment.MimeType = "image/jpeg"
 	attachment.Content = []byte("image data")
 	msg.AddAttachment(*attachment)
-	
+
 	// Test that the message works correctly
 	assert.Equal(t, "msg-1", msg.ID)
 	assert.Equal(t, domain.MessageRoleUser, msg.Role)
@@ -99,14 +99,14 @@ func TestStorageSession_WithoutConversation(t *testing.T) {
 		Metadata: make(map[string]interface{}),
 		// Conversation is nil
 	}
-	
+
 	// Convert to storage
 	storageSession := ToStorageSession(domainSession)
 	assert.NotNil(t, storageSession)
 	assert.Equal(t, domainSession.ID, storageSession.ID)
 	assert.Empty(t, storageSession.Messages)
 	assert.Empty(t, storageSession.Model)
-	
+
 	// Convert back to domain
 	convertedBack := ToDomainSession(storageSession)
 	assert.NotNil(t, convertedBack)
@@ -121,12 +121,12 @@ func TestStorageSession_CompleteRoundTrip(t *testing.T) {
 	session.Tags = []string{"test", "complete", "roundtrip"}
 	session.Config["feature"] = "enabled"
 	session.Metadata["version"] = "1.0"
-	
+
 	// Add conversation with all fields
 	session.Conversation.SetModel("anthropic", "claude-3")
 	session.Conversation.SetParameters(0.8, 2000)
 	session.Conversation.SetSystemPrompt("You are Claude, an AI assistant.")
-	
+
 	// Add messages with attachments
 	userMsg := domain.NewMessage("msg-1", domain.MessageRoleUser, "Please analyze this image")
 	imageAtt := domain.NewAttachment("att-1", domain.AttachmentTypeImage)
@@ -135,32 +135,32 @@ func TestStorageSession_CompleteRoundTrip(t *testing.T) {
 	imageAtt.URL = "https://example.com/image.png"
 	userMsg.AddAttachment(*imageAtt)
 	session.Conversation.AddMessage(*userMsg)
-	
+
 	assistantMsg := domain.NewMessage("msg-2", domain.MessageRoleAssistant, "I can see the image shows...")
 	session.Conversation.AddMessage(*assistantMsg)
-	
+
 	// Convert to storage format
 	storageSession := ToStorageSession(session)
-	
+
 	// Simulate JSON persistence
 	jsonData, err := json.MarshalIndent(storageSession, "", "  ")
 	require.NoError(t, err)
-	
+
 	// Parse back from JSON
 	var parsedStorage StorageSession
 	err = json.Unmarshal(jsonData, &parsedStorage)
 	require.NoError(t, err)
-	
+
 	// Convert back to domain
 	finalSession := ToDomainSession(&parsedStorage)
-	
+
 	// Verify everything is preserved
 	assert.Equal(t, session.ID, finalSession.ID)
 	assert.Equal(t, session.Name, finalSession.Name)
 	assert.Equal(t, session.Tags, finalSession.Tags)
 	assert.Equal(t, session.Config["feature"], finalSession.Config["feature"])
 	assert.Equal(t, session.Metadata["version"], finalSession.Metadata["version"])
-	
+
 	// Verify conversation
 	assert.NotNil(t, finalSession.Conversation)
 	assert.Equal(t, session.Conversation.Model, finalSession.Conversation.Model)
@@ -168,7 +168,7 @@ func TestStorageSession_CompleteRoundTrip(t *testing.T) {
 	assert.Equal(t, session.Conversation.Temperature, finalSession.Conversation.Temperature)
 	assert.Equal(t, session.Conversation.MaxTokens, finalSession.Conversation.MaxTokens)
 	assert.Equal(t, session.Conversation.SystemPrompt, finalSession.Conversation.SystemPrompt)
-	
+
 	// Verify messages
 	assert.Len(t, finalSession.Conversation.Messages, 2)
 	assert.Equal(t, "Please analyze this image", finalSession.Conversation.Messages[0].Content)

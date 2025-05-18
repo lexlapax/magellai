@@ -213,7 +213,7 @@ func TestSessionManager_Delegation(t *testing.T) {
 	// Create a session to work with
 	session, err := sessionManager.NewSession("Delegation Test")
 	require.NoError(t, err)
-	backend.sessions[session.ID] = ToDomainSession(session)
+	backend.sessions[session.ID] = session
 
 	// Test each delegated method
 	tests := []struct {

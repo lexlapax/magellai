@@ -314,10 +314,10 @@ func (r *REPL) processMessage(message string) error {
 
 	// Add user message to conversation
 	logging.LogDebug("Adding user message to conversation", "attachmentCount", len(attachments))
-	r.session.Conversation.AddMessage("user", message, attachments)
+	AddMessageToConversation(r.session.Conversation, "user", message, attachments)
 
 	// Get conversation history
-	messages := r.session.Conversation.GetHistory()
+	messages := GetHistory(r.session.Conversation)
 
 	// Prepare options
 	var opts []llm.ProviderOption
@@ -360,7 +360,7 @@ func (r *REPL) processMessage(message string) error {
 		fmt.Fprintln(r.writer, "")
 
 		// Add assistant message to conversation
-		r.session.Conversation.AddMessage("assistant", fullResponse.String(), nil)
+		AddMessageToConversation(r.session.Conversation, "assistant", fullResponse.String(), nil)
 	} else {
 		logging.LogDebug("Using non-streaming mode")
 		// Non-streaming response
@@ -374,7 +374,7 @@ func (r *REPL) processMessage(message string) error {
 		fmt.Fprintf(r.writer, "\n%s\n\n", resp.Content)
 
 		// Add assistant message to conversation
-		r.session.Conversation.AddMessage("assistant", resp.Content, nil)
+		AddMessageToConversation(r.session.Conversation, "assistant", resp.Content, nil)
 	}
 
 	return nil

@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lexlapax/magellai/pkg/domain"
 	schemadomain "github.com/lexlapax/go-llms/pkg/schema/domain"
+	"github.com/lexlapax/magellai/pkg/domain"
 )
 
 func TestDomainProviderAdapter(t *testing.T) {
 	// Create a mock provider
 	mockProvider := NewMockProvider()
-	
+
 	// Set up mock responses
 	mockResponse := &Response{
 		Content: "Hello from the model!",
@@ -25,28 +25,28 @@ func TestDomainProviderAdapter(t *testing.T) {
 		FinishReason: "stop",
 	}
 	mockProvider.SetResponse(mockResponse)
-	
+
 	// Wrap with domain provider
 	domainProvider := NewDomainProvider(mockProvider)
-	
+
 	// Create domain messages
 	messages := []*domain.Message{
 		{
-			ID:      "msg1",
-			Role:    domain.MessageRoleUser,
-			Content: "Hello!",
+			ID:        "msg1",
+			Role:      domain.MessageRoleUser,
+			Content:   "Hello!",
 			Timestamp: time.Now(),
-			Metadata: make(map[string]interface{}),
+			Metadata:  make(map[string]interface{}),
 		},
 	}
-	
+
 	// Test GenerateDomainMessage
 	ctx := context.Background()
 	response, err := domainProvider.GenerateDomainMessage(ctx, messages)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Validate response
 	if response.Role != domain.MessageRoleAssistant {
 		t.Errorf("expected role %s, got %s", domain.MessageRoleAssistant, response.Role)
@@ -60,7 +60,7 @@ func TestDomainProviderAdapter(t *testing.T) {
 	if response.Metadata["finish_reason"] != mockResponse.FinishReason {
 		t.Errorf("expected finish reason %s, got %s", mockResponse.FinishReason, response.Metadata["finish_reason"])
 	}
-	
+
 	// Check usage metadata
 	usage, ok := response.Metadata["usage"].(*Usage)
 	if !ok {
@@ -74,7 +74,7 @@ func TestDomainProviderAdapter(t *testing.T) {
 func TestDomainProviderStreamAdapter(t *testing.T) {
 	// Create a mock provider
 	mockProvider := NewMockProvider()
-	
+
 	// Set up streaming response
 	chunks := []StreamChunk{
 		{Content: "Hello", Index: 0},
@@ -83,39 +83,39 @@ func TestDomainProviderStreamAdapter(t *testing.T) {
 		{Content: " model!", Index: 3, FinishReason: "stop"},
 	}
 	mockProvider.SetStreamChunks(chunks)
-	
+
 	// Wrap with domain provider
 	domainProvider := NewDomainProvider(mockProvider)
-	
+
 	// Create domain messages
 	messages := []*domain.Message{
 		{
-			ID:      "msg1",
-			Role:    domain.MessageRoleUser,
-			Content: "Hello!",
+			ID:        "msg1",
+			Role:      domain.MessageRoleUser,
+			Content:   "Hello!",
 			Timestamp: time.Now(),
-			Metadata: make(map[string]interface{}),
+			Metadata:  make(map[string]interface{}),
 		},
 	}
-	
+
 	// Test StreamDomainMessage
 	ctx := context.Background()
 	stream, err := domainProvider.StreamDomainMessage(ctx, messages)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Collect streamed messages
 	var streamedMessages []*domain.Message
 	for msg := range stream {
 		streamedMessages = append(streamedMessages, msg)
 	}
-	
+
 	// Should have received messages for each chunk
 	if len(streamedMessages) != len(chunks) {
 		t.Errorf("expected %d messages, got %d", len(chunks), len(streamedMessages))
 	}
-	
+
 	// Check final message content
 	lastMsg := streamedMessages[len(streamedMessages)-1]
 	expectedContent := "Hello from the model!"

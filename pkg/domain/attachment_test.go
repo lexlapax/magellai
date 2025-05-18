@@ -7,17 +7,17 @@ import (
 func TestNewAttachment(t *testing.T) {
 	id := "att-123"
 	attType := AttachmentTypeImage
-	
+
 	att := NewAttachment(id, attType)
-	
+
 	if att.ID != id {
 		t.Errorf("Expected attachment ID %s, got %s", id, att.ID)
 	}
-	
+
 	if att.Type != attType {
 		t.Errorf("Expected type %s, got %s", attType, att.Type)
 	}
-	
+
 	if att.Metadata == nil {
 		t.Error("Expected metadata map to be initialized")
 	}
@@ -90,7 +90,7 @@ func TestAttachmentIsValid(t *testing.T) {
 			expected: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.attachment.IsValid()
@@ -108,32 +108,32 @@ func TestAttachmentHelpers(t *testing.T) {
 		Type:    AttachmentTypeImage,
 		Content: []byte("image data"),
 	}
-	
+
 	if !att1.HasContent() {
 		t.Error("Expected HasContent to return true")
 	}
-	
+
 	// Test HasReference
 	att2 := Attachment{
 		ID:       "att-2",
 		Type:     AttachmentTypeFile,
 		FilePath: "/path/to/file",
 	}
-	
+
 	if !att2.HasReference() {
 		t.Error("Expected HasReference to return true for FilePath")
 	}
-	
+
 	att3 := Attachment{
 		ID:   "att-3",
 		Type: AttachmentTypeAudio,
 		URL:  "https://example.com/audio.mp3",
 	}
-	
+
 	if !att3.HasReference() {
 		t.Error("Expected HasReference to return true for URL")
 	}
-	
+
 	// Test GetDisplayName
 	tests := []struct {
 		attachment Attachment
@@ -156,7 +156,7 @@ func TestAttachmentHelpers(t *testing.T) {
 			expected:   "att-4",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
 			result := tt.attachment.GetDisplayName()
@@ -180,7 +180,7 @@ func TestAttachmentType(t *testing.T) {
 		{"invalid", false},
 		{"", false},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(string(tt.attType), func(t *testing.T) {
 			if tt.attType.IsValid() != tt.expected {

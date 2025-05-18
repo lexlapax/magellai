@@ -261,8 +261,8 @@ func TestREPL_handleCommand_Reset(t *testing.T) {
 	defer cleanup()
 
 	// Add some messages
-	repl.session.Conversation.AddMessage("user", "Hello", nil)
-	repl.session.Conversation.AddMessage("assistant", "Hi!", nil)
+	repl.session.Conversation.AddMessage(NewMessage("user", "Hello", nil))
+	repl.session.Conversation.AddMessage(NewMessage("assistant", "Hi!", nil))
 	assert.Len(t, repl.session.Conversation.Messages, 2)
 
 	// Reset conversation

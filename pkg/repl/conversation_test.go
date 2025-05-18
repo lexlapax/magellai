@@ -1,207 +1,217 @@
 package repl
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewConversation(t *testing.T) {
-	conv := NewConversation("test-123")
+func TestNewMessage(t *testing.T) {
+	// Test creating a message without attachments
+	msg := NewMessage("user", "Hello, world!", nil)
 
-	assert.Equal(t, "test-123", conv.ID)
-	assert.Empty(t, conv.Messages)
-	assert.NotZero(t, conv.Created)
-	assert.Equal(t, conv.Created, conv.Updated)
-	assert.NotNil(t, conv.Metadata)
+	assert.Equal(t, domain.MessageRoleUser, msg.Role)
+	assert.Equal(t, "Hello, world!", msg.Content)
+	assert.NotZero(t, msg.Timestamp)
+	assert.Empty(t, msg.Attachments)
+	assert.NotNil(t, msg.Metadata)
+	assert.NotEmpty(t, msg.ID)
 }
 
-func TestConversation_AddMessage(t *testing.T) {
-	conv := NewConversation("test-123")
+func TestNewMessage_WithAttachments(t *testing.T) {
+	// Test creating a message with attachments
+	llmAttachments := []llm.Attachment{
+		{
+			Type:     "image",
+			FilePath: "test.png",
+			MimeType: "image/png",
+			Content:  "image data",
+		},
+	}
+
+	msg := NewMessage("assistant", "Here's an image", llmAttachments)
+
+	assert.Equal(t, domain.MessageRoleAssistant, msg.Role)
+	assert.Equal(t, "Here's an image", msg.Content)
+	assert.Len(t, msg.Attachments, 1)
+
+	// Check attachment conversion
+	domainAtt := msg.Attachments[0]
+	assert.Equal(t, domain.AttachmentTypeImage, domainAtt.Type)
+	assert.Equal(t, "test.png", domainAtt.Name)
+	assert.Equal(t, "image/png", domainAtt.MimeType)
+	assert.Equal(t, []byte("image data"), domainAtt.Content)
+}
+
+func TestGetHistory(t *testing.T) {
+	// Create a conversation with messages
+	conv := domain.NewConversation("test-conv")
+	conv.SystemPrompt = "You are a helpful assistant."
+
+	// Add messages
+	msg1 := NewMessage("user", "Hello", nil)
+	conv.AddMessage(msg1)
+
+	msg2 := NewMessage("assistant", "Hi there!", nil)
+	conv.AddMessage(msg2)
+
+	// Get history
+	history := GetHistory(conv)
+
+	// Should have system prompt + 2 messages
+	require.Len(t, history, 3)
+
+	// Check system prompt
+	assert.Equal(t, "system", string(history[0].Role))
+	assert.Equal(t, "You are a helpful assistant.", history[0].Content)
+
+	// Check user message
+	assert.Equal(t, "user", string(history[1].Role))
+	assert.Equal(t, "Hello", history[1].Content)
+
+	// Check assistant message
+	assert.Equal(t, "assistant", string(history[2].Role))
+	assert.Equal(t, "Hi there!", history[2].Content)
+}
+
+func TestGetHistory_NoSystemPrompt(t *testing.T) {
+	// Create a conversation without system prompt
+	conv := domain.NewConversation("test-conv")
+
+	// Add messages
+	msg1 := NewMessage("user", "Hello", nil)
+	conv.AddMessage(msg1)
+
+	// Get history
+	history := GetHistory(conv)
+
+	// Should have only 1 message
+	require.Len(t, history, 1)
+	assert.Equal(t, "user", string(history[0].Role))
+}
+
+func TestAddMessageToConversation(t *testing.T) {
+	conv := domain.NewConversation("test-conv")
 	originalUpdated := conv.Updated
 
 	// Wait a bit to ensure different timestamps
 	time.Sleep(10 * time.Millisecond)
 
-	conv.AddMessage("user", "Hello, world!", nil)
+	// Add message
+	AddMessageToConversation(conv, "user", "Test message", nil)
 
+	// Check message was added
 	require.Len(t, conv.Messages, 1)
 	msg := conv.Messages[0]
-
-	assert.NotEmpty(t, msg.ID)
-	assert.Equal(t, "user", msg.Role)
-	assert.Equal(t, "Hello, world!", msg.Content)
-	assert.NotZero(t, msg.Timestamp)
+	assert.Equal(t, domain.MessageRoleUser, msg.Role)
+	assert.Equal(t, "Test message", msg.Content)
 	assert.True(t, conv.Updated.After(originalUpdated))
 }
 
-func TestConversation_AddMessageWithAttachments(t *testing.T) {
-	conv := NewConversation("test-123")
-
-	attachments := []llm.Attachment{
-		{Type: llm.AttachmentTypeText, Content: "dGVzdA==", MimeType: "text/plain"},
-		{Type: llm.AttachmentTypeImage, Content: "aW1hZ2U=", MimeType: "image/jpeg"},
-	}
-
-	conv.AddMessage("user", "Check these files", attachments)
-
-	require.Len(t, conv.Messages, 1)
-	msg := conv.Messages[0]
-
-	assert.Equal(t, "user", msg.Role)
-	assert.Equal(t, "Check these files", msg.Content)
-	assert.Equal(t, attachments, msg.Attachments)
-}
-
-func TestConversation_SetSystemPrompt(t *testing.T) {
-	conv := NewConversation("test-123")
-	originalUpdated := conv.Updated
-
-	time.Sleep(10 * time.Millisecond)
-
-	conv.SetSystemPrompt("You are a helpful assistant.")
-
-	assert.Equal(t, "You are a helpful assistant.", conv.SystemPrompt)
-	assert.True(t, conv.Updated.After(originalUpdated))
-}
-
-func TestConversation_GetHistory(t *testing.T) {
-	conv := NewConversation("test-123")
-
-	// Set system prompt
-	conv.SetSystemPrompt("You are a helpful assistant.")
-
-	// Add messages
-	conv.AddMessage("user", "Hello", nil)
-	conv.AddMessage("assistant", "Hi there!", nil)
-
-	// Add message with attachments
-	attachments := []llm.Attachment{
-		{Type: llm.AttachmentTypeImage, Content: "aW1hZ2U=", MimeType: "image/jpeg"},
-	}
-	conv.AddMessage("user", "What's in this image?", attachments)
-
-	history := conv.GetHistory()
-
-	require.Len(t, history, 4)
-
-	// Check system message
-	assert.Equal(t, "system", history[0].Role)
-	assert.Equal(t, "You are a helpful assistant.", history[0].Content)
-
-	// Check user message
-	assert.Equal(t, "user", history[1].Role)
-	assert.Equal(t, "Hello", history[1].Content)
-
-	// Check assistant message
-	assert.Equal(t, "assistant", history[2].Role)
-	assert.Equal(t, "Hi there!", history[2].Content)
-
-	// Check message with attachments
-	assert.Equal(t, "user", history[3].Role)
-	assert.Equal(t, "What's in this image?", history[3].Content)
-	assert.Equal(t, attachments, history[3].Attachments)
-}
-
-func TestConversation_GetHistoryNoSystemPrompt(t *testing.T) {
-	conv := NewConversation("test-123")
-
-	conv.AddMessage("user", "Hello", nil)
-	conv.AddMessage("assistant", "Hi!", nil)
-
-	history := conv.GetHistory()
-
-	require.Len(t, history, 2)
-	assert.Equal(t, "user", history[0].Role)
-	assert.Equal(t, "assistant", history[1].Role)
-}
-
-func TestConversation_Reset(t *testing.T) {
-	conv := NewConversation("test-123")
+func TestResetConversation(t *testing.T) {
+	conv := domain.NewConversation("test-conv")
 
 	// Add some messages
-	conv.SetSystemPrompt("System prompt")
-	conv.AddMessage("user", "Hello", nil)
-	conv.AddMessage("assistant", "Hi!", nil)
+	AddMessageToConversation(conv, "user", "Message 1", nil)
+	AddMessageToConversation(conv, "assistant", "Response 1", nil)
 
-	// Reset conversation
-	conv.Reset()
+	require.Len(t, conv.Messages, 2)
+	originalUpdated := conv.Updated
 
+	// Wait a bit
+	time.Sleep(10 * time.Millisecond)
+
+	// Reset
+	ResetConversation(conv)
+
+	// Check messages are cleared
 	assert.Empty(t, conv.Messages)
-	assert.Equal(t, "System prompt", conv.SystemPrompt) // System prompt preserved
-	assert.Equal(t, "test-123", conv.ID)                // ID preserved
+	assert.True(t, conv.Updated.After(originalUpdated))
 }
 
-func TestConversation_CountTokens(t *testing.T) {
-	conv := NewConversation("test-123")
-
-	// Set system prompt
-	conv.SetSystemPrompt("You are a helpful assistant.")
+func TestGetLastUserMessage(t *testing.T) {
+	conv := domain.NewConversation("test-conv")
 
 	// Add messages
-	conv.AddMessage("user", "Hello, how are you?", nil)
-	conv.AddMessage("assistant", "I'm doing well, thank you!", nil)
+	AddMessageToConversation(conv, "user", "First user message", nil)
+	AddMessageToConversation(conv, "assistant", "Assistant response", nil)
+	AddMessageToConversation(conv, "user", "Second user message", nil)
 
-	tokens := conv.CountTokens()
-
-	// With our simple estimation, this should be around 20 tokens total
-	assert.Greater(t, tokens, 10)
-	assert.Less(t, tokens, 50)
+	// Get last user message
+	lastUserMsg := GetLastUserMessage(conv)
+	require.NotNil(t, lastUserMsg)
+	assert.Equal(t, "Second user message", lastUserMsg.Content)
 }
 
-func TestConversation_CountTokensWithAttachments(t *testing.T) {
-	conv := NewConversation("test-123")
+func TestGetLastUserMessage_NoMessages(t *testing.T) {
+	conv := domain.NewConversation("test-conv")
 
-	attachments := []llm.Attachment{
-		{Type: llm.AttachmentTypeImage, Content: "aW1hZ2U=", MimeType: "image/jpeg"},
-		{Type: llm.AttachmentTypeText, Content: "dGV4dA==", MimeType: "text/plain"},
+	// No messages
+	lastUserMsg := GetLastUserMessage(conv)
+	assert.Nil(t, lastUserMsg)
+}
+
+func TestGetLastAssistantMessage(t *testing.T) {
+	conv := domain.NewConversation("test-conv")
+
+	// Add messages
+	AddMessageToConversation(conv, "user", "User message", nil)
+	AddMessageToConversation(conv, "assistant", "First assistant response", nil)
+	AddMessageToConversation(conv, "user", "Another user message", nil)
+	AddMessageToConversation(conv, "assistant", "Second assistant response", nil)
+
+	// Get last assistant message
+	lastAssistantMsg := GetLastAssistantMessage(conv)
+	require.NotNil(t, lastAssistantMsg)
+	assert.Equal(t, "Second assistant response", lastAssistantMsg.Content)
+}
+
+func TestTruncateHistory(t *testing.T) {
+	conv := domain.NewConversation("test-conv")
+
+	// Add 5 messages
+	for i := 1; i <= 5; i++ {
+		AddMessageToConversation(conv, "user", fmt.Sprintf("Message %d", i), nil)
 	}
 
-	conv.AddMessage("user", "Check these files", attachments)
+	require.Len(t, conv.Messages, 5)
+	originalUpdated := conv.Updated
 
-	tokens := conv.CountTokens()
+	// Wait a bit
+	time.Sleep(10 * time.Millisecond)
 
-	// Should include base text tokens plus attachment estimates
-	assert.Greater(t, tokens, 200) // 2 attachments * 100 tokens each
+	// Truncate to last 3 messages
+	TruncateHistory(conv, 3)
+
+	// Check only last 3 messages remain
+	require.Len(t, conv.Messages, 3)
+	assert.Equal(t, "Message 3", conv.Messages[0].Content)
+	assert.Equal(t, "Message 4", conv.Messages[1].Content)
+	assert.Equal(t, "Message 5", conv.Messages[2].Content)
+	assert.True(t, conv.Updated.After(originalUpdated))
 }
 
-func TestConversation_TrimToMaxTokens(t *testing.T) {
-	conv := NewConversation("test-123")
+func TestTruncateHistory_NoTruncation(t *testing.T) {
+	conv := domain.NewConversation("test-conv")
 
-	// Add several messages
-	conv.AddMessage("user", "First message", nil)
-	conv.AddMessage("assistant", "First response", nil)
-	conv.AddMessage("user", "Second message", nil)
-	conv.AddMessage("assistant", "Second response", nil)
-	conv.AddMessage("user", "Third message", nil)
+	// Add 3 messages
+	for i := 1; i <= 3; i++ {
+		AddMessageToConversation(conv, "user", fmt.Sprintf("Message %d", i), nil)
+	}
 
-	originalCount := len(conv.Messages)
+	originalUpdated := conv.Updated
 
-	// Trim to a small token limit
-	conv.TrimToMaxTokens(20)
+	// Try to truncate to 5 (no truncation should occur)
+	TruncateHistory(conv, 5)
 
-	// Should have fewer messages (or same if already under limit)
-	assert.LessOrEqual(t, len(conv.Messages), originalCount)
-	assert.Greater(t, len(conv.Messages), 0)
-
-	// Last message should be preserved
-	lastMsg := conv.Messages[len(conv.Messages)-1]
-	assert.Equal(t, "Third message", lastMsg.Content)
+	// All messages should remain
+	require.Len(t, conv.Messages, 3)
+	assert.Equal(t, originalUpdated, conv.Updated)
 }
 
-func TestConversation_TrimToMaxTokensPreservesLast(t *testing.T) {
-	conv := NewConversation("test-123")
-
-	// Add just one message
-	conv.AddMessage("user", "Only message", nil)
-
-	// Try to trim to very small limit
-	conv.TrimToMaxTokens(1)
-
-	// Should still have the one message
-	assert.Len(t, conv.Messages, 1)
-	assert.Equal(t, "Only message", conv.Messages[0].Content)
-}
+// End of tests

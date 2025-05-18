@@ -86,8 +86,8 @@ func TestSearchSessions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create session1: %v", err)
 	}
-	session1.Conversation.AddMessage("user", "Tell me about quantum computing", nil)
-	session1.Conversation.AddMessage("assistant", "Quantum computing uses quantum bits or qubits to process information", nil)
+	session1.Conversation.AddMessage(NewMessage("user", "Tell me about quantum computing", nil))
+	session1.Conversation.AddMessage(NewMessage("assistant", "Quantum computing uses quantum bits or qubits to process information", nil))
 	session1.Conversation.SetSystemPrompt("You are a helpful physics expert")
 	session1.Tags = []string{"physics", "quantum"}
 
@@ -95,8 +95,8 @@ func TestSearchSessions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create session2: %v", err)
 	}
-	session2.Conversation.AddMessage("user", "Explain neural networks", nil)
-	session2.Conversation.AddMessage("assistant", "Neural networks are computing systems inspired by biological neurons", nil)
+	session2.Conversation.AddMessage(NewMessage("user", "Explain neural networks", nil))
+	session2.Conversation.AddMessage(NewMessage("assistant", "Neural networks are computing systems inspired by biological neurons", nil))
 	session2.Conversation.SetSystemPrompt("You are an AI expert specializing in machine learning")
 	session2.Tags = []string{"AI", "neural"}
 
@@ -104,8 +104,8 @@ func TestSearchSessions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create session3: %v", err)
 	}
-	session3.Conversation.AddMessage("user", "What's the weather like?", nil)
-	session3.Conversation.AddMessage("assistant", "I don't have access to real-time weather data", nil)
+	session3.Conversation.AddMessage(NewMessage("user", "What's the weather like?", nil))
+	session3.Conversation.AddMessage(NewMessage("assistant", "I don't have access to real-time weather data", nil))
 	session3.Tags = []string{"general", "casual"}
 
 	// Save all sessions
@@ -306,8 +306,8 @@ func TestSearchResultsFormatting(t *testing.T) {
 		FilePath: "/path/to/image.png",
 		MimeType: "image/png",
 	}
-	session.Conversation.AddMessage("user", "Here's an image about quantum physics", []llm.Attachment{attachment})
-	session.Conversation.AddMessage("assistant", "I can see the quantum physics diagram", nil)
+	session.Conversation.AddMessage(NewMessage("user", "Here's an image about quantum physics", []llm.Attachment{attachment}))
+	session.Conversation.AddMessage(NewMessage("assistant", "I can see the quantum physics diagram", nil))
 
 	// Save session
 	if err := manager.SaveSession(session); err != nil {

@@ -9,18 +9,18 @@ import (
 
 // Common errors used across the domain layer.
 var (
-	ErrSessionNotFound     = errors.New("session not found")
-	ErrInvalidSession      = errors.New("invalid session")
-	ErrMessageNotFound     = errors.New("message not found")
-	ErrInvalidMessage      = errors.New("invalid message")
-	ErrAttachmentNotFound  = errors.New("attachment not found")
-	ErrInvalidAttachment   = errors.New("invalid attachment")
-	ErrProviderNotFound    = errors.New("provider not found")
-	ErrModelNotFound       = errors.New("model not found")
-	ErrInvalidModel        = errors.New("invalid model")
-	ErrInvalidRole         = errors.New("invalid message role")
-	ErrInvalidCapability   = errors.New("invalid model capability")
-	ErrNoContent           = errors.New("message must have content or attachments")
+	ErrSessionNotFound    = errors.New("session not found")
+	ErrInvalidSession     = errors.New("invalid session")
+	ErrMessageNotFound    = errors.New("message not found")
+	ErrInvalidMessage     = errors.New("invalid message")
+	ErrAttachmentNotFound = errors.New("attachment not found")
+	ErrInvalidAttachment  = errors.New("invalid attachment")
+	ErrProviderNotFound   = errors.New("provider not found")
+	ErrModelNotFound      = errors.New("model not found")
+	ErrInvalidModel       = errors.New("invalid model")
+	ErrInvalidRole        = errors.New("invalid message role")
+	ErrInvalidCapability  = errors.New("invalid model capability")
+	ErrNoContent          = errors.New("message must have content or attachments")
 )
 
 // SessionState represents the state of a session.
@@ -47,7 +47,7 @@ const (
 // DefaultConversationSettings defines default settings for new conversations.
 const (
 	DefaultTemperature  float64 = 0.7
-	DefaultMaxTokens    int     = 0 // Use model's default
+	DefaultMaxTokens    int     = 0  // Use model's default
 	DefaultContextLimit int     = 10 // Number of messages to keep in context
 )
 
@@ -90,6 +90,6 @@ func (f ExportFormat) String() string {
 
 // IsValid checks if the export format is valid.
 func (f ExportFormat) IsValid() bool {
-	return f == ExportFormatJSON || f == ExportFormatMarkdown || 
+	return f == ExportFormatJSON || f == ExportFormatMarkdown ||
 		f == ExportFormatText || f == ExportFormatHTML
 }

@@ -1,47 +1,41 @@
-// ABOUTME: Core types for the REPL package including session and search structures
-// ABOUTME: Defines the types used for session management and conversation handling
+// ABOUTME: REPL specific types that extend or wrap domain types
+// ABOUTME: Contains only REPL-specific concerns not part of core domain
 
 package repl
 
 import (
-	"time"
+	"github.com/lexlapax/magellai/pkg/domain"
+	"github.com/lexlapax/magellai/pkg/llm"
 )
 
-// Session represents a complete REPL session with conversation and metadata
-type Session struct {
-	ID           string                 `json:"id"`
-	Name         string                 `json:"name,omitempty"`
-	Conversation *Conversation          `json:"conversation"`
-	Config       map[string]interface{} `json:"config,omitempty"`
-	Created      time.Time              `json:"created"`
-	Updated      time.Time              `json:"updated"`
-	Tags         []string               `json:"tags,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+// Use domain types directly
+type Session = domain.Session
+type SessionInfo = domain.SessionInfo
+type Message = domain.Message
+type Conversation = domain.Conversation
+type SearchResult = domain.SearchResult
+type SearchMatch = domain.SearchMatch
+
+// REPL-specific types that don't belong in domain
+
+// ConversationState represents the current state of a REPL conversation
+type ConversationState struct {
+	ActiveSession *domain.Session
+	LastResponse  string
+	StreamMode    bool
+	Provider      llm.Provider
 }
 
-// SessionInfo represents basic session information for listing
-type SessionInfo struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Created      time.Time `json:"created"`
-	Updated      time.Time `json:"updated"`
-	MessageCount int       `json:"message_count"`
-	Model        string    `json:"model,omitempty"`
-	Provider     string    `json:"provider,omitempty"`
-	Tags         []string  `json:"tags,omitempty"`
+// CommandResult represents the result of a REPL command execution
+type CommandResult struct {
+	Success bool
+	Message string
+	Data    interface{}
 }
 
-// SearchResult represents a search result with context
-type SearchResult struct {
-	Session *SessionInfo
-	Matches []SearchMatch
-}
-
-// SearchMatch represents a single match with context
-type SearchMatch struct {
-	Type     string // "message", "system_prompt", "name", "tag"
-	Role     string // for messages: "user", "assistant", "system"
-	Content  string // the actual matched content snippet
-	Context  string // surrounding context
-	Position int    // message index if applicable
+// REPLEvent represents an event in the REPL lifecycle
+type REPLEvent struct {
+	Type    string // "command", "response", "error", "stream"
+	Message string
+	Data    interface{}
 }

@@ -9,29 +9,29 @@ func TestNewMessage(t *testing.T) {
 	id := "msg-123"
 	role := MessageRoleUser
 	content := "Hello, world!"
-	
+
 	msg := NewMessage(id, role, content)
-	
+
 	if msg.ID != id {
 		t.Errorf("Expected message ID %s, got %s", id, msg.ID)
 	}
-	
+
 	if msg.Role != role {
 		t.Errorf("Expected role %s, got %s", role, msg.Role)
 	}
-	
+
 	if msg.Content != content {
 		t.Errorf("Expected content %s, got %s", content, msg.Content)
 	}
-	
+
 	if msg.Metadata == nil {
 		t.Error("Expected metadata map to be initialized")
 	}
-	
+
 	if len(msg.Attachments) != 0 {
 		t.Error("Expected attachments to be empty")
 	}
-	
+
 	// Check timestamp is recent
 	if time.Since(msg.Timestamp) > time.Second {
 		t.Error("Timestamp should be recent")
@@ -42,13 +42,13 @@ func TestMessageAddAttachment(t *testing.T) {
 	msg := NewMessage("msg-123", MessageRoleUser, "Check this file")
 	attachment := NewAttachment("att-1", AttachmentTypeFile)
 	attachment.Name = "document.pdf"
-	
+
 	msg.AddAttachment(*attachment)
-	
+
 	if len(msg.Attachments) != 1 {
 		t.Error("Failed to add attachment")
 	}
-	
+
 	if msg.Attachments[0].ID != "att-1" {
 		t.Error("Attachment ID mismatch")
 	}
@@ -56,19 +56,19 @@ func TestMessageAddAttachment(t *testing.T) {
 
 func TestMessageRemoveAttachment(t *testing.T) {
 	msg := NewMessage("msg-123", MessageRoleUser, "Multiple attachments")
-	
+
 	att1 := NewAttachment("att-1", AttachmentTypeFile)
 	att2 := NewAttachment("att-2", AttachmentTypeImage)
 	att3 := NewAttachment("att-3", AttachmentTypeText)
-	
+
 	msg.Attachments = []Attachment{*att1, *att2, *att3}
-	
+
 	msg.RemoveAttachment("att-2")
-	
+
 	if len(msg.Attachments) != 2 {
 		t.Error("Failed to remove attachment")
 	}
-	
+
 	for _, att := range msg.Attachments {
 		if att.ID == "att-2" {
 			t.Error("Attachment was not removed")
@@ -136,7 +136,7 @@ func TestMessageIsValid(t *testing.T) {
 			expected: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.message.IsValid()
@@ -158,7 +158,7 @@ func TestMessageRole(t *testing.T) {
 		{"invalid", false},
 		{"", false},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(string(tt.role), func(t *testing.T) {
 			if tt.role.IsValid() != tt.expected {

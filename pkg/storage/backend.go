@@ -5,7 +5,7 @@ package storage
 
 import (
 	"io"
-	
+
 	"github.com/lexlapax/magellai/pkg/domain"
 )
 

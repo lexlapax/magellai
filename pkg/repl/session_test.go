@@ -66,8 +66,8 @@ func TestSessionManager_SaveAndLoadSession(t *testing.T) {
 	require.NoError(t, err)
 	session.Tags = []string{"test", "demo"}
 	session.Config["model"] = "gpt-4"
-	session.Conversation.AddMessage("user", "Hello", nil)
-	session.Conversation.AddMessage("assistant", "Hi there!", nil)
+	session.Conversation.AddMessage(NewMessage("user", "Hello", nil))
+	session.Conversation.AddMessage(NewMessage("assistant", "Hi there!", nil))
 
 	// Save session
 	err = sm.SaveSession(session)
@@ -103,7 +103,7 @@ func TestSessionManager_ListSessions(t *testing.T) {
 	session1, err := sm.NewSession("Session 1")
 	require.NoError(t, err)
 	session1.Tags = []string{"work"}
-	session1.Conversation.AddMessage("user", "First message", nil)
+	session1.Conversation.AddMessage(NewMessage("user", "First message", nil))
 	err = sm.SaveSession(session1)
 	require.NoError(t, err)
 
@@ -112,8 +112,8 @@ func TestSessionManager_ListSessions(t *testing.T) {
 	session2, err := sm.NewSession("Session 2")
 	require.NoError(t, err)
 	session2.Tags = []string{"personal"}
-	session2.Conversation.AddMessage("user", "Second message", nil)
-	session2.Conversation.AddMessage("assistant", "Response", nil)
+	session2.Conversation.AddMessage(NewMessage("user", "Second message", nil))
+	session2.Conversation.AddMessage(NewMessage("assistant", "Response", nil))
 	err = sm.SaveSession(session2)
 	require.NoError(t, err)
 
@@ -186,8 +186,8 @@ func TestSessionManager_SearchSessions(t *testing.T) {
 	session1, err := sm.NewSession("Project Discussion")
 	require.NoError(t, err)
 	session1.Tags = []string{"work", "project"}
-	session1.Conversation.AddMessage("user", "Let's discuss the new project", nil)
-	session1.Conversation.AddMessage("assistant", "Sure, what aspects would you like to cover?", nil)
+	session1.Conversation.AddMessage(NewMessage("user", "Let's discuss the new project", nil))
+	session1.Conversation.AddMessage(NewMessage("assistant", "Sure, what aspects would you like to cover?", nil))
 	err = sm.SaveSession(session1)
 	require.NoError(t, err)
 
@@ -196,8 +196,8 @@ func TestSessionManager_SearchSessions(t *testing.T) {
 	session2, err := sm.NewSession("Personal Chat")
 	require.NoError(t, err)
 	session2.Tags = []string{"personal"}
-	session2.Conversation.AddMessage("user", "Tell me a joke", nil)
-	session2.Conversation.AddMessage("assistant", "Why did the chicken cross the road?", nil)
+	session2.Conversation.AddMessage(NewMessage("user", "Tell me a joke", nil))
+	session2.Conversation.AddMessage(NewMessage("assistant", "Why did the chicken cross the road?", nil))
 	err = sm.SaveSession(session2)
 	require.NoError(t, err)
 
@@ -206,7 +206,7 @@ func TestSessionManager_SearchSessions(t *testing.T) {
 	session3, err := sm.NewSession("Code Review")
 	require.NoError(t, err)
 	session3.Tags = []string{"work", "code"}
-	session3.Conversation.AddMessage("user", "Review this code for me", nil)
+	session3.Conversation.AddMessage(NewMessage("user", "Review this code for me", nil))
 	err = sm.SaveSession(session3)
 	require.NoError(t, err)
 
@@ -252,8 +252,8 @@ func TestSessionManager_ExportSessionJSON(t *testing.T) {
 	session, err := sm.NewSession("Export Test")
 	require.NoError(t, err)
 	session.Tags = []string{"test"}
-	session.Conversation.AddMessage("user", "Hello", nil)
-	session.Conversation.AddMessage("assistant", "Hi!", nil)
+	session.Conversation.AddMessage(NewMessage("user", "Hello", nil))
+	session.Conversation.AddMessage(NewMessage("assistant", "Hi!", nil))
 	err = sm.SaveSession(session)
 	require.NoError(t, err)
 
@@ -279,8 +279,8 @@ func TestSessionManager_ExportSessionMarkdown(t *testing.T) {
 	session, err := sm.NewSession("Markdown Export")
 	require.NoError(t, err)
 	session.Tags = []string{"test", "export"}
-	session.Conversation.AddMessage("user", "What is Go?", nil)
-	session.Conversation.AddMessage("assistant", "Go is a programming language.", nil)
+	session.Conversation.AddMessage(NewMessage("user", "What is Go?", nil))
+	session.Conversation.AddMessage(NewMessage("assistant", "Go is a programming language.", nil))
 	err = sm.SaveSession(session)
 	require.NoError(t, err)
 
@@ -325,7 +325,7 @@ func TestSessionManager_ExportSessionWithAttachments(t *testing.T) {
 		{Type: llm.AttachmentTypeImage, Content: "base64data", MimeType: "image/jpeg"},
 		{Type: llm.AttachmentTypeText, Content: "base64text", MimeType: "text/plain"},
 	}
-	session.Conversation.AddMessage("user", "Check these files", attachments)
+	session.Conversation.AddMessage(NewMessage("user", "Check these files", attachments))
 	err = sm.SaveSession(session)
 	require.NoError(t, err)
 

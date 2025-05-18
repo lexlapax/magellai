@@ -19,6 +19,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/lexlapax/magellai/internal/logging"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/storage"
 )
 
@@ -89,16 +90,26 @@ func (b *Backend) initSchema() error {
 			created TIMESTAMP,
 			updated TIMESTAMP,
 			metadata TEXT,
+			conversation_id TEXT,
+			tags TEXT,
+			UNIQUE(user_id, id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS conversations (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
 			model TEXT,
 			provider TEXT,
 			temperature REAL,
 			max_tokens INTEGER,
 			system_prompt TEXT,
+			created TIMESTAMP,
+			updated TIMESTAMP,
+			metadata TEXT,
 			UNIQUE(user_id, id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS messages (
 			id TEXT PRIMARY KEY,
-			session_id TEXT NOT NULL,
+			conversation_id TEXT NOT NULL,
 			user_id TEXT NOT NULL,
 			role TEXT NOT NULL,
 			content TEXT,
@@ -106,7 +117,7 @@ func (b *Backend) initSchema() error {
 			attachments TEXT,
 			metadata TEXT,
 			position INTEGER,
-			FOREIGN KEY (session_id, user_id) REFERENCES sessions(id, user_id) ON DELETE CASCADE
+			FOREIGN KEY (conversation_id, user_id) REFERENCES conversations(id, user_id) ON DELETE CASCADE
 		)`,
 		`CREATE TABLE IF NOT EXISTS tags (
 			session_id TEXT NOT NULL,
@@ -116,7 +127,8 @@ func (b *Backend) initSchema() error {
 			FOREIGN KEY (session_id, user_id) REFERENCES sessions(id, user_id) ON DELETE CASCADE
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id, user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_tags_session ON tags(session_id, user_id)`,
 	}
 
@@ -135,7 +147,7 @@ func (b *Backend) initSchema() error {
 // createFTSTable attempts to create FTS5 virtual table
 func (b *Backend) createFTSTable() {
 	fts5Schema := `CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
-		session_id UNINDEXED,
+		conversation_id UNINDEXED,
 		user_id UNINDEXED,
 		content,
 		role,
@@ -148,24 +160,15 @@ func (b *Backend) createFTSTable() {
 }
 
 // NewSession creates a new session
-func (b *Backend) NewSession(name string) *storage.Session {
+func (b *Backend) NewSession(name string) *domain.Session {
 	sessionID := storage.GenerateSessionID()
-	now := time.Now()
-
-	return &storage.Session{
-		ID:       sessionID,
-		Name:     name,
-		Messages: []storage.Message{},
-		Config:   make(map[string]interface{}),
-		Created:  now,
-		Updated:  now,
-		Metadata: make(map[string]interface{}),
-		Tags:     []string{},
-	}
+	session := domain.NewSession(sessionID)
+	session.Name = name
+	return session
 }
 
 // SaveSession persists a session to the database
-func (b *Backend) SaveSession(session *storage.Session) error {
+func (b *Backend) SaveSession(session *domain.Session) error {
 	tx, err := b.db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -179,19 +182,34 @@ func (b *Backend) SaveSession(session *storage.Session) error {
 	// Insert or update session
 	_, err = tx.Exec(`
 		INSERT OR REPLACE INTO sessions 
-		(id, user_id, name, config, created, updated, metadata, model, provider, temperature, max_tokens, system_prompt)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		(id, user_id, name, config, created, updated, metadata, conversation_id, tags)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		session.ID, b.userID, session.Name, string(configJSON),
 		session.Created, session.Updated, string(metadataJSON),
-		session.Model, session.Provider, session.Temperature,
-		session.MaxTokens, session.SystemPrompt,
+		session.Conversation.ID, strings.Join(session.Tags, ","),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to save session: %w", err)
 	}
 
+	// Save conversation
+	convMetadataJSON, _ := json.Marshal(session.Conversation.Metadata)
+	_, err = tx.Exec(`
+		INSERT OR REPLACE INTO conversations
+		(id, user_id, model, provider, temperature, max_tokens, system_prompt, created, updated, metadata)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		session.Conversation.ID, b.userID, session.Conversation.Model,
+		session.Conversation.Provider, session.Conversation.Temperature,
+		session.Conversation.MaxTokens, session.Conversation.SystemPrompt,
+		session.Conversation.Created, session.Conversation.Updated,
+		string(convMetadataJSON),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to save conversation: %w", err)
+	}
+
 	// Delete existing messages and tags
-	if _, err := tx.Exec("DELETE FROM messages WHERE session_id = ? AND user_id = ?", session.ID, b.userID); err != nil {
+	if _, err := tx.Exec("DELETE FROM messages WHERE conversation_id = ? AND user_id = ?", session.Conversation.ID, b.userID); err != nil {
 		return fmt.Errorf("failed to delete messages: %w", err)
 	}
 	if _, err := tx.Exec("DELETE FROM tags WHERE session_id = ? AND user_id = ?", session.ID, b.userID); err != nil {
@@ -199,15 +217,15 @@ func (b *Backend) SaveSession(session *storage.Session) error {
 	}
 
 	// Insert messages
-	for idx, msg := range session.Messages {
+	for idx, msg := range session.Conversation.Messages {
 		attachmentsJSON, _ := json.Marshal(msg.Attachments)
 		metadataJSON, _ := json.Marshal(msg.Metadata)
 
 		_, err = tx.Exec(`
 			INSERT INTO messages 
-			(id, session_id, user_id, role, content, timestamp, attachments, metadata, position)
+			(id, conversation_id, user_id, role, content, timestamp, attachments, metadata, position)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			msg.ID, session.ID, b.userID, msg.Role, msg.Content,
+			msg.ID, session.Conversation.ID, b.userID, string(msg.Role), msg.Content,
 			msg.Timestamp, string(attachmentsJSON), string(metadataJSON), idx,
 		)
 		if err != nil {
@@ -216,9 +234,9 @@ func (b *Backend) SaveSession(session *storage.Session) error {
 
 		// Update FTS table if it exists
 		tx.Exec(`
-			INSERT INTO messages_fts (session_id, user_id, content, role)
+			INSERT INTO messages_fts (conversation_id, user_id, content, role)
 			VALUES (?, ?, ?, ?)`,
-			session.ID, b.userID, msg.Content, msg.Role,
+			session.Conversation.ID, b.userID, msg.Content, string(msg.Role),
 		)
 	}
 
@@ -238,16 +256,14 @@ func (b *Backend) SaveSession(session *storage.Session) error {
 }
 
 // LoadSession loads a session from the database
-func (b *Backend) LoadSession(id string) (*storage.Session, error) {
-	var session storage.Session
+func (b *Backend) LoadSession(id string) (*domain.Session, error) {
+	var session domain.Session
 	var configJSON, metadataJSON sql.NullString
-	var temperature sql.NullFloat64
-	var maxTokens sql.NullInt64
-	var systemPrompt sql.NullString
+	var conversationID string
+	var tagsStr string
 
 	row := b.db.QueryRow(`
-		SELECT id, name, config, created, updated, metadata, model, provider, 
-		       temperature, max_tokens, system_prompt
+		SELECT id, name, config, created, updated, metadata, conversation_id, tags
 		FROM sessions 
 		WHERE id = ? AND user_id = ?`,
 		id, b.userID,
@@ -255,8 +271,7 @@ func (b *Backend) LoadSession(id string) (*storage.Session, error) {
 
 	err := row.Scan(
 		&session.ID, &session.Name, &configJSON, &session.Created,
-		&session.Updated, &metadataJSON, &session.Model, &session.Provider,
-		&temperature, &maxTokens, &systemPrompt,
+		&session.Updated, &metadataJSON, &conversationID, &tagsStr,
 	)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("session not found: %s", id)
@@ -268,85 +283,117 @@ func (b *Backend) LoadSession(id string) (*storage.Session, error) {
 	// Unmarshal JSON fields
 	if configJSON.Valid {
 		json.Unmarshal([]byte(configJSON.String), &session.Config)
+	} else {
+		session.Config = make(map[string]interface{})
 	}
 	if metadataJSON.Valid {
 		json.Unmarshal([]byte(metadataJSON.String), &session.Metadata)
+	} else {
+		session.Metadata = make(map[string]interface{})
 	}
+
+	// Parse tags
+	if tagsStr != "" {
+		session.Tags = strings.Split(tagsStr, ",")
+	} else {
+		session.Tags = []string{}
+	}
+
+	// Load conversation
+	var conv domain.Conversation
+	var convMetadataJSON sql.NullString
+	var temperature sql.NullFloat64
+	var maxTokens sql.NullInt64
+	var systemPrompt sql.NullString
+
+	row = b.db.QueryRow(`
+		SELECT id, model, provider, temperature, max_tokens, system_prompt, 
+		       created, updated, metadata
+		FROM conversations 
+		WHERE id = ? AND user_id = ?`,
+		conversationID, b.userID,
+	)
+
+	err = row.Scan(
+		&conv.ID, &conv.Model, &conv.Provider, &temperature, &maxTokens,
+		&systemPrompt, &conv.Created, &conv.Updated, &convMetadataJSON,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load conversation: %w", err)
+	}
+
 	if temperature.Valid {
-		session.Temperature = temperature.Float64
+		conv.Temperature = temperature.Float64
 	}
 	if maxTokens.Valid {
-		session.MaxTokens = int(maxTokens.Int64)
+		conv.MaxTokens = int(maxTokens.Int64)
 	}
 	if systemPrompt.Valid {
-		session.SystemPrompt = systemPrompt.String
+		conv.SystemPrompt = systemPrompt.String
+	}
+	if convMetadataJSON.Valid {
+		json.Unmarshal([]byte(convMetadataJSON.String), &conv.Metadata)
+	} else {
+		conv.Metadata = make(map[string]interface{})
 	}
 
 	// Load messages
 	rows, err := b.db.Query(`
 		SELECT id, role, content, timestamp, attachments, metadata
 		FROM messages
-		WHERE session_id = ? AND user_id = ?
+		WHERE conversation_id = ? AND user_id = ?
 		ORDER BY position`,
-		id, b.userID,
+		conversationID, b.userID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load messages: %w", err)
 	}
 	defer rows.Close()
 
-	session.Messages = []storage.Message{}
+	conv.Messages = []domain.Message{}
 	for rows.Next() {
-		var msg storage.Message
+		var msg domain.Message
+		var roleStr string
 		var attachmentsJSON, msgMetadataJSON sql.NullString
 
 		err := rows.Scan(
-			&msg.ID, &msg.Role, &msg.Content, &msg.Timestamp,
+			&msg.ID, &roleStr, &msg.Content, &msg.Timestamp,
 			&attachmentsJSON, &msgMetadataJSON,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan message: %w", err)
 		}
 
+		msg.Role = domain.MessageRole(roleStr)
+
 		if attachmentsJSON.Valid {
 			json.Unmarshal([]byte(attachmentsJSON.String), &msg.Attachments)
+		} else {
+			msg.Attachments = []domain.Attachment{}
 		}
 		if msgMetadataJSON.Valid {
 			json.Unmarshal([]byte(msgMetadataJSON.String), &msg.Metadata)
+		} else {
+			msg.Metadata = make(map[string]interface{})
 		}
 
-		session.Messages = append(session.Messages, msg)
+		conv.Messages = append(conv.Messages, msg)
 	}
 
-	// Load tags
-	rows, err = b.db.Query(`
-		SELECT tag FROM tags WHERE session_id = ? AND user_id = ?`,
-		id, b.userID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load tags: %w", err)
-	}
-	defer rows.Close()
-
-	session.Tags = []string{}
-	for rows.Next() {
-		var tag string
-		if err := rows.Scan(&tag); err != nil {
-			return nil, fmt.Errorf("failed to scan tag: %w", err)
-		}
-		session.Tags = append(session.Tags, tag)
-	}
+	session.Conversation = &conv
 
 	return &session, nil
 }
 
 // ListSessions returns a list of all sessions for the current user
-func (b *Backend) ListSessions() ([]*storage.SessionInfo, error) {
+func (b *Backend) ListSessions() ([]*domain.SessionInfo, error) {
 	rows, err := b.db.Query(`
-		SELECT s.id, s.name, s.created, s.updated, s.model, s.provider,
+		SELECT s.id, s.name, s.created, s.updated, s.tags,
+		       c.model, c.provider,
 		       COUNT(m.id) as message_count
 		FROM sessions s
-		LEFT JOIN messages m ON s.id = m.session_id AND s.user_id = m.user_id
+		JOIN conversations c ON s.conversation_id = c.id AND s.user_id = c.user_id
+		LEFT JOIN messages m ON c.id = m.conversation_id AND c.user_id = m.user_id
 		WHERE s.user_id = ?
 		GROUP BY s.id
 		ORDER BY s.updated DESC`,
@@ -357,36 +404,25 @@ func (b *Backend) ListSessions() ([]*storage.SessionInfo, error) {
 	}
 	defer rows.Close()
 
-	var sessions []*storage.SessionInfo
+	var sessions []*domain.SessionInfo
 	for rows.Next() {
-		var info storage.SessionInfo
+		var info domain.SessionInfo
+		var tagsStr string
+
 		err := rows.Scan(
-			&info.ID, &info.Name, &info.Created, &info.Updated,
+			&info.ID, &info.Name, &info.Created, &info.Updated, &tagsStr,
 			&info.Model, &info.Provider, &info.MessageCount,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan session info: %w", err)
 		}
 
-		// Load tags
-		tagRows, err := b.db.Query(`
-			SELECT tag FROM tags WHERE session_id = ? AND user_id = ?`,
-			info.ID, b.userID,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load tags: %w", err)
+		// Parse tags
+		if tagsStr != "" {
+			info.Tags = strings.Split(tagsStr, ",")
+		} else {
+			info.Tags = []string{}
 		}
-
-		info.Tags = []string{}
-		for tagRows.Next() {
-			var tag string
-			if err := tagRows.Scan(&tag); err != nil {
-				tagRows.Close()
-				return nil, fmt.Errorf("failed to scan tag: %w", err)
-			}
-			info.Tags = append(info.Tags, tag)
-		}
-		tagRows.Close()
 
 		sessions = append(sessions, &info)
 	}
@@ -396,7 +432,24 @@ func (b *Backend) ListSessions() ([]*storage.SessionInfo, error) {
 
 // DeleteSession removes a session from the database
 func (b *Backend) DeleteSession(id string) error {
-	result, err := b.db.Exec("DELETE FROM sessions WHERE id = ? AND user_id = ?", id, b.userID)
+	tx, err := b.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Get conversation ID first
+	var conversationID string
+	err = tx.QueryRow("SELECT conversation_id FROM sessions WHERE id = ? AND user_id = ?", id, b.userID).Scan(&conversationID)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("session not found: %s", id)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get conversation ID: %w", err)
+	}
+
+	// Delete session (cascades to tags)
+	result, err := tx.Exec("DELETE FROM sessions WHERE id = ? AND user_id = ?", id, b.userID)
 	if err != nil {
 		return fmt.Errorf("failed to delete session: %w", err)
 	}
@@ -410,11 +463,17 @@ func (b *Backend) DeleteSession(id string) error {
 		return fmt.Errorf("session not found: %s", id)
 	}
 
-	return nil
+	// Delete conversation (cascades to messages)
+	_, err = tx.Exec("DELETE FROM conversations WHERE id = ? AND user_id = ?", conversationID, b.userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete conversation: %w", err)
+	}
+
+	return tx.Commit()
 }
 
 // SearchSessions searches for sessions by text content
-func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) {
+func (b *Backend) SearchSessions(query string) ([]*domain.SearchResult, error) {
 	// First, check if FTS5 is available
 	var ftsAvailable bool
 	row := b.db.QueryRow("SELECT 1 FROM sqlite_master WHERE type='table' AND name='messages_fts'")
@@ -427,7 +486,7 @@ func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) 
 		return nil, err
 	}
 
-	var results []*storage.SearchResult
+	var results []*domain.SearchResult
 	lowerQuery := strings.ToLower(query)
 
 	for _, info := range sessions {
@@ -436,13 +495,13 @@ func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) 
 			continue
 		}
 
-		var matches []storage.SearchMatch
+		result := domain.NewSearchResult(info)
 
 		// Search in system prompt
-		if session.SystemPrompt != "" && strings.Contains(strings.ToLower(session.SystemPrompt), lowerQuery) {
-			matches = append(matches, storage.SearchMatch{
-				Type:    "system_prompt",
-				Content: extractSnippet(session.SystemPrompt, query, 50),
+		if session.Conversation.SystemPrompt != "" && strings.Contains(strings.ToLower(session.Conversation.SystemPrompt), lowerQuery) {
+			result.AddMatch(domain.SearchMatch{
+				Type:    domain.SearchMatchTypeSystemPrompt,
+				Content: extractSnippet(session.Conversation.SystemPrompt, query, 50),
 				Context: "System Prompt",
 			})
 		}
@@ -452,12 +511,12 @@ func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) 
 			rows, err := b.db.Query(`
 				SELECT content, role, position 
 				FROM messages m
-				JOIN messages_fts ON m.session_id = messages_fts.session_id 
+				JOIN messages_fts ON m.conversation_id = messages_fts.conversation_id 
 				    AND m.user_id = messages_fts.user_id
 				WHERE messages_fts MATCH ? 
-				    AND m.session_id = ? 
+				    AND m.conversation_id = ? 
 				    AND m.user_id = ?`,
-				query, session.ID, b.userID,
+				query, session.Conversation.ID, b.userID,
 			)
 			if err == nil {
 				defer rows.Close()
@@ -465,8 +524,8 @@ func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) 
 					var content, role string
 					var position int
 					if err := rows.Scan(&content, &role, &position); err == nil {
-						matches = append(matches, storage.SearchMatch{
-							Type:     "message",
+						result.AddMatch(domain.SearchMatch{
+							Type:     domain.SearchMatchTypeMessage,
 							Role:     role,
 							Content:  extractSnippet(content, query, 50),
 							Context:  fmt.Sprintf("Message %d (%s)", position+1, role),
@@ -477,11 +536,11 @@ func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) 
 			}
 		} else {
 			// Fallback to searching in loaded messages
-			for idx, msg := range session.Messages {
+			for idx, msg := range session.Conversation.Messages {
 				if strings.Contains(strings.ToLower(msg.Content), lowerQuery) {
-					matches = append(matches, storage.SearchMatch{
-						Type:     "message",
-						Role:     msg.Role,
+					result.AddMatch(domain.SearchMatch{
+						Type:     domain.SearchMatchTypeMessage,
+						Role:     string(msg.Role),
 						Content:  extractSnippet(msg.Content, query, 50),
 						Context:  fmt.Sprintf("Message %d (%s)", idx+1, msg.Role),
 						Position: idx,
@@ -492,8 +551,8 @@ func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) 
 
 		// Search in session name
 		if strings.Contains(strings.ToLower(session.Name), lowerQuery) {
-			matches = append(matches, storage.SearchMatch{
-				Type:    "name",
+			result.AddMatch(domain.SearchMatch{
+				Type:    domain.SearchMatchTypeName,
 				Content: session.Name,
 				Context: "Session Name",
 			})
@@ -502,19 +561,16 @@ func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) 
 		// Search in tags
 		for _, tag := range session.Tags {
 			if strings.Contains(strings.ToLower(tag), lowerQuery) {
-				matches = append(matches, storage.SearchMatch{
-					Type:    "tag",
+				result.AddMatch(domain.SearchMatch{
+					Type:    domain.SearchMatchTypeTag,
 					Content: tag,
 					Context: "Tag",
 				})
 			}
 		}
 
-		if len(matches) > 0 {
-			results = append(results, &storage.SearchResult{
-				Session: info,
-				Matches: matches,
-			})
+		if result.HasMatches() {
+			results = append(results, result)
 		}
 	}
 
@@ -522,19 +578,19 @@ func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) 
 }
 
 // ExportSession exports a session in the specified format
-func (b *Backend) ExportSession(id string, format storage.ExportFormat, w io.Writer) error {
+func (b *Backend) ExportSession(id string, format domain.ExportFormat, w io.Writer) error {
 	session, err := b.LoadSession(id)
 	if err != nil {
 		return err
 	}
 
 	switch format {
-	case storage.ExportFormatJSON:
+	case domain.ExportFormatJSON:
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "  ")
 		return encoder.Encode(session)
 
-	case storage.ExportFormatMarkdown:
+	case domain.ExportFormatMarkdown:
 		return exportMarkdown(session, w)
 
 	default:
@@ -583,7 +639,7 @@ func extractSnippet(content, query string, contextRadius int) string {
 	return prefix + strings.TrimSpace(content[start:end]) + suffix
 }
 
-func exportMarkdown(session *storage.Session, w io.Writer) error {
+func exportMarkdown(session *domain.Session, w io.Writer) error {
 	fmt.Fprintf(w, "# Session: %s\n\n", session.Name)
 	fmt.Fprintf(w, "ID: %s\n", session.ID)
 	fmt.Fprintf(w, "Created: %s\n", session.Created.Format(time.RFC3339))
@@ -595,9 +651,9 @@ func exportMarkdown(session *storage.Session, w io.Writer) error {
 
 	fmt.Fprintln(w, "## Conversation")
 
-	for _, msg := range session.Messages {
+	for _, msg := range session.Conversation.Messages {
 		// Capitalize first letter of role
-		role := msg.Role
+		role := string(msg.Role)
 		if len(role) > 0 {
 			role = strings.ToUpper(role[:1]) + role[1:]
 		}
@@ -610,7 +666,7 @@ func exportMarkdown(session *storage.Session, w io.Writer) error {
 			for _, att := range msg.Attachments {
 				name := att.Name
 				if name == "" {
-					name = att.Type + "_attachment"
+					name = string(att.Type) + "_attachment"
 				}
 				fmt.Fprintf(w, "- %s (%s)\n", name, att.MimeType)
 			}

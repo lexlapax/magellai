@@ -56,7 +56,7 @@ func (r *REPL) loadSession(args []string) error {
 
 // resetConversation clears the conversation history
 func (r *REPL) resetConversation() error {
-	r.session.Conversation.Reset()
+	ResetConversation(r.session.Conversation)
 	fmt.Fprintln(r.writer, "Conversation history cleared.")
 	return nil
 }
@@ -101,9 +101,14 @@ func (r *REPL) showHistory() error {
 		return nil
 	}
 
+	// Display system prompt if present
+	if r.session.Conversation.SystemPrompt != "" {
+		fmt.Fprintf(r.writer, "System prompt: %s\n\n", r.session.Conversation.SystemPrompt)
+	}
+
 	fmt.Fprintf(r.writer, "Conversation history (%d messages):\n\n", len(messages))
 	for i, msg := range messages {
-		fmt.Fprintf(r.writer, "[%d] %s:\n%s\n\n", i+1, title(msg.Role), msg.Content)
+		fmt.Fprintf(r.writer, "[%d] %s:\n%s\n\n", i+1, title(string(msg.Role)), msg.Content)
 		if len(msg.Attachments) > 0 {
 			fmt.Fprintf(r.writer, "Attachments: %d\n\n", len(msg.Attachments))
 		}

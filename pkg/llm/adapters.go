@@ -16,7 +16,7 @@ import (
 func ToDomainMessage(msg Message) *domain.Message {
 	// Generate a unique ID based on content and timestamp
 	id := fmt.Sprintf("msg_%d_%s", time.Now().UnixNano(), msg.Role)
-	
+
 	domainMsg := &domain.Message{
 		ID:          id,
 		Role:        toDomainRole(msg.Role),
@@ -94,7 +94,7 @@ func fromDomainRole(role domain.MessageRole) string {
 func toDomainAttachment(att Attachment, index int) domain.Attachment {
 	// Generate ID based on type and index
 	id := fmt.Sprintf("att_%s_%d_%d", att.Type, index, time.Now().UnixNano())
-	
+
 	domainAtt := domain.Attachment{
 		ID:       id,
 		Type:     toDomainAttachmentType(att.Type),
@@ -144,8 +144,8 @@ func fromDomainAttachment(att domain.Attachment) Attachment {
 	// Handle content - domain uses []byte, LLM uses string
 	if len(att.Content) > 0 {
 		// Check if this is binary data that needs base64 encoding
-		if att.Type == domain.AttachmentTypeImage || att.Type == domain.AttachmentTypeFile || 
-		   att.Type == domain.AttachmentTypeAudio || att.Type == domain.AttachmentTypeVideo {
+		if att.Type == domain.AttachmentTypeImage || att.Type == domain.AttachmentTypeFile ||
+			att.Type == domain.AttachmentTypeAudio || att.Type == domain.AttachmentTypeVideo {
 			// Encode binary data as base64
 			llmAtt.Content = "data:" + att.MimeType + ";base64," + base64.StdEncoding.EncodeToString(att.Content)
 		} else {

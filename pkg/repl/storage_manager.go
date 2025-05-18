@@ -29,38 +29,22 @@ func NewStorageManager(backend storage.Backend) (*StorageManager, error) {
 
 // NewSession creates a new session
 func (sm *StorageManager) NewSession(name string) *Session {
-	domainSession := sm.backend.NewSession(name)
-	return FromDomainSession(domainSession)
+	return sm.backend.NewSession(name)
 }
 
 // SaveSession saves a session
 func (sm *StorageManager) SaveSession(session *Session) error {
-	domainSession := ToDomainSession(session)
-	return sm.backend.SaveSession(domainSession)
+	return sm.backend.SaveSession(session)
 }
 
 // LoadSession loads a session by ID
 func (sm *StorageManager) LoadSession(id string) (*Session, error) {
-	domainSession, err := sm.backend.LoadSession(id)
-	if err != nil {
-		return nil, err
-	}
-	return FromDomainSession(domainSession), nil
+	return sm.backend.LoadSession(id)
 }
 
 // ListSessions lists all available sessions
 func (sm *StorageManager) ListSessions() ([]*SessionInfo, error) {
-	domainInfos, err := sm.backend.ListSessions()
-	if err != nil {
-		return nil, err
-	}
-
-	replInfos := make([]*SessionInfo, len(domainInfos))
-	for i, info := range domainInfos {
-		replInfos[i] = FromDomainSessionInfo(info)
-	}
-
-	return replInfos, nil
+	return sm.backend.ListSessions()
 }
 
 // DeleteSession removes a session
@@ -70,17 +54,7 @@ func (sm *StorageManager) DeleteSession(id string) error {
 
 // SearchSessions searches for sessions by query
 func (sm *StorageManager) SearchSessions(query string) ([]*SearchResult, error) {
-	domainResults, err := sm.backend.SearchSessions(query)
-	if err != nil {
-		return nil, err
-	}
-
-	replResults := make([]*SearchResult, len(domainResults))
-	for i, result := range domainResults {
-		replResults[i] = FromDomainSearchResult(result)
-	}
-
-	return replResults, nil
+	return sm.backend.SearchSessions(query)
 }
 
 // ExportSession exports a session in the specified format

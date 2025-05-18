@@ -103,7 +103,7 @@ func TestStorageManager_LoadSession(t *testing.T) {
 					Content:   "Hello",
 					Timestamp: time.Now(),
 				},
-		},
+			},
 		},
 		Created: time.Now(),
 		Updated: time.Now(),
@@ -141,14 +141,14 @@ func TestStorageManager_ListSessions(t *testing.T) {
 	// Add some sessions
 	for i := 0; i < 3; i++ {
 		session := &domain.Session{
-			ID:       fmt.Sprintf("session-%d", i),
-			Name:     fmt.Sprintf("Session %d", i),
-			Created:  time.Now(),
-			Updated:  time.Now(),
+			ID:      fmt.Sprintf("session-%d", i),
+			Name:    fmt.Sprintf("Session %d", i),
+			Created: time.Now(),
+			Updated: time.Now(),
 			Conversation: &domain.Conversation{
 				Messages: make([]domain.Message, i),
 			},
-			Tags:     []string{fmt.Sprintf("tag%d", i)},
+			Tags: []string{fmt.Sprintf("tag%d", i)},
 		}
 		backend.sessions[session.ID] = session
 	}

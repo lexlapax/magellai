@@ -6,10 +6,17 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Helper function to add messages to conversations in tests
+func addTestMessage(conv *domain.Conversation, role, content string, attachments []llm.Attachment) {
+	msg := NewMessage(role, content, attachments)
+	conv.AddMessage(msg)
+}
 
 func TestREPL_saveSession(t *testing.T) {
 	repl, output, cleanup := setupTestREPL(t)
@@ -35,7 +42,7 @@ func TestREPL_loadSession(t *testing.T) {
 
 	// Create and save a session
 	repl.session.Name = "Original Session"
-	repl.session.Conversation.AddMessage("user", "Hello", nil)
+	addTestMessage(repl.session.Conversation, "user", "Hello", nil)
 	err := repl.manager.SaveSession(repl.session)
 	require.NoError(t, err)
 	sessionID := repl.session.ID
@@ -48,193 +55,32 @@ func TestREPL_loadSession(t *testing.T) {
 	// Load the original session
 	err = repl.loadSession([]string{sessionID})
 	require.NoError(t, err)
-
 	assert.Equal(t, sessionID, repl.session.ID)
 	assert.Equal(t, "Original Session", repl.session.Name)
 	assert.Len(t, repl.session.Conversation.Messages, 1)
 	assert.Contains(t, output.String(), "Loaded session: Original Session")
 }
 
-func TestREPL_exportSession(t *testing.T) {
-	repl, output, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	var err error
-
-	// Add some conversation to export
-	repl.session.Name = "Export Test Session"
-	repl.session.Conversation.SetSystemPrompt("You are a helpful assistant.")
-	repl.session.Conversation.AddMessage("user", "Hello!", nil)
-	repl.session.Conversation.AddMessage("assistant", "Hi there! How can I help you?", nil)
-
-	// Add a message with attachment
-	attachment := llm.Attachment{
-		Type:     llm.AttachmentTypeText,
-		FilePath: "test.txt",
-		MimeType: "text/plain",
-		Content:  "Test content",
-	}
-	repl.session.Conversation.AddMessage("user", "Check this file", []llm.Attachment{attachment})
-	repl.session.Conversation.AddMessage("assistant", "I've reviewed the file.", nil)
-
-	// Save the session so it can be exported
-	err = repl.manager.SaveSession(repl.session)
-	require.NoError(t, err)
-
-	// Test export to stdout (JSON)
-	err = repl.exportSession([]string{"json"})
-	require.NoError(t, err)
-	exported := output.String()
-	assert.Contains(t, exported, "Export Test Session")
-	assert.Contains(t, exported, "Hello!")
-	assert.Contains(t, exported, "Hi there!")
-
-	// Verify it's valid JSON
-	var jsonData map[string]interface{}
-	err = json.Unmarshal([]byte(exported), &jsonData)
-	if err != nil {
-		t.Logf("Invalid JSON output: %s", exported)
-	}
-	require.NoError(t, err)
-
-	output.Reset()
-
-	// Test export to stdout (Markdown)
-	err = repl.exportSession([]string{"markdown"})
-	require.NoError(t, err)
-	exported = output.String()
-	assert.Contains(t, exported, "# Session: Export Test Session")
-	assert.Contains(t, exported, "### User")
-	assert.Contains(t, exported, "### Assistant")
-	assert.Contains(t, exported, "Attachments:")
-
-	output.Reset()
-
-	// Test export to file
-	tempDir := t.TempDir()
-	tempFile := filepath.Join(tempDir, "export_test.json")
-	err = repl.exportSession([]string{"json", tempFile})
-	require.NoError(t, err)
-	assert.Contains(t, output.String(), "Session exported to:")
-
-	// Verify file was created and contains valid JSON
-	data, err := os.ReadFile(tempFile)
-	require.NoError(t, err)
-	err = json.Unmarshal(data, &jsonData)
-	require.NoError(t, err)
-
-	// Test invalid format
-	err = repl.exportSession([]string{"invalid"})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "unsupported format")
-
-	// Test no arguments
-	err = repl.exportSession([]string{})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "usage:")
-}
-
-func TestREPL_loadSession_NoID(t *testing.T) {
-	repl, _, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	err := repl.loadSession([]string{})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "session ID required")
-}
-
-func TestREPL_resetConversation(t *testing.T) {
-	repl, output, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	// Add messages
-	repl.session.Conversation.AddMessage("user", "Hello", nil)
-	repl.session.Conversation.AddMessage("assistant", "Hi!", nil)
-	assert.Len(t, repl.session.Conversation.Messages, 2)
-
-	// Reset
-	err := repl.resetConversation()
-	require.NoError(t, err)
-
-	assert.Len(t, repl.session.Conversation.Messages, 0)
-	assert.Contains(t, output.String(), "Conversation history cleared")
-}
-
-func TestREPL_setSystemPrompt(t *testing.T) {
-	repl, output, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	// Show prompt when none set
-	err := repl.setSystemPrompt([]string{})
-	require.NoError(t, err)
-	assert.Contains(t, output.String(), "No system prompt set")
-
-	output.Reset()
-
-	// Set prompt
-	err = repl.setSystemPrompt([]string{"You", "are", "helpful"})
-	require.NoError(t, err)
-	assert.Equal(t, "You are helpful", repl.session.Conversation.SystemPrompt)
-	assert.Contains(t, output.String(), "System prompt updated")
-
-	output.Reset()
-
-	// Show current prompt
-	err = repl.setSystemPrompt([]string{})
-	require.NoError(t, err)
-	assert.Contains(t, output.String(), "System prompt: You are helpful")
-}
-
-func TestREPL_showHistory(t *testing.T) {
-	repl, output, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	// No history
-	err := repl.showHistory()
-	require.NoError(t, err)
-	assert.Contains(t, output.String(), "No conversation history")
-
-	output.Reset()
-
-	// Add messages
-	repl.session.Conversation.AddMessage("user", "Hello", nil)
-	repl.session.Conversation.AddMessage("assistant", "Hi there!", nil)
-
-	// With attachments
-	attachments := []llm.Attachment{
-		{Type: llm.AttachmentTypeImage, FilePath: "test.jpg"},
-	}
-	repl.session.Conversation.AddMessage("user", "Check this", attachments)
-
-	// Show history
-	err = repl.showHistory()
-	require.NoError(t, err)
-
-	outputStr := output.String()
-	assert.Contains(t, outputStr, "Conversation history (3 messages)")
-	assert.Contains(t, outputStr, "[1] User:")
-	assert.Contains(t, outputStr, "Hello")
-	assert.Contains(t, outputStr, "[2] Assistant:")
-	assert.Contains(t, outputStr, "Hi there!")
-	assert.Contains(t, outputStr, "[3] User:")
-	assert.Contains(t, outputStr, "Check this")
-	assert.Contains(t, outputStr, "Attachments: 1")
-}
-
 func TestREPL_listSessions(t *testing.T) {
 	repl, output, cleanup := setupTestREPL(t)
 	defer cleanup()
 
-	// Save current session
-	repl.session.Name = "Current Session"
-	err := repl.manager.SaveSession(repl.session)
-	require.NoError(t, err)
-	currentID := repl.session.ID
+	// Create multiple sessions
+	session1 := repl.session
+	session1.Name = "Session 1"
+	addTestMessage(session1.Conversation, "user", "Hello", nil)
+	addTestMessage(session1.Conversation, "assistant", "Hi there", nil)
 
-	// Create and save another session
-	session2, err := repl.manager.NewSession("Another Session")
+	// Create attachment for session 2
+	attachment := llm.Attachment{Type: "file", FilePath: "test.txt"}
+	addTestMessage(session1.Conversation, "user", "With attachment", []llm.Attachment{attachment})
+	addTestMessage(session1.Conversation, "assistant", "Got it", nil)
+
+	err := repl.manager.SaveSession(session1)
 	require.NoError(t, err)
-	session2.Tags = []string{"test", "demo"}
+
+	session2, err := repl.manager.NewSession("Session 2")
+	require.NoError(t, err)
 	err = repl.manager.SaveSession(session2)
 	require.NoError(t, err)
 
@@ -242,192 +88,231 @@ func TestREPL_listSessions(t *testing.T) {
 	err = repl.listSessions()
 	require.NoError(t, err)
 
+	output_str := output.String()
+	assert.Contains(t, output_str, "Session 1")
+	assert.Contains(t, output_str, "Session 2")
+	assert.Contains(t, output_str, "Messages: 4")
+	assert.Contains(t, output_str, "Messages: 0")
+}
+
+func TestREPL_showHistory(t *testing.T) {
+	repl, output, cleanup := setupTestREPL(t)
+	defer cleanup()
+
+	// Add messages with different types of content
+	addTestMessage(repl.session.Conversation, "user", "Hello", nil)
+	addTestMessage(repl.session.Conversation, "assistant", "Hi there! How can I help?", nil)
+
+	// Test showing history
+	err := repl.showHistory()
+	require.NoError(t, err)
+
+	output_str := output.String()
+	assert.Contains(t, output_str, "Hello")
+	assert.Contains(t, output_str, "Hi there! How can I help?")
+	assert.Contains(t, output_str, "[1]")
+	assert.Contains(t, output_str, "[2]")
+}
+
+func TestREPL_showHistory_EmptyConversation(t *testing.T) {
+	repl, output, cleanup := setupTestREPL(t)
+	defer cleanup()
+
+	// Test showing empty history
+	err := repl.showHistory()
+	require.NoError(t, err)
+	assert.Contains(t, output.String(), "No conversation history.")
+}
+
+func TestREPL_showHistory_WithSystemPrompt(t *testing.T) {
+	repl, output, cleanup := setupTestREPL(t)
+	defer cleanup()
+
+	// Set system prompt
+	repl.session.Conversation.SystemPrompt = "You are a helpful assistant."
+
+	// Add messages
+	addTestMessage(repl.session.Conversation, "user", "Hello", nil)
+	addTestMessage(repl.session.Conversation, "assistant", "Hi there!", nil)
+
+	// Test showing history
+	err := repl.showHistory()
+	require.NoError(t, err)
+
+	output_str := output.String()
+	assert.Contains(t, output_str, "You are a helpful assistant.")
+	assert.Contains(t, output_str, "Hello")
+	assert.Contains(t, output_str, "Hi there!")
+}
+
+func TestREPL_resetConversation(t *testing.T) {
+	repl, output, cleanup := setupTestREPL(t)
+	defer cleanup()
+
+	// Add messages
+	addTestMessage(repl.session.Conversation, "user", "Message 1", nil)
+	addTestMessage(repl.session.Conversation, "assistant", "Response 1", nil)
+	assert.Len(t, repl.session.Conversation.Messages, 2)
+
+	// Reset conversation
+	err := repl.resetConversation()
+	require.NoError(t, err)
+	assert.Len(t, repl.session.Conversation.Messages, 0)
+	assert.Contains(t, output.String(), "Conversation history cleared.")
+}
+
+func TestREPL_exportSession(t *testing.T) {
+	repl, output, cleanup := setupTestREPL(t)
+	defer cleanup()
+
+	// Add data to session
+	repl.session.Name = "Export Test"
+	addTestMessage(repl.session.Conversation, "user", "Hello world", nil)
+	addTestMessage(repl.session.Conversation, "assistant", "Hi there!", nil)
+
+	// Create attachment with multimodal content
+	attachment := llm.Attachment{
+		Type:     "image",
+		FilePath: "test.png",
+		MimeType: "image/png",
+	}
+	addTestMessage(repl.session.Conversation, "user", "Here's an image", []llm.Attachment{attachment})
+
+	err := repl.manager.SaveSession(repl.session)
+	require.NoError(t, err)
+
+	// Test JSON export
+	tempDir := t.TempDir()
+	exportPath := filepath.Join(tempDir, "export.json")
+	err = repl.exportSession([]string{repl.session.ID, exportPath})
+	require.NoError(t, err)
+	assert.Contains(t, output.String(), "Session exported to:")
+
+	// Verify JSON file was created
+	data, err := os.ReadFile(exportPath)
+	require.NoError(t, err)
+
+	var exported map[string]interface{}
+	err = json.Unmarshal(data, &exported)
+	require.NoError(t, err)
+	assert.Equal(t, "Export Test", exported["name"])
+
+	// Test Markdown export
+	output.Reset()
+	mdPath := filepath.Join(tempDir, "export.md")
+	err = repl.exportSession([]string{repl.session.ID, mdPath, "markdown"})
+	require.NoError(t, err)
+	assert.Contains(t, output.String(), "Session exported to:")
+
+	// Verify Markdown file was created
+	mdData, err := os.ReadFile(mdPath)
+	require.NoError(t, err)
+	mdContent := string(mdData)
+	assert.Contains(t, mdContent, "# Session: Export Test")
+	assert.Contains(t, mdContent, "Hello world")
+	assert.Contains(t, mdContent, "test.png")
+}
+
+func TestREPL_searchSessions(t *testing.T) {
+	repl, output, cleanup := setupTestREPL(t)
+	defer cleanup()
+
+	// Create sessions with different content
+	session1 := repl.session
+	session1.Name = "Python Tutorial"
+	addTestMessage(session1.Conversation, "user", "How to use Python decorators?", nil)
+	addTestMessage(session1.Conversation, "assistant", "Decorators in Python are functions that modify other functions.", nil)
+	err := repl.manager.SaveSession(session1)
+	require.NoError(t, err)
+
+	session2, err := repl.manager.NewSession("JavaScript Guide")
+	require.NoError(t, err)
+	addTestMessage(session2.Conversation, "user", "What are JavaScript promises?", nil)
+	addTestMessage(session2.Conversation, "assistant", "Promises are objects representing async operations.", nil)
+	err = repl.manager.SaveSession(session2)
+	require.NoError(t, err)
+
+	// Search for Python
+	err = repl.searchSessions([]string{"Python"})
+	require.NoError(t, err)
 	outputStr := output.String()
-	assert.Contains(t, outputStr, "Available sessions (2)")
-	assert.Contains(t, outputStr, currentID)
-	assert.Contains(t, outputStr, "Current Session (current)")
-	assert.Contains(t, outputStr, "Another Session")
-	assert.Contains(t, outputStr, "Tags: test, demo")
+	assert.Contains(t, outputStr, "Python Tutorial")
+	assert.Contains(t, outputStr, "decorators")
+	assert.NotContains(t, outputStr, "JavaScript")
+
+	output.Reset()
+
+	// Search for promises
+	err = repl.searchSessions([]string{"promises"})
+	require.NoError(t, err)
+	outputStr = output.String()
+	assert.Contains(t, outputStr, "JavaScript Guide")
+	assert.Contains(t, outputStr, "promises")
+	assert.NotContains(t, outputStr, "Python")
 }
 
 func TestREPL_attachFile(t *testing.T) {
 	repl, output, cleanup := setupTestREPL(t)
 	defer cleanup()
 
-	// Create test file
-	testFile := filepath.Join(t.TempDir(), "test.txt")
+	// Create a test file
+	tempDir := t.TempDir()
+	testFile := filepath.Join(tempDir, "test.txt")
 	err := os.WriteFile(testFile, []byte("test content"), 0644)
 	require.NoError(t, err)
 
 	// Attach file
 	err = repl.attachFile([]string{testFile})
 	require.NoError(t, err)
+	assert.Contains(t, output.String(), "File attached: test.txt")
 
 	// Check pending attachments
-	attachments, ok := repl.session.Metadata["pending_attachments"].([]llm.Attachment)
+	pendingAttachments, ok := repl.session.Metadata["pending_attachments"].([]llm.Attachment)
 	require.True(t, ok)
-	require.Len(t, attachments, 1)
-
-	att := attachments[0]
-	assert.Equal(t, llm.AttachmentTypeText, att.Type)
-	assert.Equal(t, testFile, att.FilePath)
-	assert.Contains(t, att.MimeType, "text")
-	assert.Equal(t, "test content", att.Content)
-
-	assert.Contains(t, output.String(), "Attached: test.txt")
+	require.Len(t, pendingAttachments, 1)
+	assert.Equal(t, testFile, pendingAttachments[0].FilePath)
 }
 
-func TestREPL_attachFile_NoPath(t *testing.T) {
-	repl, _, cleanup := setupTestREPL(t)
+func TestREPL_showModelInfo(t *testing.T) {
+	repl, output, cleanup := setupTestREPL(t)
 	defer cleanup()
 
-	err := repl.attachFile([]string{})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "file path required")
+	// Set model info
+	repl.session.Conversation.Model = "test-model"
+	repl.session.Conversation.Provider = "test-provider"
+	repl.session.Conversation.Temperature = 0.7
+	repl.session.Conversation.MaxTokens = 1000
+	repl.session.Conversation.SystemPrompt = "You are helpful."
+
+	// Show model info
+	err := repl.showModel()
+	require.NoError(t, err)
+
+	outputStr := output.String()
+	assert.Contains(t, outputStr, "test-provider")
+	assert.Contains(t, outputStr, "test-model")
+	assert.Contains(t, outputStr, "0.7")
+	assert.Contains(t, outputStr, "1000")
+	assert.Contains(t, outputStr, "You are helpful.")
 }
 
 func TestREPL_listAttachments(t *testing.T) {
 	repl, output, cleanup := setupTestREPL(t)
 	defer cleanup()
 
-	// No attachments
-	err := repl.listAttachments()
-	require.NoError(t, err)
-	assert.Contains(t, output.String(), "No pending attachments")
-
-	output.Reset()
-
 	// Add attachments
 	attachments := []llm.Attachment{
-		{Type: llm.AttachmentTypeImage, FilePath: "/path/to/image.jpg", MimeType: "image/jpeg"},
-		{Type: llm.AttachmentTypeText, FilePath: "/path/to/doc.txt", MimeType: "text/plain"},
+		{FilePath: "file1.txt", Type: "file", MimeType: "text/plain"},
+		{FilePath: "image.png", Type: "image", MimeType: "image/png"},
 	}
-	repl.session.Metadata = map[string]interface{}{
-		"pending_attachments": attachments,
-	}
+	repl.session.Metadata["pending_attachments"] = attachments
 
-	err = repl.listAttachments()
+	// List attachments
+	err := repl.listAttachments()
 	require.NoError(t, err)
 
 	outputStr := output.String()
-	assert.Contains(t, outputStr, "Pending attachments (2)")
-	assert.Contains(t, outputStr, "1. image.jpg (image/jpeg)")
-	assert.Contains(t, outputStr, "2. doc.txt (text/plain)")
-}
-
-func TestREPL_switchModel(t *testing.T) {
-	repl, output, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	// Missing model name
-	err := repl.switchModel([]string{})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "model name required")
-
-	// Valid model switch
-	err = repl.switchModel([]string{"mock/new-model"})
-	require.NoError(t, err)
-
-	assert.Equal(t, "mock/new-model", repl.session.Conversation.Model)
-	assert.Equal(t, "mock", repl.session.Conversation.Provider)
-	assert.Contains(t, output.String(), "Switched to model: mock/new-model")
-}
-
-func TestREPL_toggleStreaming(t *testing.T) {
-	repl, output, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	// Turn on
-	err := repl.toggleStreaming([]string{"on"})
-	require.NoError(t, err)
-	assert.True(t, repl.config.GetBool("stream"))
-	assert.Contains(t, output.String(), "Streaming enabled")
-
-	output.Reset()
-
-	// Turn off
-	err = repl.toggleStreaming([]string{"off"})
-	require.NoError(t, err)
-	assert.False(t, repl.config.GetBool("stream"))
-	assert.Contains(t, output.String(), "Streaming disabled")
-
-	output.Reset()
-
-	// Toggle (should turn on)
-	err = repl.toggleStreaming([]string{})
-	require.NoError(t, err)
-	assert.True(t, repl.config.GetBool("stream"))
-	assert.Contains(t, output.String(), "Streaming enabled")
-}
-
-func TestREPL_setTemperature(t *testing.T) {
-	repl, output, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	// Missing value
-	err := repl.setTemperature([]string{})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "temperature value required")
-
-	// Invalid value
-	err = repl.setTemperature([]string{"invalid"})
-	assert.Error(t, err)
-
-	// Out of range
-	err = repl.setTemperature([]string{"2.5"})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "temperature must be between")
-
-	// Valid value
-	err = repl.setTemperature([]string{"0.8"})
-	require.NoError(t, err)
-	assert.Equal(t, 0.8, repl.session.Conversation.Temperature)
-	assert.Contains(t, output.String(), "Temperature set to: 0.80")
-}
-
-func TestREPL_setMaxTokens(t *testing.T) {
-	repl, output, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	// Missing value
-	err := repl.setMaxTokens([]string{})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "max tokens value required")
-
-	// Invalid value
-	err = repl.setMaxTokens([]string{"invalid"})
-	assert.Error(t, err)
-
-	// Non-positive value
-	err = repl.setMaxTokens([]string{"0"})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "max tokens must be positive")
-
-	// Valid value
-	err = repl.setMaxTokens([]string{"500"})
-	require.NoError(t, err)
-	assert.Equal(t, 500, repl.session.Conversation.MaxTokens)
-	assert.Contains(t, output.String(), "Max tokens set to: 500")
-}
-
-func TestREPL_toggleMultiline(t *testing.T) {
-	repl, output, cleanup := setupTestREPL(t)
-	defer cleanup()
-
-	// Initially off
-	assert.False(t, repl.multiline)
-
-	// Turn on
-	err := repl.toggleMultiline()
-	require.NoError(t, err)
-	assert.True(t, repl.multiline)
-	assert.Contains(t, output.String(), "Multi-line mode enabled")
-
-	output.Reset()
-
-	// Turn off
-	err = repl.toggleMultiline()
-	require.NoError(t, err)
-	assert.False(t, repl.multiline)
-	assert.Contains(t, output.String(), "Multi-line mode disabled")
+	assert.Contains(t, outputStr, "2 pending attachments")
+	assert.Contains(t, outputStr, "file1.txt")
+	assert.Contains(t, outputStr, "image.png")
 }

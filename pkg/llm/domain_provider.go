@@ -46,11 +46,11 @@ func (p *domainProviderAdapter) GenerateDomainMessage(ctx context.Context, messa
 
 	// Create domain message from response
 	domainMsg := &domain.Message{
-		ID:      generateMessageID(),
-		Role:    domain.MessageRoleAssistant,
-		Content: response.Content,
+		ID:        generateMessageID(),
+		Role:      domain.MessageRoleAssistant,
+		Content:   response.Content,
 		Timestamp: time.Now(),
-		Metadata: make(map[string]interface{}),
+		Metadata:  make(map[string]interface{}),
 	}
 
 	// Add response metadata
@@ -80,13 +80,13 @@ func (p *domainProviderAdapter) StreamDomainMessage(ctx context.Context, message
 
 	// Create domain message stream
 	domainStream := make(chan *domain.Message)
-	
+
 	go func() {
 		defer close(domainStream)
-		
+
 		var content strings.Builder
 		var currentMsg *domain.Message
-		
+
 		for chunk := range chunkStream {
 			if chunk.Error != nil {
 				// Send error as metadata
@@ -106,10 +106,10 @@ func (p *domainProviderAdapter) StreamDomainMessage(ctx context.Context, message
 				}
 				continue
 			}
-			
+
 			// Accumulate content
 			content.WriteString(chunk.Content)
-			
+
 			// Create or update message
 			if currentMsg == nil {
 				currentMsg = &domain.Message{
@@ -122,12 +122,12 @@ func (p *domainProviderAdapter) StreamDomainMessage(ctx context.Context, message
 			} else {
 				currentMsg.Content = content.String()
 			}
-			
+
 			// Check if this is the final chunk
 			if chunk.FinishReason != "" {
 				currentMsg.Metadata["finish_reason"] = chunk.FinishReason
 			}
-			
+
 			// Send the current state
 			select {
 			case domainStream <- currentMsg:
@@ -136,7 +136,7 @@ func (p *domainProviderAdapter) StreamDomainMessage(ctx context.Context, message
 			}
 		}
 	}()
-	
+
 	return domainStream, nil
 }
 

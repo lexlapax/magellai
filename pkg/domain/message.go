@@ -57,8 +57,8 @@ func (m *Message) RemoveAttachment(attachmentID string) {
 
 // IsValid validates the message fields.
 func (m *Message) IsValid() bool {
-	return m.ID != "" && 
-		m.Role != "" && 
+	return m.ID != "" &&
+		m.Role != "" &&
 		(m.Role == MessageRoleUser || m.Role == MessageRoleAssistant || m.Role == MessageRoleSystem) &&
 		(m.Content != "" || len(m.Attachments) > 0) // Message must have content or attachments
 }

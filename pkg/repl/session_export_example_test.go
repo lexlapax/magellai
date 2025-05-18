@@ -41,8 +41,8 @@ func ExampleSessionManager_ExportSession() {
 
 	// Add some conversation messages
 	session.Conversation.SetSystemPrompt("You are a helpful assistant.")
-	session.Conversation.AddMessage("user", "Hello, can you help me with a task?", nil)
-	session.Conversation.AddMessage("assistant", "Of course! I'd be happy to help. What task do you need assistance with?", nil)
+	session.Conversation.AddMessage(repl.NewMessage("user", "Hello, can you help me with a task?", nil))
+	session.Conversation.AddMessage(repl.NewMessage("assistant", "Of course! I'd be happy to help. What task do you need assistance with?", nil))
 
 	// Add a message with an attachment
 	attachment := llm.Attachment{
@@ -51,8 +51,8 @@ func ExampleSessionManager_ExportSession() {
 		MimeType: "text/plain",
 		Content:  "This is example content",
 	}
-	session.Conversation.AddMessage("user", "Please analyze this file", []llm.Attachment{attachment})
-	session.Conversation.AddMessage("assistant", "I've analyzed the file. It contains example content.", nil)
+	session.Conversation.AddMessage(repl.NewMessage("user", "Please analyze this file", []llm.Attachment{attachment}))
+	session.Conversation.AddMessage(repl.NewMessage("assistant", "I've analyzed the file. It contains example content.", nil))
 
 	// Save the session
 	if err := manager.SaveSession(session); err != nil {

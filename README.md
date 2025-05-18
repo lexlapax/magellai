@@ -9,6 +9,8 @@ Magellai is a library-first CLI tool that provides a unified interface for multi
 - **`ask` mode**: One-shot queries for quick interactions
 - **`chat` mode**: Interactive conversations through a REPL interface
 
+The architecture follows a clean domain-driven design with a central domain layer containing all business entities, ensuring clear separation of concerns and maintainable code structure.
+
 ## Features
 
 - Multiple LLM provider support (OpenAI, Anthropic, Gemini)

@@ -48,12 +48,12 @@ func init() {
 // NewSession creates a new session
 func (b *Backend) NewSession(name string) *domain.Session {
 	sessionID := generateSessionID()
-	
+
 	logging.LogInfo("Creating new session", "id", sessionID, "name", name)
 
 	session := domain.NewSession(sessionID)
 	session.Name = name
-	
+
 	return session
 }
 
@@ -69,7 +69,7 @@ func (b *Backend) SaveSession(session *domain.Session) error {
 
 	// Convert to storage format for better JSON structure
 	storageSession := storage.ToStorageSession(session)
-	
+
 	data, err := json.MarshalIndent(storageSession, "", "  ")
 	if err != nil {
 		logging.LogError(err, "Failed to marshal session", "id", session.ID)
@@ -204,7 +204,7 @@ func (b *Backend) SearchSessions(query string) ([]*domain.SearchResult, error) {
 		session := storage.ToDomainSession(&storageSession)
 		sessionInfo := session.ToSessionInfo()
 		result := domain.NewSearchResult(sessionInfo)
-		
+
 		// Search in session name
 		if strings.Contains(strings.ToLower(session.Name), lowerQuery) {
 			result.AddMatch(domain.NewSearchMatch(
@@ -370,7 +370,7 @@ func exportMarkdown(session *domain.Session, w io.Writer) error {
 	fmt.Fprintf(w, "**ID:** %s\n", session.ID)
 	fmt.Fprintf(w, "**Created:** %s\n", session.Created.Format(time.RFC3339))
 	fmt.Fprintf(w, "**Updated:** %s\n", session.Updated.Format(time.RFC3339))
-	
+
 	// Add tags if present
 	if len(session.Tags) > 0 {
 		fmt.Fprintf(w, "Tags: %s\n", strings.Join(session.Tags, ", "))
@@ -390,7 +390,7 @@ func exportMarkdown(session *domain.Session, w io.Writer) error {
 			}
 			fmt.Fprintf(w, "### %s\n\n", role)
 			fmt.Fprintf(w, "%s\n\n", msg.Content)
-			
+
 			if len(msg.Attachments) > 0 {
 				fmt.Fprintf(w, "**Attachments:**\n")
 				for _, att := range msg.Attachments {

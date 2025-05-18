@@ -33,8 +33,8 @@ func TestSessionExport(t *testing.T) {
 		t.Fatal(err)
 	}
 	session.Conversation.SetSystemPrompt("You are a test assistant.")
-	session.Conversation.AddMessage("user", "Test question?", nil)
-	session.Conversation.AddMessage("assistant", "Test response.", nil)
+	session.Conversation.AddMessage(NewMessage("user", "Test question?", nil))
+	session.Conversation.AddMessage(NewMessage("assistant", "Test response.", nil))
 
 	// Add a message with attachment
 	attachment := llm.Attachment{
@@ -43,8 +43,8 @@ func TestSessionExport(t *testing.T) {
 		MimeType: "text/plain",
 		Content:  "Test content",
 	}
-	session.Conversation.AddMessage("user", "Analyze this", []llm.Attachment{attachment})
-	session.Conversation.AddMessage("assistant", "Analysis complete.", nil)
+	session.Conversation.AddMessage(NewMessage("user", "Analyze this", []llm.Attachment{attachment}))
+	session.Conversation.AddMessage(NewMessage("assistant", "Analysis complete.", nil))
 
 	// Save the session
 	if err := manager.SaveSession(session); err != nil {
@@ -181,8 +181,8 @@ func TestREPLExportCommand(t *testing.T) {
 	repl.provider = mockProvider
 
 	// Add some messages to the session
-	repl.session.Conversation.AddMessage("user", "Test message", nil)
-	repl.session.Conversation.AddMessage("assistant", "Test response", nil)
+	repl.session.Conversation.AddMessage(NewMessage("user", "Test message", nil))
+	repl.session.Conversation.AddMessage(NewMessage("assistant", "Test response", nil))
 
 	// Save the session so it can be exported
 	if err := repl.manager.SaveSession(repl.session); err != nil {

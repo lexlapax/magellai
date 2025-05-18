@@ -12,13 +12,13 @@ import (
 // but we'll try to use domain types directly first.
 type StorageSession struct {
 	*domain.Session
-	
+
 	// Flattened conversation fields for easier storage/querying
-	Model        string  `json:"model,omitempty"`
-	Provider     string  `json:"provider,omitempty"`
-	Temperature  float64 `json:"temperature,omitempty"`
-	MaxTokens    int     `json:"max_tokens,omitempty"`
-	SystemPrompt string  `json:"system_prompt,omitempty"`
+	Model        string           `json:"model,omitempty"`
+	Provider     string           `json:"provider,omitempty"`
+	Temperature  float64          `json:"temperature,omitempty"`
+	MaxTokens    int              `json:"max_tokens,omitempty"`
+	SystemPrompt string           `json:"system_prompt,omitempty"`
 	Messages     []domain.Message `json:"messages"`
 }
 
@@ -28,11 +28,11 @@ func ToStorageSession(session *domain.Session) *StorageSession {
 	if session == nil {
 		return nil
 	}
-	
+
 	storageSession := &StorageSession{
 		Session: session,
 	}
-	
+
 	// Flatten conversation fields if present
 	if session.Conversation != nil {
 		storageSession.Model = session.Conversation.Model
@@ -42,7 +42,7 @@ func ToStorageSession(session *domain.Session) *StorageSession {
 		storageSession.SystemPrompt = session.Conversation.SystemPrompt
 		storageSession.Messages = session.Conversation.Messages
 	}
-	
+
 	return storageSession
 }
 
@@ -51,7 +51,7 @@ func ToDomainSession(storageSession *StorageSession) *domain.Session {
 	if storageSession == nil {
 		return nil
 	}
-	
+
 	// Reconstruct the domain session
 	session := &domain.Session{
 		ID:       storageSession.ID,
@@ -62,7 +62,7 @@ func ToDomainSession(storageSession *StorageSession) *domain.Session {
 		Config:   storageSession.Config,
 		Metadata: storageSession.Metadata,
 	}
-	
+
 	// Reconstruct conversation from flattened fields
 	if len(storageSession.Messages) > 0 || storageSession.Model != "" {
 		conversation := &domain.Conversation{
@@ -78,6 +78,6 @@ func ToDomainSession(storageSession *StorageSession) *domain.Session {
 		}
 		session.Conversation = conversation
 	}
-	
+
 	return session
 }

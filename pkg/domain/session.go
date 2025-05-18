@@ -84,12 +84,12 @@ func (s *Session) ToSessionInfo() *SessionInfo {
 		Updated: s.Updated,
 		Tags:    s.Tags,
 	}
-	
+
 	if s.Conversation != nil {
 		info.MessageCount = len(s.Conversation.Messages)
 		info.Model = s.Conversation.Model
 		info.Provider = s.Conversation.Provider
 	}
-	
+
 	return info
 }

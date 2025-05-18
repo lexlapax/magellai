@@ -5,13 +5,13 @@ package domain
 
 // Provider represents an LLM provider configuration.
 type Provider struct {
-	Name            string                 `json:"name"`
-	DisplayName     string                 `json:"display_name"`
-	Endpoint        string                 `json:"endpoint,omitempty"`
-	APIKeyEnvVar    string                 `json:"api_key_env_var,omitempty"`
-	Models          []Model                `json:"models"`
-	Capabilities    []string               `json:"capabilities"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	Name         string                 `json:"name"`
+	DisplayName  string                 `json:"display_name"`
+	Endpoint     string                 `json:"endpoint,omitempty"`
+	APIKeyEnvVar string                 `json:"api_key_env_var,omitempty"`
+	Models       []Model                `json:"models"`
+	Capabilities []string               `json:"capabilities"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // Model represents a specific model offered by a provider.

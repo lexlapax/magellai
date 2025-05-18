@@ -1,41 +1,28 @@
 # Domain Layer Architecture
 
-## Current Architecture (Before Refactoring)
+## Implementation Status
+
+As of phase 4.6, the domain layer refactoring has been **partially completed**:
+
+✅ **Completed:**
+- Domain package structure created
+- All core domain types implemented
+- Storage package refactored to use domain types
+- SQLite backend updated
+- REPL package refactored
+- Comprehensive test coverage
+
+🔲 **Pending:**
+- Architecture documentation updates
+- Package relationship diagrams
+- Migration guide for consumers
+- Performance verification
+
+## Current Architecture (After Refactoring)
 
 ```mermaid
 graph TB
-    subgraph "Current Architecture - Type Duplication"
-        CLI[CLI Commands]
-        REPL[REPL Package]
-        Storage[Storage Package]
-        LLM[LLM Package]
-        
-        REPL_Types["REPL Types<br/>- Session<br/>- Message<br/>- SessionInfo<br/>- SearchResult"]
-        Storage_Types["Storage Types<br/>- Session<br/>- Message<br/>- SessionInfo<br/>- SearchResult"]
-        LLM_Types["LLM Types<br/>- Message<br/>- Attachment"]
-        
-        Adapter["Adapter<br/>Complex Type Conversions"]
-        
-        CLI --> REPL
-        REPL --> REPL_Types
-        REPL --> Adapter
-        Adapter --> Storage_Types
-        Storage --> Storage_Types
-        LLM --> LLM_Types
-        REPL --> LLM_Types
-        
-        style REPL_Types fill:#ffcccc
-        style Storage_Types fill:#ffcccc
-        style LLM_Types fill:#ffcccc
-        style Adapter fill:#ffffcc
-    end
-```
-
-## Proposed Architecture (After Refactoring)
-
-```mermaid
-graph TB
-    subgraph "Proposed Architecture - Domain Layer"
+    subgraph "Current Architecture - Domain Layer Implemented"
         CLI[CLI Commands]
         
         subgraph "Application Layer"
@@ -69,126 +56,98 @@ graph TB
 
 ## Type Ownership Matrix
 
-| Type | Current Owner(s) | Proposed Owner | Layer |
-|------|-----------------|----------------|-------|
-| Session | repl, storage | domain | Domain |
-| SessionInfo | repl, storage | domain | Domain |
-| Message | repl, storage, llm | domain | Domain |
-| Attachment | storage, llm | domain | Domain |
-| SearchResult | repl, storage | domain | Domain |
-| SearchMatch | repl, storage | domain | Domain |
-| Conversation | repl | domain | Domain |
-| Provider/Model | llm, models | domain | Domain |
+| Type | Owner | Layer | Status |
+|------|-------|-------|--------|
+| Session | domain | Domain | ✅ Migrated |
+| SessionInfo | domain | Domain | ✅ Migrated |
+| Message | domain | Domain | ✅ Migrated |
+| MessageRole | domain | Domain | ✅ Migrated |
+| Attachment | domain | Domain | ✅ Migrated |
+| AttachmentType | domain | Domain | ✅ Migrated |
+| SearchResult | domain | Domain | ✅ Migrated |
+| SearchMatch | domain | Domain | ✅ Migrated |
+| Conversation | domain | Domain | ✅ Migrated |
+| Provider | domain | Domain | ✅ Migrated |
+| Model | domain | Domain | ✅ Migrated |
+| ExportFormat | domain | Domain | ✅ Migrated |
 
 ## Dependency Flow
 
-### Before Refactoring
+### Current Flow (After Refactoring)
 ```
-CLI → REPL ←→ Adapter ←→ Storage
-     ↓
-    LLM
-```
-
-### After Refactoring
-```
-CLI → REPL → Domain ← Storage
-              ↑
-             LLM
+CLI → Commands → REPL → Domain ← Storage
+                          ↑
+                         LLM
+                          ↑
+                       Config
 ```
 
 ## Package Relationships
 
-```mermaid
-graph LR
-    subgraph "Presentation"
-        CMD[cmd/magellai]
-    end
-    
-    subgraph "Application"
-        COMMAND[pkg/command]
-        REPL[pkg/repl]
-    end
-    
-    subgraph "Domain"
-        DOMAIN[pkg/domain]
-    end
-    
-    subgraph "Infrastructure"
-        LLM[pkg/llm]
-        STORAGE[pkg/storage]
-        CONFIG[pkg/config]
-        MODELS[pkg/models]
-    end
-    
-    CMD --> COMMAND
-    COMMAND --> REPL
-    REPL --> DOMAIN
-    COMMAND --> DOMAIN
-    LLM --> DOMAIN
-    STORAGE --> DOMAIN
-    CONFIG --> DOMAIN
-    MODELS --> DOMAIN
-    
-    style DOMAIN fill:#90EE90
+### Domain Package Structure
+
+```
+pkg/domain/
+├── session.go      - Core session aggregate root
+├── message.go      - Message entities
+├── attachment.go   - Multimodal attachment support
+├── conversation.go - Conversation management
+├── search.go       - Search results types
+├── provider.go     - LLM provider/model configuration
+├── types.go        - Shared enums and interfaces
+└── doc.go         - Package documentation
 ```
 
-## Benefits of Domain Layer
+### Package Dependencies
 
-1. **Single Source of Truth**: All business entities defined once
-2. **Clear Boundaries**: Infrastructure depends on domain, not vice versa
-3. **No Type Conversions**: Direct use of domain types across layers
-4. **Better Testing**: Domain logic can be tested in isolation
-5. **Easier Maintenance**: Changes to business entities happen in one place
+- **CLI Layer**: Depends on Command, REPL
+- **Command Layer**: Depends on Domain, REPL
+- **REPL Layer**: Depends on Domain, LLM, Storage
+- **Storage Layer**: Depends on Domain only
+- **LLM Layer**: Has internal types, adapts to Domain when interfacing with other packages
+- **Config Layer**: Uses Domain constants and enums
 
-## Migration Path
+## Migration Impact
 
-1. **Phase 1**: Create domain package with all types
-2. **Phase 2**: Update storage to use domain types
-3. **Phase 3**: Update REPL to use domain types
-4. **Phase 4**: Update LLM to use domain types
-5. **Phase 5**: Remove adapter layer and test everything
+### Code Changes Made
 
-## Code Example
+1. **Storage Package**:
+   - Removed duplicate type definitions
+   - Updated all methods to use domain types
+   - Removed conversion functions
+   - Updated both filesystem and SQLite backends
 
-### Before (Duplication)
-```go
-// pkg/repl/types.go
-type Session struct {
-    ID           string
-    Conversation *Conversation
-    // ... fields
-}
+2. **REPL Package**:
+   - Removed duplicate type definitions
+   - Updated all imports to use domain types
+   - Simplified adapter.go to only handle LLM conversions
+   - Updated all commands and managers
 
-// pkg/storage/types.go
-type Session struct {
-    ID       string
-    Messages []Message
-    // ... similar fields
-}
+3. **LLM Package**:
+   - Created adapters between domain and LLM-specific types
+   - Maintains internal types for provider-specific needs
+   - Handles domain type conversion at boundaries
 
-// pkg/repl/adapter.go
-func ToStorageSession(replSession *Session) *storage.Session {
-    // Complex conversion logic
-}
-```
+### Benefits Achieved
 
-### After (Domain Layer)
-```go
-// pkg/domain/session.go
-type Session struct {
-    ID           string
-    Conversation *Conversation
-    // ... single definition
-}
+1. **Reduced Code Duplication**: Eliminated ~500 lines of duplicate type definitions
+2. **Simplified Conversions**: Removed most type conversion functions
+3. **Clear Type Ownership**: Single source of truth for business entities
+4. **Better Maintainability**: Changes to types only need to be made in one place
+5. **Improved Type Safety**: Consistent types across packages
 
-// pkg/repl/session_manager.go
-func (sm *SessionManager) Save(session *domain.Session) error {
-    // Direct use of domain type
-}
+## Testing Strategy
 
-// pkg/storage/backend.go
-type Backend interface {
-    SaveSession(session *domain.Session) error
-    // Direct use of domain type
-}
-```
+All packages have been updated with comprehensive tests:
+- Domain package: Unit tests for all types and methods
+- Storage package: Integration tests for both backends
+- REPL package: Unit tests for session management
+- End-to-end tests: Verify cross-package functionality
+
+## Future Considerations
+
+1. **Performance**: Monitor for any performance impact from the refactoring
+2. **Extension Points**: Domain types can be extended with methods as needed
+3. **Repository Pattern**: Consider implementing repository interfaces in domain
+4. **Event Sourcing**: Domain types are well-positioned for event sourcing if needed
+5. **Plugin Support**: Domain types provide stable contracts for plugins

@@ -39,8 +39,8 @@ func NewAttachment(id string, attachmentType AttachmentType) *Attachment {
 
 // IsValid validates the attachment fields.
 func (a *Attachment) IsValid() bool {
-	return a.ID != "" && 
-		a.Type.IsValid() && 
+	return a.ID != "" &&
+		a.Type.IsValid() &&
 		(len(a.Content) > 0 || a.FilePath != "" || a.URL != "")
 }
 
@@ -75,9 +75,9 @@ func (t AttachmentType) String() string {
 
 // IsValid checks if the attachment type is valid.
 func (t AttachmentType) IsValid() bool {
-	return t == AttachmentTypeImage || 
-		t == AttachmentTypeFile || 
-		t == AttachmentTypeText || 
-		t == AttachmentTypeAudio || 
+	return t == AttachmentTypeImage ||
+		t == AttachmentTypeFile ||
+		t == AttachmentTypeText ||
+		t == AttachmentTypeAudio ||
 		t == AttachmentTypeVideo
 }

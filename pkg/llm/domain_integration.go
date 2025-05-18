@@ -17,7 +17,7 @@ func CreateDomainProvider(providerType, model string, apiKey ...string) (DomainP
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %w", err)
 	}
-	
+
 	// Wrap with domain support
 	return NewDomainProvider(baseProvider), nil
 }
@@ -93,8 +93,8 @@ func ConvertProviderToDomain(provider string) *domain.Provider {
 	}
 
 	return &domain.Provider{
-		Name:        provider,
-		DisplayName: displayName,
+		Name:         provider,
+		DisplayName:  displayName,
 		Capabilities: []string{"text", "streaming"},
 		Metadata: map[string]interface{}{
 			"source": "llm-package",
@@ -120,7 +120,7 @@ func GenerateWithDomainMessages(ctx context.Context, providerType, model string,
 	return provider.GenerateDomainMessage(ctx, messages, options...)
 }
 
-// StreamWithDomainMessages is a convenience function for streaming with domain messages  
+// StreamWithDomainMessages is a convenience function for streaming with domain messages
 func StreamWithDomainMessages(ctx context.Context, providerType, model string, messages []*domain.Message, options ...ProviderOption) (<-chan *domain.Message, error) {
 	// Get API key from environment if not provided
 	apiKey := getAPIKeyFromEnv(providerType)

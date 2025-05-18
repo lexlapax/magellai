@@ -60,13 +60,13 @@ func TestBackend_SaveAndLoadSession(t *testing.T) {
 	session := domain.NewSession("test-session-001")
 	session.Name = "Test Session"
 	session.Tags = []string{"test", "example"}
-	
+
 	// Add conversation data
 	session.Conversation.SetModel("openai", "gpt-4")
 	session.Conversation.SetSystemPrompt("You are helpful")
 	session.Conversation.AddMessage(*domain.NewMessage("msg-1", domain.MessageRoleUser, "Hello"))
 	session.Conversation.AddMessage(*domain.NewMessage("msg-2", domain.MessageRoleAssistant, "Hi there!"))
-	
+
 	// Add config
 	session.Config["temperature"] = 0.7
 
@@ -109,7 +109,7 @@ func TestBackend_ListSessions(t *testing.T) {
 		name string
 	}{
 		{"session-1", "First Session"},
-		{"session-2", "Second Session"},  
+		{"session-2", "Second Session"},
 		{"session-3", "Third Session"},
 	}
 
@@ -177,10 +177,10 @@ func TestBackend_SearchSessions(t *testing.T) {
 	// Add messages to sessions
 	sessions[0].Conversation.AddMessage(*domain.NewMessage("msg-1", domain.MessageRoleUser, "Tell me about Python classes"))
 	sessions[0].Conversation.AddMessage(*domain.NewMessage("msg-2", domain.MessageRoleAssistant, "Python classes are object blueprints"))
-	
+
 	sessions[1].Conversation.AddMessage(*domain.NewMessage("msg-3", domain.MessageRoleUser, "Explain Go interfaces"))
 	sessions[1].Conversation.AddMessage(*domain.NewMessage("msg-4", domain.MessageRoleAssistant, "Go interfaces define method signatures"))
-	
+
 	sessions[2].Conversation.AddMessage(*domain.NewMessage("msg-5", domain.MessageRoleUser, "What is JavaScript closure?"))
 	sessions[2].Conversation.AddMessage(*domain.NewMessage("msg-6", domain.MessageRoleAssistant, "A closure is a function that has access to outer scope"))
 
@@ -232,13 +232,13 @@ func TestBackend_SearchSessions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			results, err := backend.SearchSessions(tt.query)
 			require.NoError(t, err)
-			
+
 			foundIDs := make(map[string]bool)
 			for _, result := range results {
 				foundIDs[result.Session.ID] = true
 				assert.True(t, result.HasMatches())
 			}
-			
+
 			assert.Len(t, foundIDs, len(tt.expected))
 			for _, expectedID := range tt.expected {
 				assert.True(t, foundIDs[expectedID], "Expected to find session %s", expectedID)
@@ -254,7 +254,7 @@ func TestBackend_ExportSession(t *testing.T) {
 	session := createTestSession("export-test", "Export Test", "You are helpful")
 	session.Conversation.AddMessage(*domain.NewMessage("msg-1", domain.MessageRoleUser, "Hello"))
 	session.Conversation.AddMessage(*domain.NewMessage("msg-2", domain.MessageRoleAssistant, "Hi there!"))
-	
+
 	err := backend.SaveSession(session)
 	require.NoError(t, err)
 
@@ -262,7 +262,7 @@ func TestBackend_ExportSession(t *testing.T) {
 	var buf bytes.Buffer
 	err = backend.ExportSession(session.ID, domain.ExportFormatJSON, &buf)
 	require.NoError(t, err)
-	
+
 	// Verify JSON structure
 	var exported map[string]interface{}
 	err = json.Unmarshal(buf.Bytes(), &exported)
@@ -274,7 +274,7 @@ func TestBackend_ExportSession(t *testing.T) {
 	buf.Reset()
 	err = backend.ExportSession(session.ID, domain.ExportFormatMarkdown, &buf)
 	require.NoError(t, err)
-	
+
 	// Verify Markdown content
 	markdown := buf.String()
 	assert.Contains(t, markdown, "# Session: Export Test")
