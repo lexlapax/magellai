@@ -484,6 +484,8 @@ func (r *REPL) handleCommand(cmd string) error {
 		return r.cmdTree(args)
 	case "/switch":
 		return r.cmdSwitch(args)
+	case "/merge":
+		return r.cmdMerge(args)
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}
@@ -579,6 +581,7 @@ COMMANDS:
   /branches          List all branches of current session
   /tree              Show session branch tree
   /switch <id>       Switch to a different branch
+  /merge <source_id> Merge another session into current
 
 SPECIAL COMMANDS:
   :model <name>         Switch to a different model

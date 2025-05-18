@@ -545,3 +545,29 @@ Implementation details:
     - [x] Visual diagrams (session-branching.mermaid)
     - [x] Practical examples (branching-examples.md)
     - [x] Feature summary (session-branching.md)
+
+- [x] Session merging ✅ (2025-05-17)
+  - [x] Designed merge types and options in domain layer
+  - [x] Added MergeType enum (Continuation, Rebase, CherryPick)
+  - [x] Created MergeOptions and MergeResult structures
+  - [x] Implemented merge validation (CanMerge method)
+  - [x] Created PrepareForMerge for setup and validation
+  - [x] Implemented ExecuteMerge with different merge algorithms
+  - [x] Added Clone methods to Conversation and Message
+  - [x] Extended Backend interface with MergeSessions method
+  - [x] Implemented merge in filesystem storage backend
+  - [x] Implemented merge in SQLite storage backend
+  - [x] Added merge support to mock backend for testing
+  - [x] Created REPL command /merge with options parsing
+  - [x] Added merge command to command registry
+  - [x] Updated help text for merge functionality
+  - [x] Created comprehensive unit tests for domain merge logic
+  - [x] Created integration tests for merge operations
+  - [x] Fixed test compilation issues
+  - [x] Generated complete documentation suite:
+    - [x] User guide (session-merging-guide.md)
+    - [x] Technical architecture (session-merging.md)
+    - [x] API reference (session-merging-api.md)
+    - [x] Visual diagrams (session-merging.mermaid)
+    - [x] Practical examples (merging-examples.md)
+    - [x] Feature summary (session-merging.md)

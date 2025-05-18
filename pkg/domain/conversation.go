@@ -106,3 +106,31 @@ func (c *Conversation) ClearMessages() {
 func (c *Conversation) IsEmpty() bool {
 	return len(c.Messages) == 0
 }
+
+// Clone creates a deep copy of the conversation.
+func (c *Conversation) Clone() *Conversation {
+	clone := &Conversation{
+		ID:           c.ID,
+		Model:        c.Model,
+		Provider:     c.Provider,
+		Temperature:  c.Temperature,
+		MaxTokens:    c.MaxTokens,
+		SystemPrompt: c.SystemPrompt,
+		Created:      c.Created,
+		Updated:      c.Updated,
+		Messages:     make([]Message, len(c.Messages)),
+		Metadata:     make(map[string]interface{}),
+	}
+	
+	// Deep copy messages
+	for i, msg := range c.Messages {
+		clone.Messages[i] = msg.Clone()
+	}
+	
+	// Deep copy metadata
+	for k, v := range c.Metadata {
+		clone.Metadata[k] = v
+	}
+	
+	return clone
+}

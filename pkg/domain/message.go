@@ -72,3 +72,27 @@ func (r MessageRole) String() string {
 func (r MessageRole) IsValid() bool {
 	return r == MessageRoleUser || r == MessageRoleAssistant || r == MessageRoleSystem
 }
+
+// Clone creates a deep copy of the message.
+func (m *Message) Clone() Message {
+	clone := Message{
+		ID:        m.ID,
+		Role:      m.Role,
+		Content:   m.Content,
+		Timestamp: m.Timestamp,
+		Attachments: make([]Attachment, len(m.Attachments)),
+		Metadata:    make(map[string]interface{}),
+	}
+	
+	// Deep copy attachments
+	for i, att := range m.Attachments {
+		clone.Attachments[i] = att // Assuming Attachment is value type or has Clone
+	}
+	
+	// Deep copy metadata
+	for k, v := range m.Metadata {
+		clone.Metadata[k] = v
+	}
+	
+	return clone
+}

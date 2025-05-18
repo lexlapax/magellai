@@ -39,6 +39,11 @@ type Backend interface {
 	
 	// GetBranchTree returns the full branch tree starting from a session
 	GetBranchTree(sessionID string) (*domain.BranchTree, error)
+	
+	// Merge operations
+	
+	// MergeSessions merges two sessions according to the specified options
+	MergeSessions(targetID, sourceID string, options domain.MergeOptions) (*domain.MergeResult, error)
 
 	// Close cleans up any resources used by the backend
 	Close() error

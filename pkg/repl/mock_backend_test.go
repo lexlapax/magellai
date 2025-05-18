@@ -35,7 +35,7 @@ func (m *MockStorageBackend) AsBackend() storage.Backend {
 
 func (m *MockStorageBackend) NewSession(name string) *domain.Session {
 	m.calls["NewSession"]++
-	sessionID := "test-session-" + fmt.Sprint(time.Now().Unix())
+	sessionID := fmt.Sprintf("test-session-%d-%d", time.Now().UnixNano(), m.calls["NewSession"])
 	session := domain.NewSession(sessionID)
 	session.Name = name
 	return session
@@ -180,4 +180,39 @@ func (m *MockStorageBackend) GetBranchTree(sessionID string) (*domain.BranchTree
 	}
 	
 	return tree, nil
+}
+
+// MergeSessions merges two sessions according to the specified options
+func (m *MockStorageBackend) MergeSessions(targetID, sourceID string, options domain.MergeOptions) (*domain.MergeResult, error) {
+	m.calls["MergeSessions"]++
+	if m.err != nil {
+		return nil, m.err
+	}
+	
+	// Load both sessions
+	targetSession, ok := m.sessions[targetID]
+	if !ok {
+		return nil, fmt.Errorf("target session not found: %s", targetID)
+	}
+	
+	sourceSession, ok := m.sessions[sourceID]
+	if !ok {
+		return nil, fmt.Errorf("source session not found: %s", sourceID)
+	}
+	
+	// Execute the merge
+	mergedSession, result, err := targetSession.ExecuteMerge(sourceSession, options)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Save the merged session
+	m.sessions[mergedSession.ID] = mergedSession
+	
+	// Update parent if needed
+	if options.CreateBranch {
+		m.sessions[targetID] = targetSession
+	}
+	
+	return result, nil
 }

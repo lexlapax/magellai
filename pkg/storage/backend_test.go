@@ -125,6 +125,34 @@ func (mb *MockBackend) GetBranchTree(sessionID string) (*domain.BranchTree, erro
 	return tree, nil
 }
 
+func (mb *MockBackend) MergeSessions(targetID, sourceID string, options domain.MergeOptions) (*domain.MergeResult, error) {
+	targetSession, exists := mb.sessions[targetID]
+	if !exists {
+		return nil, nil
+	}
+	
+	sourceSession, exists := mb.sessions[sourceID]
+	if !exists {
+		return nil, nil
+	}
+	
+	// Execute the merge
+	mergedSession, result, err := targetSession.ExecuteMerge(sourceSession, options)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Save the merged session
+	mb.sessions[mergedSession.ID] = mergedSession
+	
+	// Update parent if needed
+	if options.CreateBranch {
+		mb.sessions[targetID] = targetSession
+	}
+	
+	return result, nil
+}
+
 func TestMockBackend_Implementation(t *testing.T) {
 	// This test ensures MockBackend properly implements the Backend interface
 	var _ Backend = (*MockBackend)(nil)

@@ -1,0 +1,153 @@
+```mermaid
+graph TD
+    subgraph "Session Merge Types"
+        A[Target Session] --> B{Merge Type}
+        C[Source Session] --> B
+        
+        B --> D[Continuation Merge]
+        B --> E[Rebase Merge]
+        B --> F[Cherry Pick<br/>*Future*]
+        
+        D --> G[Append messages after<br/>current conversation]
+        E --> H[Replace/replay messages<br/>from merge point]
+        F --> I[Select specific<br/>messages to merge]
+    end
+
+    subgraph "Merge Process"
+        J[User: /merge command] --> K[Parse Options]
+        K --> L[Load Sessions]
+        L --> M{Validate<br/>Merge}
+        M -->|Valid| N[Execute Merge]
+        M -->|Invalid| O[Return Error]
+        
+        N --> P{Create<br/>Branch?}
+        P -->|Yes| Q[Create New Session]
+        P -->|No| R[Modify Target]
+        
+        Q --> S[Save Merged Session]
+        R --> S
+        S --> T[Update Parent/Child<br/>Relationships]
+        T --> U[Return Result]
+    end
+
+    subgraph "Data Flow Example"
+        V[Session A<br/>Messages: 1,2,3] --> W[Merge Type:<br/>Continuation]
+        X[Session B<br/>Messages: 4,5,6] --> W
+        W --> Y[Merged Result<br/>Messages: 1,2,3,4,5,6]
+        
+        Z[Session C<br/>Messages: 1,2,3] --> AA[Merge Type:<br/>Rebase at 2]
+        AB[Session D<br/>Messages: 4,5,6] --> AA
+        AA --> AC[Merged Result<br/>Messages: 1,2,4,5,6]
+    end
+
+    subgraph "Storage Operations"
+        AD[MergeSessions] --> AE[Begin Transaction]
+        AE --> AF[Load Target Session]
+        AF --> AG[Load Source Session]
+        AG --> AH[Execute Domain Merge]
+        AH --> AI[Save Result]
+        AI --> AJ[Update Relationships]
+        AJ --> AK[Commit Transaction]
+        AK --> AL[Return MergeResult]
+    end
+
+    style B fill:#f9f,stroke:#333,stroke-width:4px
+    style M fill:#f9f,stroke:#333,stroke-width:4px
+    style P fill:#f9f,stroke:#333,stroke-width:4px
+    style W fill:#bbf,stroke:#333,stroke-width:2px
+    style AA fill:#bbf,stroke:#333,stroke-width:2px
+```
+
+## Merge Scenarios
+
+```mermaid
+graph LR
+    subgraph "Simple Continuation"
+        A1[Main Session] --> A2[Messages 1-5]
+        B1[Feature Branch] --> B2[Messages 6-8]
+        A2 --> C1[Merge]
+        B2 --> C1
+        C1 --> D1[Combined: 1-8]
+    end
+
+    subgraph "Branch and Merge"
+        E1[Main] --> E2[Branch Point]
+        E2 --> F1[Branch A]
+        E2 --> F2[Branch B]
+        F1 --> G1[Development]
+        F2 --> G2[Development]
+        G1 --> H1[Merge Back]
+        G2 --> H1
+        H1 --> I1[Unified Result]
+    end
+
+    subgraph "Rebase Scenario"
+        J1[Base: Messages 1-3] --> J2[Feature: Messages 4-6]
+        J1 --> K1[Main continues: 7-9]
+        J2 --> L1[Rebase onto Main]
+        K1 --> L1
+        L1 --> M1[Result: 1-3,7-9,4-6]
+    end
+```
+
+## Error Handling Flow
+
+```mermaid
+graph TD
+    A[Merge Request] --> B{Valid Sessions?}
+    B -->|No| C[Error: Session not found]
+    B -->|Yes| D{Same Session?}
+    D -->|Yes| E[Error: Cannot merge with self]
+    D -->|No| F{Has Conversations?}
+    F -->|No| G[Error: No conversation data]
+    F -->|Yes| H{Valid Options?}
+    H -->|No| I[Error: Invalid merge type]
+    H -->|Yes| J[Execute Merge]
+    J --> K{Success?}
+    K -->|No| L[Error: Merge failed]
+    K -->|Yes| M[Return Result]
+```
+
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "User Interface"
+        A[REPL Command: /merge]
+    end
+
+    subgraph "REPL Layer"
+        B[cmdMerge Function]
+        C[Parse Arguments]
+        D[Build MergeOptions]
+    end
+
+    subgraph "Storage Layer"
+        E[StorageManager]
+        F[Backend Interface]
+        G[Filesystem Backend]
+        H[SQLite Backend]
+    end
+
+    subgraph "Domain Layer"
+        I[Session.CanMerge]
+        J[Session.ExecuteMerge]
+        K[Merge Algorithms]
+    end
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    F --> H
+    G --> I
+    H --> I
+    I --> J
+    J --> K
+
+    style A fill:#f9f,stroke:#333,stroke-width:4px
+    style F fill:#bbf,stroke:#333,stroke-width:2px
+    style J fill:#bfb,stroke:#333,stroke-width:2px
+```

@@ -129,3 +129,8 @@ __snapshots__/
 
 # Air (live reload) files
 tmp/
+
+# Test artifacts
+pkg/repl/session_*.json
+pkg/repl/session_*.md
+pkg/repl/session_*.invalid

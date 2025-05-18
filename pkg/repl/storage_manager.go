@@ -128,3 +128,8 @@ func (sm *StorageManager) GetChildren(sessionID string) ([]*SessionInfo, error) 
 func (sm *StorageManager) GetBranchTree(sessionID string) (*domain.BranchTree, error) {
 	return sm.backend.GetBranchTree(sessionID)
 }
+
+// MergeSessions merges two sessions according to the specified options
+func (sm *StorageManager) MergeSessions(targetID, sourceID string, options domain.MergeOptions) (*domain.MergeResult, error) {
+	return sm.backend.MergeSessions(targetID, sourceID, options)
+}

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/domain"
@@ -225,4 +226,81 @@ func (r *REPL) cmdSwitch(args []string) error {
 func (r *REPL) hasUnsavedChanges() bool {
 	// This is a simplified check - in practice might track modifications
 	return r.session != nil && r.session.Updated.After(r.lastSaveTime)
+}
+
+// cmdMerge merges two sessions
+func (r *REPL) cmdMerge(args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("usage: /merge <source_session_id> [--type <continuation|rebase>] [--create-branch] [--branch-name <name>]")
+	}
+	
+	// Parse arguments
+	sourceID := args[0]
+	targetID := r.session.ID
+	
+	// Default options
+	mergeType := domain.MergeTypeContinuation
+	createBranch := false
+	branchName := ""
+	mergePoint := len(r.session.Conversation.Messages)
+	
+	// Parse flags
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
+		case "--type":
+			if i+1 < len(args) {
+				i++
+				switch args[i] {
+				case "continuation":
+					mergeType = domain.MergeTypeContinuation
+				case "rebase":
+					mergeType = domain.MergeTypeRebase
+				default:
+					return fmt.Errorf("invalid merge type: %s", args[i])
+				}
+			}
+		case "--create-branch":
+			createBranch = true
+		case "--branch-name":
+			if i+1 < len(args) {
+				i++
+				branchName = strings.Join(args[i:], " ")
+				break
+			}
+		}
+	}
+	
+	// Create merge options
+	options := domain.MergeOptions{
+		Type:         mergeType,
+		SourceID:     sourceID,
+		TargetID:     targetID,
+		MergePoint:   mergePoint,
+		CreateBranch: createBranch,
+		BranchName:   branchName,
+	}
+	
+	// Perform the merge
+	result, err := r.manager.StorageManager.MergeSessions(targetID, sourceID, options)
+	if err != nil {
+		return fmt.Errorf("failed to merge sessions: %w", err)
+	}
+	
+	// Display results
+	fmt.Fprintf(r.writer, "Successfully merged %d messages from %s into %s\n", result.MergedCount, sourceID, targetID)
+	
+	if result.NewBranchID != "" {
+		fmt.Fprintf(r.writer, "Created new branch: %s\n", result.NewBranchID)
+		
+		// Ask if user wants to switch to the new branch
+		fmt.Fprint(r.writer, "Switch to new branch? (y/n): ")
+		var response string
+		fmt.Fscanln(r.reader, &response)
+		
+		if response == "y" || response == "yes" {
+			return r.cmdSwitch([]string{result.NewBranchID})
+		}
+	}
+	
+	return nil
 }
