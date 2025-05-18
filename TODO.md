@@ -61,40 +61,40 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Rich media rendering (images, tables)
 
 ### 4.6 Fix domain layer and types
-- [ ] Create domain layer package structure
-    - [ ] Create new package `pkg/domain/` as the central domain layer
-    - [ ] Create directory structure for domain entities
-    - [ ] Add comprehensive package documentation (doc.go)
+- [x] Create domain layer package structure ✅
+    - [x] Create new package `pkg/domain/` as the central domain layer
+    - [x] Create directory structure for domain entities
+    - [x] Add comprehensive package documentation (doc.go)
 
-- [ ] Implement core domain types
-    - [ ] Create `pkg/domain/session.go`
-        - [ ] Define `Session` type with all fields
-        - [ ] Define `SessionInfo` type
-        - [ ] Add validation methods
-        - [ ] Add session-related constants
-    - [ ] Create `pkg/domain/message.go`
-        - [ ] Define `Message` type
-        - [ ] Define `MessageRole` enum (user, assistant, system)
-        - [ ] Add message validation
-    - [ ] Create `pkg/domain/attachment.go`
-        - [ ] Define `Attachment` type
-        - [ ] Define `AttachmentType` enum
-        - [ ] Add attachment validation and helper methods
-    - [ ] Create `pkg/domain/conversation.go`
-        - [ ] Define `Conversation` type
-        - [ ] Add conversation management methods
-        - [ ] Define conversation constants
-    - [ ] Create `pkg/domain/search.go`
-        - [ ] Define `SearchResult` type
-        - [ ] Define `SearchMatch` type
-        - [ ] Add search-related enums
-    - [ ] Create `pkg/domain/provider.go`
-        - [ ] Define `Provider` type
-        - [ ] Define `Model` type
-        - [ ] Define `ModelCapability` type
-    - [ ] Create `pkg/domain/types.go`
-        - [ ] Define shared enums and constants
-        - [ ] Add common interface definitions
+- [x] Implement core domain types ✅
+    - [x] Create `pkg/domain/session.go`
+        - [x] Define `Session` type with all fields
+        - [x] Define `SessionInfo` type
+        - [x] Add validation methods
+        - [x] Add session-related constants
+    - [x] Create `pkg/domain/message.go`
+        - [x] Define `Message` type
+        - [x] Define `MessageRole` enum (user, assistant, system)
+        - [x] Add message validation
+    - [x] Create `pkg/domain/attachment.go`
+        - [x] Define `Attachment` type
+        - [x] Define `AttachmentType` enum
+        - [x] Add attachment validation and helper methods
+    - [x] Create `pkg/domain/conversation.go`
+        - [x] Define `Conversation` type
+        - [x] Add conversation management methods
+        - [x] Define conversation constants
+    - [x] Create `pkg/domain/search.go`
+        - [x] Define `SearchResult` type
+        - [x] Define `SearchMatch` type
+        - [x] Add search-related enums
+    - [x] Create `pkg/domain/provider.go`
+        - [x] Define `Provider` type
+        - [x] Define `Model` type
+        - [x] Define `ModelCapability` type
+    - [x] Create `pkg/domain/types.go`
+        - [x] Define shared enums and constants
+        - [x] Add common interface definitions
 
 - [ ] Refactor storage package to use domain types
     - [ ] Remove all duplicate type definitions from `pkg/storage/types.go`
