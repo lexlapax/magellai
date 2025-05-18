@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 4 - Advanced REPL Features)
+## Current Status (Phase 4.2.2 - Session merging)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2: Configuration and Command Foundation - Complete
@@ -19,13 +19,13 @@ The project follows a library-first design where the core intelligence (LLM prov
   ✅ Phase 4.1: Extended REPL Commands - Complete
   ✅ Phase 4.1.1: Fix logging and file attachment issues - Complete
   ✅ Phase 4.2.1: Session Storage library abstraction - Complete
-  ✅ Phase 4.2.2: Session Auto-save functionality - Partially Complete
+  🚧 Phase 4.2.2: Session Auto-save functionality - In Progress
     ✅ Auto-save functionality - Complete
     ✅ Session export formats (JSON, Markdown) - Complete
     ✅ Session search by content - Complete
     ✅ Session tags and metadata - Complete
     ✅ Session branching/forking - Complete
-    🔲 Session merging - Pending
+    🚧 Session merging - In Progress
   🔲 Phase 4.3: Error Handling & Recovery - Pending
   🔲 Phase 4.4: REPL Integration with Unified Command System - Pending
   🔲 Phase 4.5: REPL UI Enhancements - Pending

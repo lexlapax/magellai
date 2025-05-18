@@ -1,0 +1,41 @@
+graph TD
+    %% Main conversation flow
+    A[Session Start] --> B[Message 1: Hello]
+    B --> C[Message 2: How can I help?]
+    C --> D[Message 3: Tell me about Python]
+    D --> E[Message 4: Python is...]
+    E --> F[Message 5: What about performance?]
+    F --> G[Message 6: Performance tips...]
+    
+    %% First branch at message 3
+    D --> H[Branch 1: 'Web Dev']
+    H --> I[Message 4b: Tell me about web frameworks]
+    I --> J[Message 5b: Django and Flask...]
+    
+    %% Second branch at message 5
+    F --> K[Branch 2: 'Security']
+    K --> L[Message 6b: What about security?]
+    L --> M[Message 7b: Security best practices...]
+    
+    %% Sub-branch from Branch 1
+    J --> N[Branch 1.1: 'APIs']
+    N --> O[Message 6c: How to build REST APIs?]
+    O --> P[Message 7c: REST API design...]
+    
+    %% Style the nodes
+    style A fill:#f9f,stroke:#333,stroke-width:4px
+    style D fill:#bbf,stroke:#333,stroke-width:2px
+    style F fill:#bbf,stroke:#333,stroke-width:2px
+    style H fill:#bfb,stroke:#333,stroke-width:2px
+    style K fill:#bfb,stroke:#333,stroke-width:2px
+    style N fill:#fbf,stroke:#333,stroke-width:2px
+    
+    %% Add labels
+    A:::start
+    H:::branch
+    K:::branch
+    N:::subbranch
+    
+    classDef start fill:#f9f,stroke:#333,stroke-width:4px
+    classDef branch fill:#bfb,stroke:#333,stroke-width:2px
+    classDef subbranch fill:#fbf,stroke:#333,stroke-width:2px

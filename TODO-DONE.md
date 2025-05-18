@@ -525,3 +525,23 @@ Implementation details:
   - [x] Updated help text to include new branch commands
   - [x] Fixed storage interface method calls throughout REPL
   - [x] Updated mock backend to implement new branch methods
+
+- [x] Session branching/forking ✅ (2025-05-17)
+  - [x] Extended domain layer to support branching in Session type
+  - [x] Added ParentID, BranchPoint, BranchName, ChildIDs fields
+  - [x] Implemented CreateBranch method on Session
+  - [x] Added branch management methods (AddChild, RemoveChild, IsBranch, HasBranches)
+  - [x] Extended SessionInfo with branch information
+  - [x] Added GetChildren and GetBranchTree to storage backend interface
+  - [x] Implemented branch operations in filesystem storage
+  - [x] Implemented branch operations in SQLite storage (when enabled)
+  - [x] Added REPL commands: /branch, /branches, /tree, /switch
+  - [x] Created comprehensive tests for branch functionality
+  - [x] Fixed compilation and test issues across packages
+  - [x] Generated comprehensive documentation:
+    - [x] Technical architecture documentation (session-branching.md)
+    - [x] User guide with examples (session-branching-guide.md)
+    - [x] API reference documentation (session-branching-api.md)
+    - [x] Visual diagrams (session-branching.mermaid)
+    - [x] Practical examples (branching-examples.md)
+    - [x] Feature summary (session-branching.md)

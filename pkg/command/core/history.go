@@ -134,7 +134,7 @@ func (c *HistoryCommand) executeList(ctx context.Context, exec *command.Executio
 func (c *HistoryCommand) executeShow(ctx context.Context, exec *command.ExecutionContext, manager *repl.SessionManager) error {
 	logging.LogInfo("Showing session details", "id", c.sessionID)
 
-	session, err := manager.LoadSession(c.sessionID)
+	session, err := manager.StorageManager.LoadSession(c.sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to load session: %v", err)
 	}

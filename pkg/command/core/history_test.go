@@ -258,7 +258,7 @@ func TestHistoryCommand_Execute_Delete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify session was deleted
-	_, err = manager.LoadSession(session.ID)
+	_, err = manager.StorageManager.LoadSession(session.ID)
 	assert.Error(t, err)
 }
 

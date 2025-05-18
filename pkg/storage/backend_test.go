@@ -93,6 +93,38 @@ func (mb *MockBackend) Close() error {
 	return nil
 }
 
+func (mb *MockBackend) GetChildren(sessionID string) ([]*domain.SessionInfo, error) {
+	var children []*domain.SessionInfo
+	if session, exists := mb.sessions[sessionID]; exists {
+		for _, childID := range session.ChildIDs {
+			if child, exists := mb.sessions[childID]; exists {
+				children = append(children, child.ToSessionInfo())
+			}
+		}
+	}
+	return children, nil
+}
+
+func (mb *MockBackend) GetBranchTree(sessionID string) (*domain.BranchTree, error) {
+	session, exists := mb.sessions[sessionID]
+	if !exists {
+		return nil, nil
+	}
+	
+	tree := &domain.BranchTree{
+		Session:  session.ToSessionInfo(),
+		Children: make([]*domain.BranchTree, 0),
+	}
+	
+	for _, childID := range session.ChildIDs {
+		if childTree, err := mb.GetBranchTree(childID); err == nil && childTree != nil {
+			tree.Children = append(tree.Children, childTree)
+		}
+	}
+	
+	return tree, nil
+}
+
 func TestMockBackend_Implementation(t *testing.T) {
 	// This test ensures MockBackend properly implements the Backend interface
 	var _ Backend = (*MockBackend)(nil)
