@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 4.7 - Tests and Integration Issue Fixing)
+## Current Status (Phase 4.8 - Code abstraction and redundancy checks)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2: Configuration and Command Foundation - Complete  
@@ -44,8 +44,11 @@ The project follows a library-first design where the core intelligence (LLM prov
     ✅ LLM package updated with domain adapters
     ✅ All tests updated and passing
     ✅ Build and lint checks passing
-  🚧 Phase 4.7: Fix tests, test-integration issue - In Progress
-  🔲 Phase 4.8: Run code, abstraction, redundancy checks and fixes - Pending
+  ✅ Phase 4.7: Fix tests, test-integration issue - Complete
+    ✅ Fixed logging tests that were failing in bulk runs
+    ✅ Fixed session export tests creating leftover files
+    ✅ All unit and integration tests passing
+  🚧 Phase 4.8: Run code, abstraction, redundancy checks and fixes - Next
   🔲 Phase 4.9: Documentation and architecture updates - Pending (moved from 4.6)
   🔲 Phase 4.10: Final validation and rollout - Pending (moved from 4.6)
 

@@ -636,3 +636,14 @@ Implementation Files Created:
 - pkg/repl/auto_recovery_test.go - Auto-recovery unit tests
 - pkg/repl/commands_recovery.go - Manual recovery commands
 - All tests passing, comprehensive error recovery in place
+
+### 4.7 Fix tests, test-integration issue ✅ (2025-05-17)
+- [x] Fixed logging tests (TestDefaultConfig and TestVerbosityConfiguration)
+  - Tests were failing when run in bulk but passing individually
+  - Issue was due to state management/race conditions
+  - Resolved by proper test isolation
+- [x] Fixed session export tests creating leftover files
+  - TestREPLExportCommand was creating session_2025*.{json,md,invalid} files
+  - Added cleanup code to remove files after tests complete
+  - Fixed issue where invalid format test created empty .invalid files
+- [x] All tests now passing (both unit and integration)
