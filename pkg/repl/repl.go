@@ -36,24 +36,25 @@ type ConfigInterface interface {
 
 // REPL represents the Read-Eval-Print Loop for interactive chat
 type REPL struct {
-	config         ConfigInterface
-	provider       llm.Provider
-	session        *Session
-	manager        *SessionManager
-	reader         *bufio.Reader
-	writer         io.Writer
-	promptStyle    string
-	multiline      bool
-	exitOnEOF      bool
-	autoSave       bool
-	autoSaveTimer  *time.Timer
-	lastSaveTime   time.Time
-	autoRecovery   *AutoRecoveryManager
-	registry       *command.Registry
-	cmdHistory     []string              // Command history
-	readline       *ReadlineInterface    // Readline interface for tab completion
-	isTerminal     bool                  // Whether we're running in a terminal
-	colorFormatter *utils.ColorFormatter // Color formatter for output
+	config           ConfigInterface
+	provider         llm.Provider
+	session          *Session
+	manager          *SessionManager
+	reader           *bufio.Reader
+	writer           io.Writer
+	promptStyle      string
+	multiline        bool
+	exitOnEOF        bool
+	autoSave         bool
+	autoSaveTimer    *time.Timer
+	lastSaveTime     time.Time
+	autoRecovery     *AutoRecoveryManager
+	registry         *command.Registry
+	cmdHistory       []string              // Command history
+	readline         *ReadlineInterface    // Readline interface for tab completion
+	isTerminal       bool                  // Whether we're running in a terminal
+	colorFormatter   *utils.ColorFormatter // Color formatter for output
+	nonInteractive   NonInteractiveMode    // Non-interactive mode detection
 }
 
 // REPLOptions contains options for creating a new REPL
@@ -214,25 +215,32 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 
 	autoSave := cfg.GetBool("repl.auto_save.enabled")
 
+	// Detect non-interactive mode
+	nonInteractive := DetectNonInteractiveMode(opts.Reader, opts.Writer)
+	
 	repl := &REPL{
-		config:       cfg,
-		provider:     provider,
-		session:      session,
-		manager:      manager,
-		reader:       bufio.NewReader(opts.Reader),
-		writer:       opts.Writer,
-		promptStyle:  opts.PromptStyle,
-		exitOnEOF:    true,
-		autoSave:     autoSave,
-		lastSaveTime: time.Now(),
-		registry:     command.NewRegistry(),
-		cmdHistory:   make([]string, 0),
-		isTerminal:   utils.IsTerminal(),
+		config:         cfg,
+		provider:       provider,
+		session:        session,
+		manager:        manager,
+		reader:         bufio.NewReader(opts.Reader),
+		writer:         opts.Writer,
+		promptStyle:    opts.PromptStyle,
+		exitOnEOF:      true,
+		autoSave:       autoSave,
+		lastSaveTime:   time.Now(),
+		registry:       command.NewRegistry(),
+		cmdHistory:     make([]string, 0),
+		isTerminal:     utils.IsTerminal() && !nonInteractive.IsNonInteractive,
+		nonInteractive: nonInteractive,
 	}
 
 	// Initialize color formatter if in terminal
 	enableColors := repl.isTerminal && cfg.GetBool("repl.colors.enabled")
 	repl.colorFormatter = utils.NewColorFormatter(enableColors, nil)
+
+	// Configure for non-interactive mode if needed
+	repl.ConfigureForNonInteractiveMode(nonInteractive)
 
 	// Register all REPL commands
 	if err := RegisterREPLCommands(repl, repl.registry); err != nil {
@@ -335,21 +343,37 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 func (r *REPL) Run() error {
 	logging.LogInfo("Starting REPL session", "sessionID", r.session.ID, "model", r.session.Conversation.Model)
 
-	// Print welcome message
-	if r.colorFormatter.Enabled() {
-		fmt.Fprintf(r.writer, "%s (type %s for commands)\n",
-			r.colorFormatter.FormatInfo("magellai chat - Interactive LLM chat"),
-			r.colorFormatter.FormatCommand("/help"))
-		fmt.Fprintf(r.writer, "%s: %s\n",
-			r.colorFormatter.FormatInfo("Model"),
-			r.colorFormatter.FormatHighlight(r.session.Conversation.Model))
-		fmt.Fprintf(r.writer, "%s: %s\n\n",
-			r.colorFormatter.FormatInfo("Session"),
-			r.colorFormatter.FormatHighlight(r.session.ID))
-	} else {
-		fmt.Fprintf(r.writer, "magellai chat - Interactive LLM chat (type /help for commands)\n")
-		fmt.Fprintf(r.writer, "Model: %s\n", r.session.Conversation.Model)
-		fmt.Fprintf(r.writer, "Session: %s\n\n", r.session.ID)
+	// Print welcome message only in interactive mode
+	if !r.nonInteractive.IsNonInteractive {
+		if r.colorFormatter.Enabled() {
+			fmt.Fprintf(r.writer, "%s (type %s for commands)\n",
+				r.colorFormatter.FormatInfo("magellai chat - Interactive LLM chat"),
+				r.colorFormatter.FormatCommand("/help"))
+			fmt.Fprintf(r.writer, "%s: %s\n",
+				r.colorFormatter.FormatInfo("Model"),
+				r.colorFormatter.FormatHighlight(r.session.Conversation.Model))
+			fmt.Fprintf(r.writer, "%s: %s\n\n",
+				r.colorFormatter.FormatInfo("Session"),
+				r.colorFormatter.FormatHighlight(r.session.ID))
+		} else {
+			fmt.Fprintf(r.writer, "magellai chat - Interactive LLM chat (type /help for commands)\n")
+			fmt.Fprintf(r.writer, "Model: %s\n", r.session.Conversation.Model)
+			fmt.Fprintf(r.writer, "Session: %s\n\n", r.session.ID)
+		}
+	}
+	
+	// Process piped input if in non-interactive mode
+	if r.nonInteractive.IsPipedInput {
+		logging.LogInfo("Processing piped input in non-interactive mode")
+		if err := r.ProcessPipedInput(r.nonInteractive); err != nil {
+			logging.LogError(err, "Failed to process piped input")
+			return err
+		}
+		// Exit after processing piped input
+		if r.ShouldAutoExit(r.nonInteractive) {
+			logging.LogInfo("Auto-exiting after processing piped input")
+			return nil
+		}
 	}
 
 	// Start auto-recovery if available

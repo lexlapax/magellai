@@ -28,12 +28,8 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ### 4.5 REPL UI Enhancements *(PARTIALLY COMPLETE)*
 - [x] Tab completion for commands
-- [ ] Syntax highlighting for code blocks
 - [x] ANSI color output when TTY
-- [ ] Non-interactive mode detection
-- [ ] Custom prompt themes (command/core functionality - cli and repl both)
-- [ ] Progress indicators for streaming (command/core functionality - cli and repl both)
-- [ ] Rich media rendering (images, tables) (command/core functionality - cli and repl both)
+- [x] Non-interactive mode detection
 - [ ] scan and fix Context preservation between commands (command/core functionality - cli and repl both)
 
 ### 4.6 Fix domain layer and types ✅
@@ -43,7 +39,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ### 4.8 Run code, abstraction, redundancy checks and fixes *(REVISIT)*
   - [ ] analyze entire codebase for inconsistent abstractions, unneeded functions, misplaced files in packages, duplicate functions, inconsistent errors and arguments and create todo list under this task section.
 
-### 4.9 Documentation and architecture updates *(REVISIT - moved from 4.6)*
+### 4.9 Documentation and architecture updates *(REVISIT)*
 - [ ] Update architecture documentation
     - [ ] Create domain layer diagrams
     - [ ] Update package relationship diagrams
@@ -55,7 +51,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [ ] Update README with new architecture
 - [ ] Create docs/technical/architecture.md if needed
 
-### 4.10 Final validation and rollout *(REVISIT - moved from 4.6)*
+### 4.10 Final validation and rollout *(REVISIT)*
 - [ ] Run full test suite
 - [ ] Manual testing of all features
 - [ ] Update CHANGELOG.md
@@ -252,13 +248,19 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ## Phase 8: Advanced Features (Post-MVP)
 
-### 8.1 CLI Help System Advanced Improvements
+### 8.1 REPL/CLI UI Advanced features.
+- [ ] Custom prompt themes (command/core functionality - cli and repl both)
+- [ ] Syntax highlighting for code blocks (command/core functionality - cli and repl both)
+- [ ] Progress indicators for streaming (command/core functionality - cli and repl both)
+- [ ] Rich media rendering (images, tables) (command/core functionality - cli and repl both DEFER till tools/agents)
+
+### 8.2 CLI Help System Advanced Improvements
 - [ ] Future improvements for CLI help system:
   - [ ] Add custom help formatter for more control
   - [ ] Integrate Kong help with core help system for unified behavior
   - [ ] Add support for hiding commands with --all flag
 
-### 8.2 Additional Scripting Engines
+### 8.3 Additional Scripting Engines
 - [ ] Goja (JavaScript) support
   - [ ] Runtime integration
   - [ ] API bindings
@@ -268,7 +270,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] API bindings
   - [ ] Example scripts
 
-### 8.3 Go Plugin Support
+### 8.4 Go Plugin Support
 - [ ] Native Go plugin interface
   - [ ] Plugin loading mechanism
   - [ ] API stability guarantees
@@ -276,7 +278,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Migration guide from binary plugins
   - [ ] Security considerations
 
-### 8.4 Web Interface
+### 8.5 Web Interface
 - [ ] HTTP API server
   - [ ] RESTful endpoints
   - [ ] WebSocket support for streaming
@@ -288,7 +290,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Plugin management
   - [ ] Session history
 
-### 8.5 Advanced REPL Features
+### 8.6 Advanced REPL Features
 - [ ] Enhanced REPL capabilities:
   - [ ] Syntax highlighting
   - [ ] Command history search
@@ -297,7 +299,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Auto-suggestions
   - [ ] Rich media rendering
 
-### 8.6 Enterprise Features
+### 8.7 Enterprise Features
 - [ ] Enterprise enhancements:
   - [ ] SAML/OIDC authentication
   - [ ] Audit logging
@@ -306,13 +308,13 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Policy management
   - [ ] Compliance tools
 
-### 8.7 Additional Session Storage Backends
-#### 8.7.1 Additional Database Support
+### 8.8 Additional Session Storage Backends
+#### 8.8.1 Additional Database Support
     - [ ] Implement PostgreSQLStorage backend for remote database
     - [ ] Add database connection pooling and retry logic
     - [ ] Add configuration options
     - [ ] Create database migration scripts
-#### 8.7.2 Cloud Storage Support 
+#### 8.8.2 Cloud Storage Support 
     - [ ] Implement S3Storage backend for object storage
     - [ ] Implement RedisStorage backend for in-memory cache
     - [ ] Add cloud authentication and credentials support
@@ -320,7 +322,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Add multi-tier storage with caching layer
     - [ ] Create cloud deployment documentation
     - [ ] Add configuration options
-#### 8.7.3 Advanced Features 
+#### 8.8.3 Advanced Features 
     - [ ] Add storage migration tool for backend switching
     - [ ] Implement storage health checks and monitoring
     - [ ] Add storage backup and restore functionality

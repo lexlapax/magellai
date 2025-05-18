@@ -178,7 +178,12 @@ func TestNewREPL(t *testing.T) {
 	assert.NotNil(t, repl.manager)
 	assert.NotNil(t, repl.provider)
 	assert.NotNil(t, repl.config)
-	assert.Equal(t, "> ", repl.promptStyle)
+	// In test mode with bytes.Buffer, non-interactive mode is detected
+	if repl.nonInteractive.IsNonInteractive {
+		assert.Equal(t, "", repl.promptStyle) // Non-interactive mode clears prompt
+	} else {
+		assert.Equal(t, "> ", repl.promptStyle)
+	}
 	assert.Equal(t, "mock/test-model", repl.session.Conversation.Model)
 	assert.Equal(t, "mock", repl.session.Conversation.Provider)
 
