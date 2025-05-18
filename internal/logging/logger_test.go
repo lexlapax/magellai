@@ -13,8 +13,8 @@ import (
 func TestDefaultConfig(t *testing.T) {
 	config := DefaultConfig()
 
-	if config.Level != "info" {
-		t.Errorf("expected default level 'info', got %s", config.Level)
+	if config.Level != "warn" {
+		t.Errorf("expected default level 'warn', got %s", config.Level)
 	}
 	if config.Format != "text" {
 		t.Errorf("expected default format 'text', got %s", config.Format)
@@ -252,17 +252,22 @@ func TestVerbosityConfiguration(t *testing.T) {
 		verbosity   int
 		expectLevel slog.Level
 	}{
-		{"no verbosity", 0, slog.LevelInfo},
-		{"verbosity 1", 1, slog.LevelDebug},
-		{"verbosity 2", 2, slog.LevelDebug}, // Max is debug
+		{"no verbosity", 0, slog.LevelWarn},   // Default is warn now
+		{"verbosity 1", 1, slog.LevelInfo},    // -v gives info level
+		{"verbosity 2", 2, slog.LevelDebug},   // -vv gives debug level
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create config with verbosity
 			config := DefaultConfig()
-			if tt.verbosity > 0 {
+			// Map verbosity to appropriate log level
+			switch tt.verbosity {
+			case 1:
+				config.Level = "info"
+			case 2:
 				config.Level = "debug"
+			// 0 keeps default warn level
 			}
 
 			// Parse and check level

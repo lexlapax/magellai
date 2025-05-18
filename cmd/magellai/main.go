@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 
 	"github.com/alecthomas/kong"
@@ -678,7 +677,7 @@ func main() {
 	}
 
 	// Initialize logger
-	logLevel := "info"
+	logLevel := "warn"
 	if envLevel := os.Getenv("MAGELLAI_LOG_LEVEL"); envLevel != "" {
 		logLevel = envLevel
 	}
@@ -727,13 +726,21 @@ func main() {
 		}
 	}
 
-	// Set verbosity
+	// Set verbosity - map -v flags to log levels
 	if cli.Verbosity > 0 {
 		switch cli.Verbosity {
 		case 1:
-			logger.SetLevel(slog.LevelDebug)
+			if err := logging.SetLogLevel("info"); err != nil {
+				logger.Error("Failed to set log level", "error", err)
+			}
+		case 2:
+			if err := logging.SetLogLevel("debug"); err != nil {
+				logger.Error("Failed to set log level", "error", err)
+			}
 		default:
-			logger.SetLevel(slog.LevelDebug) // slog doesn't have trace level, use debug
+			if err := logging.SetLogLevel("debug"); err != nil {
+				logger.Error("Failed to set log level", "error", err)
+			}
 		}
 	}
 

@@ -10,11 +10,12 @@ import (
 
 // ModelCapabilities represents what a model can process
 type ModelCapabilities struct {
-	Text  bool `json:"text"`
-	Audio bool `json:"audio"`
-	Video bool `json:"video"`
-	Image bool `json:"image"`
-	File  bool `json:"file"`
+	Text             bool `json:"text"`
+	Audio            bool `json:"audio"`
+	Video            bool `json:"video"`
+	Image            bool `json:"image"`
+	File             bool `json:"file"`
+	StructuredOutput bool `json:"structured_output"` // Can generate structured JSON output
 }
 
 // ModelInfo represents detailed information about a model

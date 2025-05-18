@@ -571,3 +571,59 @@ Implementation details:
     - [x] Visual diagrams (session-merging.mermaid)
     - [x] Practical examples (merging-examples.md)
     - [x] Feature summary (session-merging.md)
+
+### 4.3 Error Handling & Recovery *(PARTIALLY COMPLETE)* ✅ (2025-05-17)
+- [x] Ensure loglevels are implemented at the library level with cmd line just passing the argument through ✅
+  - [x] set default loglevel to warn ✅
+    - Changed default log level from "info" to "warn" across the codebase
+    - Updated CLI to properly map verbosity flags (-v, -vv) to log levels (info, debug)
+    - Environment variable MAGELLAI_LOG_LEVEL is now properly respected
+    - Fixed double logger initialization issues
+
+- [ ] Implement robust error handling: *(PARTIALLY COMPLETE)*
+  - [x] Graceful network error recovery ✅
+    - Created errorhandler.go with retry logic and exponential backoff
+    - Implemented intelligent error classification for retryable vs non-retryable errors
+    - Added configurable retry policies with jitter to prevent thundering herd
+    - Proper timeout handling and context cancellation
+    
+  - [x] Provider fallback mechanisms ✅
+    - Created resilient_provider.go that wraps providers with failover capability
+    - Supports primary and multiple fallback providers
+    - Automatically switches to fallback providers when primary fails
+    - Includes timeout handling for each operation
+    - Chain of providers can be configured with different models/providers
+    
+  - [ ] Session auto-recovery after crashes *(REVISIT)*
+    - Complex implementation requiring crash detection infrastructure
+    - May need process monitoring and state persistence
+    - Deferred for future implementation
+    
+  - [x] Partial response handling ✅
+    - Created partial_response.go with streaming recovery logic
+    - Detects incomplete responses and attempts to complete them
+    - Includes response buffer management and completion detection
+    - Handles stream timeouts and interruptions gracefully
+    - Smart continuation prompts for completing partial content
+    
+  - [x] Rate limit handling ✅
+    - Implemented special rate limit retry logic with longer backoff periods
+    - Rate limit errors are handled separately from other retryable errors
+    - Configurable wait times for rate limit recovery
+    - Exponential backoff with maximum delay caps
+    
+  - [x] Context length management ✅
+    - Created context_manager.go with intelligent message prioritization
+    - Implements sliding window and importance-based message selection
+    - Automatically reduces context when hitting model limits
+    - Preserves system messages and recent conversation context
+    - Token counting estimation for managing context windows
+
+Implementation Files Created:
+- pkg/llm/errorhandler.go - Core error handling and retry logic
+- pkg/llm/resilient_provider.go - Provider with fallback mechanisms
+- pkg/llm/partial_response.go - Partial response recovery
+- pkg/llm/context_manager.go - Context length management
+- pkg/llm/errorhandler_test.go - Tests for error handling
+- pkg/llm/resilient_provider_test.go - Tests for resilient provider
+- All tests passing, comprehensive error recovery in place

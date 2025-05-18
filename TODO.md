@@ -22,16 +22,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ### 4.2.2 Session Auto-save functionality ✅
 
-### 4.3 Error Handling & Recovery
-- [ ] Ensure loglevels are implemented at the library level with cmd line just passing the argument through
-  - [ ] set default loglevel to warn
-- [ ] Implement robust error handling:
-  - [ ] Graceful network error recovery
-  - [ ] Provider fallback mechanisms
-  - [ ] Session auto-recovery after crashes
-  - [ ] Partial response handling
-  - [ ] Rate limit handling
-  - [ ] Context length management
+### 4.3 Error Handling & Recovery *(PARTIALLY COMPLETE)* ✅ (2025-05-17) 
 
 ### 4.4 REPL Integration with Unified Command System
 - [ ] Connect REPL to unified command system:
@@ -54,7 +45,10 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ### 4.6 Fix domain layer and types ✅
 
-### 4.7 Documentation and architecture updates *(REVISIT - moved from 4.6)*
+### 4.7 Fix tests, test-integration issue
+  - [ ] find all remaining test issues and update TODO.md with fix tasks
+
+### 4.8 Documentation and architecture updates *(REVISIT - moved from 4.6)*
 - [ ] Update architecture documentation
     - [ ] Create domain layer diagrams
     - [ ] Update package relationship diagrams
@@ -66,7 +60,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [ ] Update README with new architecture
 - [ ] Create docs/technical/architecture.md if needed
 
-### 4.8 Final validation and rollout *(REVISIT - moved from 4.6)*
+### 4.9 Final validation and rollout *(REVISIT - moved from 4.6)*
 - [ ] Run full test suite
 - [ ] Manual testing of all features
 - [ ] Update CHANGELOG.md

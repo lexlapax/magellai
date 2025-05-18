@@ -36,7 +36,7 @@ type LogConfig struct {
 
 // DefaultConfig returns default logging configuration
 func DefaultConfig() LogConfig {
-	level := "info"
+	level := "warn"
 	if envLevel := os.Getenv("MAGELLAI_LOG_LEVEL"); envLevel != "" {
 		level = envLevel
 	}
