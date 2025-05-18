@@ -252,6 +252,11 @@ func getDefaultConfig() map[string]interface{} {
 				},
 			},
 		},
+		"repl": map[string]interface{}{
+			"colors": map[string]interface{}{
+				"enabled": true,
+			},
+		},
 		"plugin": map[string]interface{}{
 			"directory": expandPath("~/.config/magellai/plugins"),
 		},

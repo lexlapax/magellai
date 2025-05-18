@@ -22,6 +22,7 @@ import (
 	"github.com/lexlapax/magellai/pkg/storage"
 	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
 	_ "github.com/lexlapax/magellai/pkg/storage/sqlite"     // Register SQLite backend
+	"github.com/lexlapax/magellai/pkg/utils"
 )
 
 // ConfigInterface defines the minimal interface needed for configuration
@@ -35,21 +36,24 @@ type ConfigInterface interface {
 
 // REPL represents the Read-Eval-Print Loop for interactive chat
 type REPL struct {
-	config        ConfigInterface
-	provider      llm.Provider
-	session       *Session
-	manager       *SessionManager
-	reader        *bufio.Reader
-	writer        io.Writer
-	promptStyle   string
-	multiline     bool
-	exitOnEOF     bool
-	autoSave      bool
-	autoSaveTimer *time.Timer
-	lastSaveTime  time.Time
-	autoRecovery  *AutoRecoveryManager
-	registry      *command.Registry
-	cmdHistory    []string // Command history
+	config         ConfigInterface
+	provider       llm.Provider
+	session        *Session
+	manager        *SessionManager
+	reader         *bufio.Reader
+	writer         io.Writer
+	promptStyle    string
+	multiline      bool
+	exitOnEOF      bool
+	autoSave       bool
+	autoSaveTimer  *time.Timer
+	lastSaveTime   time.Time
+	autoRecovery   *AutoRecoveryManager
+	registry       *command.Registry
+	cmdHistory     []string              // Command history
+	readline       *ReadlineInterface    // Readline interface for tab completion
+	isTerminal     bool                  // Whether we're running in a terminal
+	colorFormatter *utils.ColorFormatter // Color formatter for output
 }
 
 // REPLOptions contains options for creating a new REPL
@@ -223,12 +227,60 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 		lastSaveTime: time.Now(),
 		registry:     command.NewRegistry(),
 		cmdHistory:   make([]string, 0),
+		isTerminal:   utils.IsTerminal(),
 	}
+
+	// Initialize color formatter if in terminal
+	enableColors := repl.isTerminal && cfg.GetBool("repl.colors.enabled")
+	repl.colorFormatter = utils.NewColorFormatter(enableColors, nil)
 
 	// Register all REPL commands
 	if err := RegisterREPLCommands(repl, repl.registry); err != nil {
 		logging.LogError(err, "Failed to register REPL commands")
 		return nil, fmt.Errorf("failed to register REPL commands: %w", err)
+	}
+
+	// Initialize readline if in terminal mode
+	if repl.isTerminal {
+		// Get command names from registry for tab completion
+		commands := make([]string, 0)
+		for _, cmd := range repl.registry.List(command.CategoryShared) {
+			// Add the actual command name (without prefix)
+			meta := cmd.Metadata()
+			commands = append(commands, meta.Name)
+			// Add aliases if any
+			commands = append(commands, meta.Aliases...)
+		}
+
+		historyFile := ""
+		if opts.StorageDir != "" {
+			historyFile = filepath.Join(opts.StorageDir, ".repl_history")
+		}
+
+		// Use colored prompt if colors are enabled
+		prompt := repl.promptStyle
+		if repl.colorFormatter.Enabled() {
+			prompt = repl.colorFormatter.FormatPrompt(prompt)
+		}
+
+		readlineConfig := &ReadlineConfig{
+			Prompt:           prompt,
+			HistoryFile:      historyFile,
+			EnableCompletion: true,
+			MultilineMode:    repl.multiline,
+		}
+
+		readlineInterface, err := NewReadlineInterface(readlineConfig)
+		if err != nil {
+			logging.LogWarn("Failed to initialize readline, falling back to standard input", "error", err)
+			repl.isTerminal = false
+		} else {
+			repl.readline = readlineInterface
+			// Update completer with actual command names
+			if completer, ok := repl.readline.Instance.Config.AutoComplete.(*replCompleter); ok {
+				completer.commands = commands
+			}
+		}
 	}
 
 	// Setup auto-save timer if enabled
@@ -284,9 +336,21 @@ func (r *REPL) Run() error {
 	logging.LogInfo("Starting REPL session", "sessionID", r.session.ID, "model", r.session.Conversation.Model)
 
 	// Print welcome message
-	fmt.Fprintf(r.writer, "magellai chat - Interactive LLM chat (type /help for commands)\n")
-	fmt.Fprintf(r.writer, "Model: %s\n", r.session.Conversation.Model)
-	fmt.Fprintf(r.writer, "Session: %s\n\n", r.session.ID)
+	if r.colorFormatter.Enabled() {
+		fmt.Fprintf(r.writer, "%s (type %s for commands)\n",
+			r.colorFormatter.FormatInfo("magellai chat - Interactive LLM chat"),
+			r.colorFormatter.FormatCommand("/help"))
+		fmt.Fprintf(r.writer, "%s: %s\n",
+			r.colorFormatter.FormatInfo("Model"),
+			r.colorFormatter.FormatHighlight(r.session.Conversation.Model))
+		fmt.Fprintf(r.writer, "%s: %s\n\n",
+			r.colorFormatter.FormatInfo("Session"),
+			r.colorFormatter.FormatHighlight(r.session.ID))
+	} else {
+		fmt.Fprintf(r.writer, "magellai chat - Interactive LLM chat (type /help for commands)\n")
+		fmt.Fprintf(r.writer, "Model: %s\n", r.session.Conversation.Model)
+		fmt.Fprintf(r.writer, "Session: %s\n\n", r.session.ID)
+	}
 
 	// Start auto-recovery if available
 	if r.autoRecovery != nil {
@@ -330,16 +394,32 @@ func (r *REPL) Run() error {
 			}
 			logging.LogInfo("Stopped auto-recovery")
 		}
+		if r.readline != nil {
+			r.readline.Close()
+			logging.LogInfo("Closed readline interface")
+		}
 	}()
 
 	// Main REPL loop
 	for {
-		// Print prompt
-		fmt.Fprint(r.writer, r.promptStyle)
-
 		// Read input
 		logging.LogDebug("Reading user input")
-		input, err := r.readInput()
+		var input string
+		var err error
+
+		if r.readline != nil {
+			// Use readline for input
+			input, err = r.readline.ReadLine()
+		} else {
+			// Fallback to standard input
+			prompt := r.promptStyle
+			if r.colorFormatter.Enabled() {
+				prompt = r.colorFormatter.FormatPrompt(prompt)
+			}
+			fmt.Fprint(r.writer, prompt)
+			input, err = r.readInput()
+		}
+
 		if err != nil {
 			if err == io.EOF && r.exitOnEOF {
 				logging.LogInfo("EOF received, exiting REPL")
@@ -363,7 +443,11 @@ func (r *REPL) Run() error {
 			logging.LogDebug("Processing command", "command", input)
 			if err := r.handleCommand(input); err != nil {
 				logging.LogError(err, "Command error", "command", input)
-				fmt.Fprintf(r.writer, "Error: %v\n", err)
+				if r.colorFormatter.Enabled() {
+					fmt.Fprintf(r.writer, "%s: %v\n", r.colorFormatter.FormatError("Error"), err)
+				} else {
+					fmt.Fprintf(r.writer, "Error: %v\n", err)
+				}
 			}
 			continue
 		}
@@ -373,7 +457,11 @@ func (r *REPL) Run() error {
 			logging.LogDebug("Processing special command", "command", input)
 			if err := r.handleSpecialCommand(input); err != nil {
 				logging.LogError(err, "Special command error", "command", input)
-				fmt.Fprintf(r.writer, "Error: %v\n", err)
+				if r.colorFormatter.Enabled() {
+					fmt.Fprintf(r.writer, "%s: %v\n", r.colorFormatter.FormatError("Error"), err)
+				} else {
+					fmt.Fprintf(r.writer, "Error: %v\n", err)
+				}
 			}
 			continue
 		}
@@ -382,7 +470,11 @@ func (r *REPL) Run() error {
 		logging.LogDebug("Processing message", "messageLength", len(input))
 		if err := r.processMessage(input); err != nil {
 			logging.LogError(err, "Message processing error")
-			fmt.Fprintf(r.writer, "Error: %v\n", err)
+			if r.colorFormatter.Enabled() {
+				fmt.Fprintf(r.writer, "%s: %v\n", r.colorFormatter.FormatError("Error"), err)
+			} else {
+				fmt.Fprintf(r.writer, "Error: %v\n", err)
+			}
 		}
 
 		// Trigger auto-save after processing message
@@ -482,7 +574,11 @@ func (r *REPL) processMessage(message string) error {
 				logging.LogError(chunk.Error, "Stream error")
 				return fmt.Errorf("stream error: %w", chunk.Error)
 			}
-			fmt.Fprint(r.writer, chunk.Content)
+			content := chunk.Content
+			if r.colorFormatter.Enabled() {
+				content = r.colorFormatter.FormatAssistantMessage(content)
+			}
+			fmt.Fprint(r.writer, content)
 			fullResponse.WriteString(chunk.Content)
 		}
 		logging.LogDebug("Stream completed", "responseLength", fullResponse.Len())
@@ -510,7 +606,11 @@ func (r *REPL) processMessage(message string) error {
 		}
 
 		// Print response
-		fmt.Fprintf(r.writer, "\n%s\n\n", resp.Content)
+		content := resp.Content
+		if r.colorFormatter.Enabled() {
+			content = r.colorFormatter.FormatAssistantMessage(content)
+		}
+		fmt.Fprintf(r.writer, "\n%s\n\n", content)
 
 		// Add assistant message to conversation
 		AddMessageToConversation(r.session.Conversation, "assistant", resp.Content, nil)

@@ -49,6 +49,8 @@ func TestHelpCommand_Basic(t *testing.T) {
 	require.NoError(t, config.Init())
 	cfg := config.Manager
 	require.NoError(t, cfg.Load(nil))
+	// Disable colors for testing
+	require.NoError(t, cfg.SetValue("repl.colors.enabled", false))
 
 	// Create registry
 	registry := command.NewRegistry()
@@ -92,6 +94,8 @@ func TestHelpCommand_SpecificCommand(t *testing.T) {
 	require.NoError(t, config.Init())
 	cfg := config.Manager
 	require.NoError(t, cfg.Load(nil))
+	// Disable colors for testing
+	require.NoError(t, cfg.SetValue("repl.colors.enabled", false))
 
 	// Create registry
 	registry := command.NewRegistry()
@@ -146,6 +150,8 @@ func TestHelpCommand_ContextAwareness(t *testing.T) {
 	require.NoError(t, config.Init())
 	cfg := config.Manager
 	require.NoError(t, cfg.Load(nil))
+	// Disable colors for testing
+	require.NoError(t, cfg.SetValue("repl.colors.enabled", false))
 
 	// Create registry
 	registry := command.NewRegistry()
@@ -180,13 +186,13 @@ func TestHelpCommand_ContextAwareness(t *testing.T) {
 		{
 			name:        "CLI context",
 			category:    command.CategoryCLI,
-			expected:    []string{"CLI Commands", "shared", "cli-only", "Use 'magellai <command> --help'"},
+			expected:    []string{"CLI Commands", "shared", "cli-only", "magellai <command> --help"},
 			notExpected: []string{"repl-only"},
 		},
 		{
 			name:        "REPL context",
 			category:    command.CategoryREPL,
-			expected:    []string{"REPL Commands", "shared", "repl-only", "Use '/help <command>'"},
+			expected:    []string{"REPL Commands", "shared", "repl-only", "/help <command>"},
 			notExpected: []string{"cli-only"},
 		},
 	}
@@ -226,6 +232,8 @@ func TestHelpCommand_CommandNotFound(t *testing.T) {
 	require.NoError(t, config.Init())
 	cfg := config.Manager
 	require.NoError(t, cfg.Load(nil))
+	// Disable colors for testing
+	require.NoError(t, cfg.SetValue("repl.colors.enabled", false))
 
 	// Create registry with one command
 	registry := command.NewRegistry()
@@ -261,6 +269,8 @@ func TestHelpCommand_Flags(t *testing.T) {
 	require.NoError(t, config.Init())
 	cfg := config.Manager
 	require.NoError(t, cfg.Load(nil))
+	// Disable colors for testing
+	require.NoError(t, cfg.SetValue("repl.colors.enabled", false))
 
 	// Create registry
 	registry := command.NewRegistry()
@@ -398,7 +408,14 @@ func TestHelpCommand_Validate(t *testing.T) {
 }
 
 func TestHelpFormatter(t *testing.T) {
-	formatter := NewContextAwareHelpFormatter(&config.Config{})
+	// Initialize config
+	require.NoError(t, config.Init())
+	cfg := config.Manager
+	require.NoError(t, cfg.Load(nil))
+	// Disable colors for testing
+	require.NoError(t, cfg.SetValue("repl.colors.enabled", false))
+
+	formatter := NewContextAwareHelpFormatter(cfg)
 
 	// Test command formatting
 	cmd := &SimpleTestCommand{
@@ -435,6 +452,8 @@ func TestHelpCommand_AliasResolution(t *testing.T) {
 	require.NoError(t, config.Init())
 	cfg := config.Manager
 	require.NoError(t, cfg.Load(nil))
+	// Disable colors for testing
+	require.NoError(t, cfg.SetValue("repl.colors.enabled", false))
 
 	// Add an alias
 	err := cfg.SetValue("aliases.t", "test")

@@ -12,6 +12,7 @@ import (
 
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
+	"github.com/lexlapax/magellai/pkg/utils"
 )
 
 // HelpFormatter formats help text for commands
@@ -115,8 +116,19 @@ func (h *HelpCommand) Execute(ctx context.Context, exec *command.ExecutionContex
 
 // formatAliases formats the aliases for display
 func (h *HelpCommand) formatAliases(aliases map[string]interface{}) string {
+	// If formatter is ContextAwareHelpFormatter, use its color formatter
+	var colorFormatter *utils.ColorFormatter
+	if formatter, ok := h.formatter.(*ContextAwareHelpFormatter); ok {
+		colorFormatter = formatter.colorFormatter
+	} else {
+		// Fallback to default formatter without colors
+		colorFormatter = utils.NewColorFormatter(false, nil)
+	}
+
 	var b strings.Builder
-	b.WriteString("\nAliases:\n")
+	b.WriteString("\n")
+	b.WriteString(colorFormatter.FormatInfo("Aliases:"))
+	b.WriteString("\n")
 
 	// Sort aliases for consistent display
 	var names []string
@@ -131,7 +143,10 @@ func (h *HelpCommand) formatAliases(aliases map[string]interface{}) string {
 		if v, ok := aliases[name]; ok {
 			value = fmt.Sprintf("%v", v)
 		}
-		fmt.Fprintf(w, "  %s\t→ %s\n", name, value)
+
+		aliasName := colorFormatter.FormatCommand(name)
+		aliasValue := colorFormatter.FormatPrompt(value)
+		fmt.Fprintf(w, "  %s\t→ %s\n", aliasName, aliasValue)
 	}
 	w.Flush()
 
@@ -180,22 +195,32 @@ func (h *HelpCommand) Validate() error {
 
 // ContextAwareHelpFormatter provides context-aware help formatting
 type ContextAwareHelpFormatter struct {
-	ShowHidden   bool
-	ShowAliases  bool
-	MaxWidth     int
-	IndentSpaces int
-	Category     command.Category
-	config       *config.Config
+	ShowHidden     bool
+	ShowAliases    bool
+	MaxWidth       int
+	IndentSpaces   int
+	Category       command.Category
+	config         *config.Config
+	colorFormatter *utils.ColorFormatter
 }
 
 // NewContextAwareHelpFormatter creates a new context-aware help formatter
 func NewContextAwareHelpFormatter(config *config.Config) *ContextAwareHelpFormatter {
+	// Check if colors are enabled in config
+	colorsEnabled := config.GetBool("repl.colors.enabled")
+
+	// Only enable colors if we're in a terminal
+	if colorsEnabled && !utils.IsTerminal() {
+		colorsEnabled = false
+	}
+
 	return &ContextAwareHelpFormatter{
-		ShowHidden:   false,
-		ShowAliases:  true,
-		MaxWidth:     80,
-		IndentSpaces: 2,
-		config:       config,
+		ShowHidden:     false,
+		ShowAliases:    true,
+		MaxWidth:       80,
+		IndentSpaces:   2,
+		config:         config,
+		colorFormatter: utils.NewColorFormatter(colorsEnabled, nil),
 	}
 }
 
@@ -205,46 +230,63 @@ func (f *ContextAwareHelpFormatter) FormatCommand(cmd command.Interface) string 
 	var b strings.Builder
 
 	// Command name and aliases
-	b.WriteString(fmt.Sprintf("Command: %s", meta.Name))
+	b.WriteString(f.colorFormatter.FormatInfo("Command: "))
+	b.WriteString(f.colorFormatter.FormatCommand(meta.Name))
 	if f.ShowAliases && len(meta.Aliases) > 0 {
-		b.WriteString(fmt.Sprintf(" (aliases: %s)", strings.Join(meta.Aliases, ", ")))
+		b.WriteString(" (aliases: ")
+		b.WriteString(f.colorFormatter.FormatCommand(strings.Join(meta.Aliases, ", ")))
+		b.WriteString(")")
 	}
 	b.WriteString("\n\n")
 
 	// Description
 	if meta.Description != "" {
-		b.WriteString(fmt.Sprintf("Description: %s\n\n", meta.Description))
+		b.WriteString(f.colorFormatter.FormatInfo("Description: "))
+		b.WriteString(meta.Description)
+		b.WriteString("\n\n")
 	}
 
 	// Long description
 	if meta.LongDescription != "" {
-		b.WriteString("Details:\n")
+		b.WriteString(f.colorFormatter.FormatInfo("Details:"))
+		b.WriteString("\n")
 		b.WriteString(f.wrapText(meta.LongDescription, f.IndentSpaces))
 		b.WriteString("\n\n")
 	}
 
 	// Flags
 	if len(meta.Flags) > 0 {
-		b.WriteString("Flags:\n")
+		b.WriteString(f.colorFormatter.FormatInfo("Flags:"))
+		b.WriteString("\n")
 		b.WriteString(f.formatFlags(meta.Flags))
 		b.WriteString("\n")
 	}
 
 	// Category
-	b.WriteString(fmt.Sprintf("Available in: %s\n", f.formatCategory(meta.Category)))
+	b.WriteString(f.colorFormatter.FormatInfo("Available in: "))
+	b.WriteString(f.formatCategory(meta.Category))
+	b.WriteString("\n")
 
 	// Context-specific information
 	if f.Category == command.CategoryCLI && meta.Category == command.CategoryShared {
-		b.WriteString("\nCLI-specific usage:\n")
-		b.WriteString(fmt.Sprintf("  magellai %s [flags] [args]\n", meta.Name))
+		b.WriteString("\n")
+		b.WriteString(f.colorFormatter.FormatInfo("CLI-specific usage:"))
+		b.WriteString("\n")
+		b.WriteString(f.colorFormatter.FormatPrompt(fmt.Sprintf("  magellai %s [flags] [args]", meta.Name)))
+		b.WriteString("\n")
 	} else if f.Category == command.CategoryREPL && meta.Category == command.CategoryShared {
-		b.WriteString("\nREPL-specific usage:\n")
-		b.WriteString(fmt.Sprintf("  /%s [flags] [args]\n", meta.Name))
+		b.WriteString("\n")
+		b.WriteString(f.colorFormatter.FormatInfo("REPL-specific usage:"))
+		b.WriteString("\n")
+		b.WriteString(f.colorFormatter.FormatPrompt(fmt.Sprintf("  /%s [flags] [args]", meta.Name)))
+		b.WriteString("\n")
 	}
 
 	// Deprecated warning
 	if meta.Deprecated != "" {
-		b.WriteString(fmt.Sprintf("\nDEPRECATED: %s\n", meta.Deprecated))
+		b.WriteString("\n")
+		b.WriteString(f.colorFormatter.FormatError(fmt.Sprintf("DEPRECATED: %s", meta.Deprecated)))
+		b.WriteString("\n")
 	}
 
 	return b.String()
@@ -264,14 +306,21 @@ func (f *ContextAwareHelpFormatter) FormatCommandList(commands []command.Interfa
 	} else if category == command.CategoryREPL {
 		title = "REPL Commands"
 	}
-	b.WriteString(fmt.Sprintf("%s:\n\n", title))
+	b.WriteString(f.colorFormatter.FormatInfo(fmt.Sprintf("%s:", title)))
+	b.WriteString("\n\n")
 
 	// Context-specific intro
 	if category == command.CategoryCLI {
-		b.WriteString("Use 'magellai <command> --help' for more information about a command.\n\n")
+		b.WriteString("Use ")
+		b.WriteString(f.colorFormatter.FormatPrompt("'magellai <command> --help'"))
+		b.WriteString(" for more information about a command.\n\n")
 	} else if category == command.CategoryREPL {
-		b.WriteString("Use '/help <command>' for more information about a command.\n")
-		b.WriteString("Use '/<command>' to execute a command in the REPL.\n\n")
+		b.WriteString("Use ")
+		b.WriteString(f.colorFormatter.FormatPrompt("'/help <command>'"))
+		b.WriteString(" for more information about a command.\n")
+		b.WriteString("Use ")
+		b.WriteString(f.colorFormatter.FormatPrompt("'/<command>'"))
+		b.WriteString(" to execute a command in the REPL.\n\n")
 	}
 
 	// Format each category
@@ -288,7 +337,8 @@ func (f *ContextAwareHelpFormatter) FormatCommandList(commands []command.Interfa
 				title = "Available everywhere"
 			}
 
-			b.WriteString(fmt.Sprintf("%s:\n", title))
+			b.WriteString(f.colorFormatter.FormatInfo(fmt.Sprintf("%s:", title)))
+			b.WriteString("\n")
 			b.WriteString(f.formatCommandTable(cmds))
 			b.WriteString("\n")
 		}
@@ -301,20 +351,32 @@ func (f *ContextAwareHelpFormatter) FormatCommandList(commands []command.Interfa
 func (f *ContextAwareHelpFormatter) FormatError(err error, suggestion string) string {
 	var b strings.Builder
 
-	b.WriteString(fmt.Sprintf("Error: %v\n", err))
+	b.WriteString(f.colorFormatter.FormatError(fmt.Sprintf("Error: %v", err)))
+	b.WriteString("\n")
 
 	if suggestion != "" {
-		b.WriteString(fmt.Sprintf("\nDid you mean: %s?\n", suggestion))
+		b.WriteString("\n")
+		b.WriteString(f.colorFormatter.FormatInfo("Did you mean: "))
+		b.WriteString(f.colorFormatter.FormatCommand(suggestion))
+		b.WriteString("?\n")
 	}
 
 	// Context-specific help message
+	b.WriteString("\n")
 	if f.Category == command.CategoryCLI {
-		b.WriteString("\nUse 'magellai help' to see available commands.\n")
+		b.WriteString(f.colorFormatter.FormatInfo("Use "))
+		b.WriteString(f.colorFormatter.FormatPrompt("'magellai help'"))
+		b.WriteString(f.colorFormatter.FormatInfo(" to see available commands."))
 	} else if f.Category == command.CategoryREPL {
-		b.WriteString("\nUse '/help' to see available commands.\n")
+		b.WriteString(f.colorFormatter.FormatInfo("Use "))
+		b.WriteString(f.colorFormatter.FormatPrompt("'/help'"))
+		b.WriteString(f.colorFormatter.FormatInfo(" to see available commands."))
 	} else {
-		b.WriteString("\nUse 'help' to see available commands.\n")
+		b.WriteString(f.colorFormatter.FormatInfo("Use "))
+		b.WriteString(f.colorFormatter.FormatPrompt("'help'"))
+		b.WriteString(f.colorFormatter.FormatInfo(" to see available commands."))
 	}
+	b.WriteString("\n")
 
 	return b.String()
 }
@@ -327,21 +389,22 @@ func (f *ContextAwareHelpFormatter) formatFlags(flags []command.Flag) string {
 	for _, flag := range flags {
 		shortFlag := ""
 		if flag.Short != "" {
-			shortFlag = fmt.Sprintf("-%s, ", flag.Short)
+			shortFlag = f.colorFormatter.FormatCommand(fmt.Sprintf("-%s", flag.Short)) + ", "
 		}
 
 		required := ""
 		if flag.Required {
-			required = " (required)"
+			required = f.colorFormatter.FormatError(" (required)")
 		}
 
 		defaultVal := ""
 		if flag.Default != nil {
-			defaultVal = fmt.Sprintf(" (default: %v)", flag.Default)
+			defaultVal = f.colorFormatter.FormatInfo(fmt.Sprintf(" (default: %v)", flag.Default))
 		}
 
-		fmt.Fprintf(w, "  %s--%s\t%s%s%s\n",
-			shortFlag, flag.Name, flag.Description, required, defaultVal)
+		flagName := f.colorFormatter.FormatCommand(fmt.Sprintf("--%s", flag.Name))
+		fmt.Fprintf(w, "  %s%s\t%s%s%s\n",
+			shortFlag, flagName, flag.Description, required, defaultVal)
 	}
 
 	w.Flush()
@@ -364,14 +427,15 @@ func (f *ContextAwareHelpFormatter) formatCommandTable(commands []command.Interf
 			continue
 		}
 
-		name := meta.Name
+		name := f.colorFormatter.FormatCommand(meta.Name)
 		if f.ShowAliases && len(meta.Aliases) > 0 {
-			name = fmt.Sprintf("%s (%s)", name, strings.Join(meta.Aliases, ", "))
+			aliases := f.colorFormatter.FormatCommand(strings.Join(meta.Aliases, ", "))
+			name = fmt.Sprintf("%s (%s)", name, aliases)
 		}
 
 		desc := meta.Description
 		if meta.Deprecated != "" {
-			desc = fmt.Sprintf("[DEPRECATED] %s", desc)
+			desc = f.colorFormatter.FormatError(fmt.Sprintf("[DEPRECATED] %s", desc))
 		}
 
 		fmt.Fprintf(w, "  %s\t%s\n", name, desc)

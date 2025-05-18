@@ -218,7 +218,7 @@ func TestAdapterEdgeCases(t *testing.T) {
 	t.Run("empty domain attachment to LLM", func(t *testing.T) {
 		domainAtt := domain.Attachment{}
 		llmAtt := domainAttachmentToLLM(domainAtt)
-		
+
 		assert.Equal(t, llm.AttachmentType(""), llmAtt.Type)
 		assert.Equal(t, "", llmAtt.FilePath)
 		assert.Equal(t, "", llmAtt.MimeType)
@@ -228,7 +228,7 @@ func TestAdapterEdgeCases(t *testing.T) {
 	t.Run("empty LLM attachment to domain", func(t *testing.T) {
 		llmAtt := llm.Attachment{}
 		domainAtt := llmAttachmentToDomain(llmAtt)
-		
+
 		assert.Equal(t, domain.AttachmentType(""), domainAtt.Type)
 		assert.Equal(t, "", domainAtt.URL)
 		assert.Equal(t, "", domainAtt.Name)
@@ -243,7 +243,7 @@ func TestAdapterEdgeCases(t *testing.T) {
 			Content:     "test",
 			Attachments: nil,
 		}
-		
+
 		llmMsg := convertDomainMessageToLLM(domainMsg)
 		assert.Equal(t, "user", llmMsg.Role)
 		assert.Equal(t, "test", llmMsg.Content)
@@ -256,7 +256,7 @@ func TestAdapterEdgeCases(t *testing.T) {
 			Content:     "test",
 			Attachments: []domain.Attachment{},
 		}
-		
+
 		llmMsg := convertDomainMessageToLLM(domainMsg)
 		assert.Equal(t, "user", llmMsg.Role)
 		assert.Equal(t, "test", llmMsg.Content)
@@ -275,10 +275,10 @@ func TestRoundTripConversion(t *testing.T) {
 
 	// Convert to domain
 	domainAtt := llmAttachmentToDomain(originalAttachment)
-	
+
 	// Convert back to LLM
 	llmAtt := domainAttachmentToLLM(domainAtt)
-	
+
 	// The round trip changes some fields due to mapping differences
 	assert.Equal(t, originalAttachment.Type, llmAtt.Type)
 	assert.Equal(t, originalAttachment.MimeType, llmAtt.MimeType)
