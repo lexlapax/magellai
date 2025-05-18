@@ -61,134 +61,25 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [ ] Rich media rendering (images, tables)
 
 ### 4.6 Fix domain layer and types ✅
-- [x] Create domain layer package structure ✅
-    - [x] Create new package `pkg/domain/` as the central domain layer
-    - [x] Create directory structure for domain entities
-    - [x] Add comprehensive package documentation (doc.go)
 
-- [x] Implement core domain types ✅
-    - [x] Create `pkg/domain/session.go`
-        - [x] Define `Session` type with all fields
-        - [x] Define `SessionInfo` type
-        - [x] Add validation methods
-        - [x] Add session-related constants
-    - [x] Create `pkg/domain/message.go`
-        - [x] Define `Message` type
-        - [x] Define `MessageRole` enum (user, assistant, system)
-        - [x] Add message validation
-    - [x] Create `pkg/domain/attachment.go`
-        - [x] Define `Attachment` type
-        - [x] Define `AttachmentType` enum
-        - [x] Add attachment validation and helper methods
-    - [x] Create `pkg/domain/conversation.go`
-        - [x] Define `Conversation` type
-        - [x] Add conversation management methods
-        - [x] Define conversation constants
-    - [x] Create `pkg/domain/search.go`
-        - [x] Define `SearchResult` type
-        - [x] Define `SearchMatch` type
-        - [x] Add search-related enums
-    - [x] Create `pkg/domain/provider.go`
-        - [x] Define `Provider` type
-        - [x] Define `Model` type
-        - [x] Define `ModelCapability` type
-    - [x] Create `pkg/domain/types.go`
-        - [x] Define shared enums and constants
-        - [x] Add common interface definitions
+### 4.7 Documentation and architecture updates *(REVISIT - moved from 4.6)*
+- [ ] Update architecture documentation
+    - [ ] Create domain layer diagrams
+    - [ ] Update package relationship diagrams
+    - [ ] Document type ownership
+- [ ] Update package documentation
+    - [ ] Add godoc comments to all domain types
+    - [ ] Update existing package docs
+    - [ ] Create migration guide
+- [ ] Update README with new architecture
+- [ ] Create ARCHITECTURE.md if needed
 
-- [x] Refactor storage package to use domain types ✅
-    - [x] Remove all duplicate type definitions from `pkg/storage/types.go`
-    - [x] Update imports to use `pkg/domain/`
-    - [x] Update `Backend` interface to use domain types
-    - [x] Update filesystem implementation
-        - [x] Modify all methods to use domain types
-        - [x] Remove type conversion code
-        - [x] Update JSON marshaling/unmarshaling
-    - [x] Update SQLite implementation ✅
-        - [x] Modify all methods to use domain types
-        - [x] Update database schema mappings
-        - [x] Remove type conversion code
-    - [x] Update storage factory to return domain types
-    - [x] Remove obsolete conversion functions
-
-- [x] Refactor REPL package to use domain types ✅
-    - [x] Remove all duplicate type definitions from `pkg/repl/types.go`
-    - [x] Update imports to use `pkg/domain/`
-    - [x] Update `Conversation` to use domain types
-    - [x] Update `SessionManager` to use domain types
-    - [x] Update `StorageManager` to use domain types
-    - [x] Remove or refactor `adapter.go`
-        - [x] Identify remaining conversion needs
-        - [x] Remove unnecessary conversions
-        - [x] Keep only LLM-specific adaptations if needed
-    - [x] Update all REPL commands to use domain types
-    - [x] Update session export functionality
-
-- [x] Update LLM package integration ✅
-    - [x] Analyze current LLM `Message` type usage
-    - [x] Create adapter between domain and LLM types if needed
-    - [x] Update provider interfaces to use domain types where possible
-    - [x] Ensure multimodal attachment support works with domain types
-
-- [x] Update configuration and models packages ✅
-    - [x] Check for any type dependencies in config package
-    - [x] Update models package to use domain provider types
-    - [x] Ensure configuration values map to domain types
-
-- [x] Comprehensive test updates ✅
-    - [x] Create domain package tests ✅
-        - [x] `pkg/domain/session_test.go`
-        - [x] `pkg/domain/message_test.go`
-        - [x] `pkg/domain/attachment_test.go`
-        - [x] `pkg/domain/conversation_test.go`
-        - [x] `pkg/domain/search_test.go`
-        - [x] `pkg/domain/provider_test.go`
-    - [x] Update storage package tests ✅
-        - [x] Fix filesystem tests for domain types
-        - [x] Fix SQLite tests for domain types ✅
-        - [x] Update backend interface tests
-    - [x] Update REPL package tests ✅
-        - [x] Fix session manager tests
-        - [x] Fix storage manager tests
-        - [x] Update conversation tests
-        - [x] Fix command tests
-    - [x] Update integration tests ✅
-        - [x] Ensure end-to-end functionality
-        - [x] Test cross-package interactions
-
-- [ ] Documentation and architecture updates
-    - [ ] Update architecture documentation
-        - [ ] Create domain layer diagrams
-        - [ ] Update package relationship diagrams
-        - [ ] Document type ownership
-    - [ ] Update package documentation
-        - [ ] Add godoc comments to all domain types
-        - [ ] Update existing package docs
-        - [ ] Create migration guide
-    - [ ] Update README with new architecture
-    - [ ] Create ARCHITECTURE.md if needed
-
-- [x] Code cleanup and optimization ✅
-    - [x] Remove all obsolete type conversion code
-    - [x] Delete unused adapter functions
-    - [x] Remove duplicate type definitions
-    - [x] Clean up import statements
-    - [x] Run gofmt and golangci-lint
-    - [x] Verify no circular dependencies
-
-- [x] Performance and compatibility verification ✅
-    - [x] Run benchmarks before and after refactoring
-    - [x] Ensure no performance regression
-    - [x] Verify JSON serialization compatibility
-    - [x] Test database migration if schema changes
-    - [x] Ensure existing sessions can be loaded
-
-- [ ] Final validation and rollout
-    - [ ] Run full test suite
-    - [ ] Manual testing of all features
-    - [ ] Update CHANGELOG.md
-    - [ ] Create release notes
-    - [ ] Plan deployment strategy
+### 4.8 Final validation and rollout *(REVISIT - moved from 4.6)*
+- [ ] Run full test suite
+- [ ] Manual testing of all features
+- [ ] Update CHANGELOG.md
+- [ ] Create release notes
+- [ ] Plan deployment strategy
 
 ## Phase 5: Plugin System (Week 5)
 
