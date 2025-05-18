@@ -1,4 +1,4 @@
-// ABOUTME: Tests for adapter functions that convert between REPL and storage types
+// ABOUTME: Tests for adapter functions that convert between REPL and domain types
 // ABOUTME: Ensures proper conversion logic and handles nil values correctly
 
 package repl
@@ -7,15 +7,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
-	"github.com/lexlapax/magellai/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestToStorageSession(t *testing.T) {
+func TestToDomainSession(t *testing.T) {
 	t.Run("nil session", func(t *testing.T) {
-		result := ToStorageSession(nil)
+		result := ToDomainSession(nil)
 		assert.Nil(t, result)
 	})
 
@@ -30,16 +30,16 @@ func TestToStorageSession(t *testing.T) {
 			Metadata: map[string]interface{}{"meta": "data"},
 		}
 
-		storageSession := ToStorageSession(replSession)
-		require.NotNil(t, storageSession)
-		assert.Equal(t, replSession.ID, storageSession.ID)
-		assert.Equal(t, replSession.Name, storageSession.Name)
-		assert.Equal(t, replSession.Config, storageSession.Config)
-		assert.Equal(t, replSession.Created, storageSession.Created)
-		assert.Equal(t, replSession.Updated, storageSession.Updated)
-		assert.Equal(t, replSession.Tags, storageSession.Tags)
-		assert.Equal(t, replSession.Metadata, storageSession.Metadata)
-		assert.Empty(t, storageSession.Messages)
+		domainSession := ToDomainSession(replSession)
+		require.NotNil(t, domainSession)
+		assert.Equal(t, replSession.ID, domainSession.ID)
+		assert.Equal(t, replSession.Name, domainSession.Name)
+		assert.Equal(t, replSession.Config, domainSession.Config)
+		assert.Equal(t, replSession.Created, domainSession.Created)
+		assert.Equal(t, replSession.Updated, domainSession.Updated)
+		assert.Equal(t, replSession.Tags, domainSession.Tags)
+		assert.Equal(t, replSession.Metadata, domainSession.Metadata)
+		assert.Nil(t, domainSession.Conversation)
 	})
 
 	t.Run("session with conversation", func(t *testing.T) {
@@ -83,55 +83,61 @@ func TestToStorageSession(t *testing.T) {
 			Updated: now,
 		}
 
-		storageSession := ToStorageSession(replSession)
-		require.NotNil(t, storageSession)
-		assert.Equal(t, replSession.ID, storageSession.ID)
-		assert.Equal(t, replSession.Name, storageSession.Name)
-		assert.Equal(t, replSession.Conversation.Model, storageSession.Model)
-		assert.Equal(t, replSession.Conversation.Provider, storageSession.Provider)
-		assert.Equal(t, replSession.Conversation.Temperature, storageSession.Temperature)
-		assert.Equal(t, replSession.Conversation.MaxTokens, storageSession.MaxTokens)
-		assert.Equal(t, replSession.Conversation.SystemPrompt, storageSession.SystemPrompt)
-		assert.Len(t, storageSession.Messages, 2)
+		domainSession := ToDomainSession(replSession)
+		require.NotNil(t, domainSession)
+		assert.Equal(t, replSession.ID, domainSession.ID)
+		assert.Equal(t, replSession.Name, domainSession.Name)
+		require.NotNil(t, domainSession.Conversation)
+		assert.Equal(t, replSession.Conversation.Model, domainSession.Conversation.Model)
+		assert.Equal(t, replSession.Conversation.Provider, domainSession.Conversation.Provider)
+		assert.Equal(t, replSession.Conversation.Temperature, domainSession.Conversation.Temperature)
+		assert.Equal(t, replSession.Conversation.MaxTokens, domainSession.Conversation.MaxTokens)
+		assert.Equal(t, replSession.Conversation.SystemPrompt, domainSession.Conversation.SystemPrompt)
+		assert.Len(t, domainSession.Conversation.Messages, 2)
 
 		// Check message conversion
-		assert.Equal(t, "msg-1", storageSession.Messages[0].ID)
-		assert.Equal(t, "user", storageSession.Messages[0].Role)
-		assert.Equal(t, "Hello", storageSession.Messages[0].Content)
-		assert.Len(t, storageSession.Messages[0].Attachments, 1)
-		assert.Equal(t, "image", storageSession.Messages[0].Attachments[0].Type)
-		assert.Equal(t, "image.png", storageSession.Messages[0].Attachments[0].Name)
+		assert.Equal(t, "msg-1", domainSession.Conversation.Messages[0].ID)
+		assert.Equal(t, domain.MessageRoleUser, domainSession.Conversation.Messages[0].Role)
+		assert.Equal(t, "Hello", domainSession.Conversation.Messages[0].Content)
+		assert.Len(t, domainSession.Conversation.Messages[0].Attachments, 1)
+		assert.Equal(t, domain.AttachmentTypeImage, domainSession.Conversation.Messages[0].Attachments[0].Type)
+		assert.Equal(t, "image.png", domainSession.Conversation.Messages[0].Attachments[0].Name)
 	})
 }
 
-func TestFromStorageSession(t *testing.T) {
+func TestFromDomainSession(t *testing.T) {
 	t.Run("nil session", func(t *testing.T) {
-		result := FromStorageSession(nil)
+		result := FromDomainSession(nil)
 		assert.Nil(t, result)
 	})
 
 	t.Run("complete session", func(t *testing.T) {
 		now := time.Now()
-		storageSession := &storage.Session{
-			ID:           "test-id",
-			Name:         "Test Session",
-			Model:        "gpt-4",
-			Provider:     "openai",
-			Temperature:  0.7,
-			MaxTokens:    2000,
-			SystemPrompt: "You are helpful",
-			Messages: []storage.Message{
-				{
-					ID:        "msg-1",
-					Role:      "user",
-					Content:   "Hello",
-					Timestamp: now,
-					Attachments: []storage.Attachment{
-						{
-							Type:     "image",
-							MimeType: "image/png",
-							Name:     "image.png",
-							Content:  "image data",
+		domainSession := &domain.Session{
+			ID:   "test-id",
+			Name: "Test Session",
+			Conversation: &domain.Conversation{
+				ID:           "conv-id",
+				Model:        "gpt-4",
+				Provider:     "openai",
+				Temperature:  0.7,
+				MaxTokens:    2000,
+				SystemPrompt: "You are helpful",
+				Created:      now,
+				Updated:      now,
+				Messages: []domain.Message{
+					{
+						ID:        "msg-1",
+						Role:      domain.MessageRoleUser,
+						Content:   "Hello",
+						Timestamp: now,
+						Attachments: []domain.Attachment{
+							{
+								Type:     domain.AttachmentTypeImage,
+								MimeType: "image/png",
+								Name:     "image.png",
+								Content:  []byte("image data"),
+							},
 						},
 					},
 				},
@@ -143,19 +149,19 @@ func TestFromStorageSession(t *testing.T) {
 			Metadata: map[string]interface{}{"meta": "data"},
 		}
 
-		replSession := FromStorageSession(storageSession)
+		replSession := FromDomainSession(domainSession)
 		require.NotNil(t, replSession)
-		assert.Equal(t, storageSession.ID, replSession.ID)
-		assert.Equal(t, storageSession.Name, replSession.Name)
+		assert.Equal(t, domainSession.ID, replSession.ID)
+		assert.Equal(t, domainSession.Name, replSession.Name)
 		assert.NotNil(t, replSession.Conversation)
-		assert.Equal(t, storageSession.Model, replSession.Conversation.Model)
-		assert.Equal(t, storageSession.Provider, replSession.Conversation.Provider)
-		assert.Equal(t, storageSession.Temperature, replSession.Conversation.Temperature)
-		assert.Equal(t, storageSession.MaxTokens, replSession.Conversation.MaxTokens)
-		assert.Equal(t, storageSession.SystemPrompt, replSession.Conversation.SystemPrompt)
-		assert.Equal(t, storageSession.Config, replSession.Config)
-		assert.Equal(t, storageSession.Tags, replSession.Tags)
-		assert.Equal(t, storageSession.Metadata, replSession.Metadata)
+		assert.Equal(t, domainSession.Conversation.Model, replSession.Conversation.Model)
+		assert.Equal(t, domainSession.Conversation.Provider, replSession.Conversation.Provider)
+		assert.Equal(t, domainSession.Conversation.Temperature, replSession.Conversation.Temperature)
+		assert.Equal(t, domainSession.Conversation.MaxTokens, replSession.Conversation.MaxTokens)
+		assert.Equal(t, domainSession.Conversation.SystemPrompt, replSession.Conversation.SystemPrompt)
+		assert.Equal(t, domainSession.Config, replSession.Config)
+		assert.Equal(t, domainSession.Tags, replSession.Tags)
+		assert.Equal(t, domainSession.Metadata, replSession.Metadata)
 
 		// Check message conversion
 		assert.Len(t, replSession.Conversation.Messages, 1)
@@ -167,7 +173,7 @@ func TestFromStorageSession(t *testing.T) {
 	})
 }
 
-func TestToStorageMessage(t *testing.T) {
+func TestToDomainMessage(t *testing.T) {
 	t.Run("message without attachments", func(t *testing.T) {
 		now := time.Now()
 		replMsg := Message{
@@ -178,20 +184,20 @@ func TestToStorageMessage(t *testing.T) {
 			Metadata:  map[string]interface{}{"key": "value"},
 		}
 
-		storageMsg := ToStorageMessage(replMsg)
-		assert.Equal(t, replMsg.ID, storageMsg.ID)
-		assert.Equal(t, replMsg.Role, storageMsg.Role)
-		assert.Equal(t, replMsg.Content, storageMsg.Content)
-		assert.Equal(t, replMsg.Timestamp, storageMsg.Timestamp)
-		assert.Equal(t, replMsg.Metadata, storageMsg.Metadata)
-		assert.Empty(t, storageMsg.Attachments)
+		domainMsg := ToDomainMessage(replMsg)
+		assert.Equal(t, replMsg.ID, domainMsg.ID)
+		assert.Equal(t, domain.MessageRoleUser, domainMsg.Role)
+		assert.Equal(t, replMsg.Content, domainMsg.Content)
+		assert.Equal(t, replMsg.Timestamp, domainMsg.Timestamp)
+		assert.Equal(t, replMsg.Metadata, domainMsg.Metadata)
+		assert.Empty(t, domainMsg.Attachments)
 	})
 
 	t.Run("message with attachments", func(t *testing.T) {
 		now := time.Now()
 		replMsg := Message{
 			ID:        "msg-1",
-			Role:      "user",
+			Role:      "assistant",
 			Content:   "Check this image",
 			Timestamp: now,
 			Attachments: []llm.Attachment{
@@ -210,57 +216,56 @@ func TestToStorageMessage(t *testing.T) {
 			},
 		}
 
-		storageMsg := ToStorageMessage(replMsg)
-		assert.Len(t, storageMsg.Attachments, 2)
-		assert.Equal(t, "image", storageMsg.Attachments[0].Type)
-		assert.Equal(t, "image/jpeg", storageMsg.Attachments[0].MimeType)
-		assert.Equal(t, "photo.jpg", storageMsg.Attachments[0].Name)
-		assert.Equal(t, "photo.jpg", storageMsg.Attachments[0].URL)
-		assert.Equal(t, "file", storageMsg.Attachments[1].Type)
-		assert.Equal(t, "application/pdf", storageMsg.Attachments[1].MimeType)
-		assert.Equal(t, "document.pdf", storageMsg.Attachments[1].Name)
+		domainMsg := ToDomainMessage(replMsg)
+		assert.Len(t, domainMsg.Attachments, 2)
+		assert.Equal(t, domain.AttachmentTypeImage, domainMsg.Attachments[0].Type)
+		assert.Equal(t, "image/jpeg", domainMsg.Attachments[0].MimeType)
+		assert.Equal(t, "photo.jpg", domainMsg.Attachments[0].Name)
+		assert.Equal(t, domain.AttachmentTypeFile, domainMsg.Attachments[1].Type)
+		assert.Equal(t, "application/pdf", domainMsg.Attachments[1].MimeType)
+		assert.Equal(t, "document.pdf", domainMsg.Attachments[1].Name)
 	})
 }
 
-func TestFromStorageMessage(t *testing.T) {
+func TestFromDomainMessage(t *testing.T) {
 	t.Run("message without attachments", func(t *testing.T) {
 		now := time.Now()
-		storageMsg := storage.Message{
+		domainMsg := domain.Message{
 			ID:        "msg-1",
-			Role:      "assistant",
+			Role:      domain.MessageRoleAssistant,
 			Content:   "Hello there!",
 			Timestamp: now,
 			Metadata:  map[string]interface{}{"key": "value"},
 		}
 
-		replMsg := FromStorageMessage(storageMsg)
-		assert.Equal(t, storageMsg.ID, replMsg.ID)
-		assert.Equal(t, storageMsg.Role, replMsg.Role)
-		assert.Equal(t, storageMsg.Content, replMsg.Content)
-		assert.Equal(t, storageMsg.Timestamp, replMsg.Timestamp)
-		assert.Equal(t, storageMsg.Metadata, replMsg.Metadata)
+		replMsg := FromDomainMessage(domainMsg)
+		assert.Equal(t, domainMsg.ID, replMsg.ID)
+		assert.Equal(t, "assistant", replMsg.Role)
+		assert.Equal(t, domainMsg.Content, replMsg.Content)
+		assert.Equal(t, domainMsg.Timestamp, replMsg.Timestamp)
+		assert.Equal(t, domainMsg.Metadata, replMsg.Metadata)
 		assert.Empty(t, replMsg.Attachments)
 	})
 
 	t.Run("message with attachments", func(t *testing.T) {
 		now := time.Now()
-		storageMsg := storage.Message{
+		domainMsg := domain.Message{
 			ID:        "msg-1",
-			Role:      "user",
+			Role:      domain.MessageRoleUser,
 			Content:   "Here's a video",
 			Timestamp: now,
-			Attachments: []storage.Attachment{
+			Attachments: []domain.Attachment{
 				{
-					Type:     "video",
+					Type:     domain.AttachmentTypeVideo,
 					MimeType: "video/mp4",
 					Name:     "video.mp4",
 					URL:      "video.mp4",
-					Content:  "video data",
+					Content:  []byte("video data"),
 				},
 			},
 		}
 
-		replMsg := FromStorageMessage(storageMsg)
+		replMsg := FromDomainMessage(domainMsg)
 		assert.Len(t, replMsg.Attachments, 1)
 		assert.Equal(t, llm.AttachmentTypeVideo, replMsg.Attachments[0].Type)
 		assert.Equal(t, "video/mp4", replMsg.Attachments[0].MimeType)
@@ -270,13 +275,13 @@ func TestFromStorageMessage(t *testing.T) {
 }
 
 func TestSearchResultConversion(t *testing.T) {
-	t.Run("ToStorageSearchResult nil", func(t *testing.T) {
-		result := ToStorageSearchResult(nil)
+	t.Run("ToDomainSearchResult nil", func(t *testing.T) {
+		result := ToDomainSearchResult(nil)
 		assert.Nil(t, result)
 	})
 
-	t.Run("FromStorageSearchResult nil", func(t *testing.T) {
-		result := FromStorageSearchResult(nil)
+	t.Run("FromDomainSearchResult nil", func(t *testing.T) {
+		result := FromDomainSearchResult(nil)
 		assert.Nil(t, result)
 	})
 
@@ -302,15 +307,16 @@ func TestSearchResultConversion(t *testing.T) {
 			},
 		}
 
-		// Convert to storage and back
-		storageResult := ToStorageSearchResult(replResult)
-		require.NotNil(t, storageResult)
-		assert.Equal(t, replResult.Session.ID, storageResult.Session.ID)
-		assert.Len(t, storageResult.Matches, 1)
-		assert.Equal(t, replResult.Matches[0].Type, storageResult.Matches[0].Type)
+		// Convert to domain and back
+		domainResult := ToDomainSearchResult(replResult)
+		require.NotNil(t, domainResult)
+		assert.Equal(t, replResult.Session.ID, domainResult.Session.ID)
+		assert.Equal(t, 1, domainResult.GetMatchCount())
+		matches := domainResult.Matches
+		assert.Equal(t, replResult.Matches[0].Type, matches[0].Type)
 
 		// Convert back
-		convertedResult := FromStorageSearchResult(storageResult)
+		convertedResult := FromDomainSearchResult(domainResult)
 		require.NotNil(t, convertedResult)
 		assert.Equal(t, replResult.Session.ID, convertedResult.Session.ID)
 		assert.Equal(t, replResult.Session.Name, convertedResult.Session.Name)
@@ -320,13 +326,13 @@ func TestSearchResultConversion(t *testing.T) {
 }
 
 func TestSessionInfoConversion(t *testing.T) {
-	t.Run("ToStorageSessionInfo nil", func(t *testing.T) {
-		result := ToStorageSessionInfo(nil)
+	t.Run("ToDomainSessionInfo nil", func(t *testing.T) {
+		result := ToDomainSessionInfo(nil)
 		assert.Nil(t, result)
 	})
 
-	t.Run("FromStorageSessionInfo nil", func(t *testing.T) {
-		result := FromStorageSessionInfo(nil)
+	t.Run("FromDomainSessionInfo nil", func(t *testing.T) {
+		result := FromDomainSessionInfo(nil)
 		assert.Nil(t, result)
 	})
 
@@ -341,18 +347,18 @@ func TestSessionInfoConversion(t *testing.T) {
 			Tags:         []string{"work", "project"},
 		}
 
-		// Convert to storage
-		storageInfo := ToStorageSessionInfo(replInfo)
-		require.NotNil(t, storageInfo)
-		assert.Equal(t, replInfo.ID, storageInfo.ID)
-		assert.Equal(t, replInfo.Name, storageInfo.Name)
-		assert.Equal(t, replInfo.Created, storageInfo.Created)
-		assert.Equal(t, replInfo.Updated, storageInfo.Updated)
-		assert.Equal(t, replInfo.MessageCount, storageInfo.MessageCount)
-		assert.Equal(t, replInfo.Tags, storageInfo.Tags)
+		// Convert to domain
+		domainInfo := ToDomainSessionInfo(replInfo)
+		require.NotNil(t, domainInfo)
+		assert.Equal(t, replInfo.ID, domainInfo.ID)
+		assert.Equal(t, replInfo.Name, domainInfo.Name)
+		assert.Equal(t, replInfo.Created, domainInfo.Created)
+		assert.Equal(t, replInfo.Updated, domainInfo.Updated)
+		assert.Equal(t, replInfo.MessageCount, domainInfo.MessageCount)
+		assert.Equal(t, replInfo.Tags, domainInfo.Tags)
 
 		// Convert back
-		convertedInfo := FromStorageSessionInfo(storageInfo)
+		convertedInfo := FromDomainSessionInfo(domainInfo)
 		require.NotNil(t, convertedInfo)
 		assert.Equal(t, replInfo.ID, convertedInfo.ID)
 		assert.Equal(t, replInfo.Name, convertedInfo.Name)
@@ -363,10 +369,14 @@ func TestSessionInfoConversion(t *testing.T) {
 
 func TestSearchMatchConversion(t *testing.T) {
 	t.Run("empty matches", func(t *testing.T) {
-		storageMatches := ToStorageSearchMatches([]SearchMatch{})
-		assert.Empty(t, storageMatches)
+		domainMatches := make([]domain.SearchMatch, 0)
+		for _, match := range []SearchMatch{} {
+			domainMatchValue := ToDomainSearchMatch(match)
+			domainMatches = append(domainMatches, domainMatchValue)
+		}
+		assert.Empty(t, domainMatches)
 
-		replMatches := FromStorageSearchMatches([]storage.SearchMatch{})
+		replMatches := FromDomainSearchMatches([]domain.SearchMatch{})
 		assert.Empty(t, replMatches)
 	})
 
@@ -388,14 +398,17 @@ func TestSearchMatchConversion(t *testing.T) {
 			},
 		}
 
-		// Convert to storage
-		storageMatches := ToStorageSearchMatches(replMatches)
-		assert.Len(t, storageMatches, 2)
-		assert.Equal(t, replMatches[0].Type, storageMatches[0].Type)
-		assert.Equal(t, replMatches[1].Content, storageMatches[1].Content)
+		// Convert to domain
+		domainMatches := make([]domain.SearchMatch, len(replMatches))
+		for i, match := range replMatches {
+			domainMatches[i] = ToDomainSearchMatch(match)
+		}
+		assert.Len(t, domainMatches, 2)
+		assert.Equal(t, replMatches[0].Type, domainMatches[0].Type)
+		assert.Equal(t, replMatches[1].Content, domainMatches[1].Content)
 
 		// Convert back
-		convertedMatches := FromStorageSearchMatches(storageMatches)
+		convertedMatches := FromDomainSearchMatches(domainMatches)
 		assert.Len(t, convertedMatches, 2)
 		assert.Equal(t, replMatches[0].Type, convertedMatches[0].Type)
 		assert.Equal(t, replMatches[0].Role, convertedMatches[0].Role)
@@ -404,7 +417,7 @@ func TestSearchMatchConversion(t *testing.T) {
 }
 
 func TestAttachmentConversion(t *testing.T) {
-	t.Run("llmAttachmentToStorage", func(t *testing.T) {
+	t.Run("llmAttachmentToDomain", func(t *testing.T) {
 		llmAtt := llm.Attachment{
 			Type:     llm.AttachmentTypeAudio,
 			MimeType: "audio/mp3",
@@ -412,27 +425,27 @@ func TestAttachmentConversion(t *testing.T) {
 			Content:  "audio data",
 		}
 
-		storageAtt := llmAttachmentToStorage(llmAtt)
-		assert.Equal(t, "audio", storageAtt.Type)
-		assert.Equal(t, "audio/mp3", storageAtt.MimeType)
-		assert.Equal(t, "sound.mp3", storageAtt.Name)
-		assert.Equal(t, "sound.mp3", storageAtt.URL)
-		assert.Equal(t, "audio data", storageAtt.Content)
-		assert.NotNil(t, storageAtt.Metadata)
-		assert.Empty(t, storageAtt.Metadata)
+		domainAtt := llmAttachmentToDomain(llmAtt)
+		assert.Equal(t, domain.AttachmentTypeAudio, domainAtt.Type)
+		assert.Equal(t, "audio/mp3", domainAtt.MimeType)
+		assert.Equal(t, "sound.mp3", domainAtt.Name)
+		assert.Equal(t, "sound.mp3", domainAtt.URL)
+		assert.Equal(t, []byte("audio data"), domainAtt.Content)
+		assert.NotNil(t, domainAtt.Metadata)
+		assert.Empty(t, domainAtt.Metadata)
 	})
 
-	t.Run("storageAttachmentToLLM", func(t *testing.T) {
-		storageAtt := storage.Attachment{
-			Type:     "file",
+	t.Run("domainAttachmentToLLM", func(t *testing.T) {
+		domainAtt := domain.Attachment{
+			Type:     domain.AttachmentTypeFile,
 			MimeType: "text/plain",
 			Name:     "document.txt",
 			URL:      "http://example.com/document.txt",
-			Content:  "text content",
+			Content:  []byte("text content"),
 			Metadata: map[string]interface{}{"key": "value"},
 		}
 
-		llmAtt := storageAttachmentToLLM(storageAtt)
+		llmAtt := domainAttachmentToLLM(domainAtt)
 		assert.Equal(t, llm.AttachmentTypeFile, llmAtt.Type)
 		assert.Equal(t, "text/plain", llmAtt.MimeType)
 		assert.Equal(t, "document.txt", llmAtt.FilePath)

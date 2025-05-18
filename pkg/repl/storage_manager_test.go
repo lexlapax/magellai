@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lexlapax/magellai/pkg/storage"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -76,7 +76,8 @@ func TestStorageManager_SaveSession(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, session.ID, savedSession.ID)
 	assert.Equal(t, session.Name, savedSession.Name)
-	assert.Len(t, savedSession.Messages, 1)
+	assert.NotNil(t, savedSession.Conversation)
+	assert.Len(t, savedSession.Conversation.Messages, 1)
 
 	// Test error case
 	backend.err = fmt.Errorf("save error")
@@ -91,22 +92,24 @@ func TestStorageManager_LoadSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a session in the backend
-	storageSession := &storage.Session{
+	domainSession := &domain.Session{
 		ID:   "test-123",
 		Name: "Test Session",
-		Messages: []storage.Message{
-			{
-				ID:        "msg-1",
-				Role:      "user",
-				Content:   "Hello",
-				Timestamp: time.Now(),
-			},
+		Conversation: &domain.Conversation{
+			Messages: []domain.Message{
+				{
+					ID:        "msg-1",
+					Role:      domain.MessageRoleUser,
+					Content:   "Hello",
+					Timestamp: time.Now(),
+				},
+		},
 		},
 		Created: time.Now(),
 		Updated: time.Now(),
 		Tags:    []string{"test"},
 	}
-	backend.sessions["test-123"] = storageSession
+	backend.sessions["test-123"] = domainSession
 
 	// Load the session
 	session, err := manager.LoadSession("test-123")
@@ -137,12 +140,14 @@ func TestStorageManager_ListSessions(t *testing.T) {
 
 	// Add some sessions
 	for i := 0; i < 3; i++ {
-		session := &storage.Session{
+		session := &domain.Session{
 			ID:       fmt.Sprintf("session-%d", i),
 			Name:     fmt.Sprintf("Session %d", i),
 			Created:  time.Now(),
 			Updated:  time.Now(),
-			Messages: make([]storage.Message, i),
+			Conversation: &domain.Conversation{
+				Messages: make([]domain.Message, i),
+			},
 			Tags:     []string{fmt.Sprintf("tag%d", i)},
 		}
 		backend.sessions[session.ID] = session
@@ -174,7 +179,7 @@ func TestStorageManager_DeleteSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a session
-	session := &storage.Session{
+	session := &domain.Session{
 		ID:   "delete-test",
 		Name: "Delete Test",
 	}
@@ -217,7 +222,7 @@ func TestStorageManager_SearchSessions(t *testing.T) {
 	}
 
 	for _, s := range sessions {
-		session := &storage.Session{
+		session := &domain.Session{
 			ID:   s.id,
 			Name: s.name,
 		}
@@ -250,7 +255,7 @@ func TestStorageManager_ExportSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a session
-	session := &storage.Session{
+	session := &domain.Session{
 		ID:   "export-test",
 		Name: "Export Test",
 	}

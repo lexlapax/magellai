@@ -5,30 +5,32 @@ package storage
 
 import (
 	"io"
+	
+	"github.com/lexlapax/magellai/pkg/domain"
 )
 
 // Backend defines the interface for session storage implementations
 type Backend interface {
 	// NewSession creates a new session with the given name
-	NewSession(name string) *Session
+	NewSession(name string) *domain.Session
 
 	// SaveSession persists a session to storage
-	SaveSession(session *Session) error
+	SaveSession(session *domain.Session) error
 
 	// LoadSession retrieves a session by ID
-	LoadSession(id string) (*Session, error)
+	LoadSession(id string) (*domain.Session, error)
 
 	// ListSessions returns a list of all stored sessions
-	ListSessions() ([]*SessionInfo, error)
+	ListSessions() ([]*domain.SessionInfo, error)
 
 	// DeleteSession removes a session from storage
 	DeleteSession(id string) error
 
 	// SearchSessions finds sessions matching the given query
-	SearchSessions(query string) ([]*SearchResult, error)
+	SearchSessions(query string) ([]*domain.SearchResult, error)
 
 	// ExportSession exports a session in the specified format
-	ExportSession(id string, format ExportFormat, w io.Writer) error
+	ExportSession(id string, format domain.ExportFormat, w io.Writer) error
 
 	// Close cleans up any resources used by the backend
 	Close() error

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/storage"
 )
 
@@ -28,35 +29,35 @@ func NewStorageManager(backend storage.Backend) (*StorageManager, error) {
 
 // NewSession creates a new session
 func (sm *StorageManager) NewSession(name string) *Session {
-	storageSession := sm.backend.NewSession(name)
-	return FromStorageSession(storageSession)
+	domainSession := sm.backend.NewSession(name)
+	return FromDomainSession(domainSession)
 }
 
 // SaveSession saves a session
 func (sm *StorageManager) SaveSession(session *Session) error {
-	storageSession := ToStorageSession(session)
-	return sm.backend.SaveSession(storageSession)
+	domainSession := ToDomainSession(session)
+	return sm.backend.SaveSession(domainSession)
 }
 
 // LoadSession loads a session by ID
 func (sm *StorageManager) LoadSession(id string) (*Session, error) {
-	storageSession, err := sm.backend.LoadSession(id)
+	domainSession, err := sm.backend.LoadSession(id)
 	if err != nil {
 		return nil, err
 	}
-	return FromStorageSession(storageSession), nil
+	return FromDomainSession(domainSession), nil
 }
 
 // ListSessions lists all available sessions
 func (sm *StorageManager) ListSessions() ([]*SessionInfo, error) {
-	storageInfos, err := sm.backend.ListSessions()
+	domainInfos, err := sm.backend.ListSessions()
 	if err != nil {
 		return nil, err
 	}
 
-	replInfos := make([]*SessionInfo, len(storageInfos))
-	for i, info := range storageInfos {
-		replInfos[i] = FromStorageSessionInfo(info)
+	replInfos := make([]*SessionInfo, len(domainInfos))
+	for i, info := range domainInfos {
+		replInfos[i] = FromDomainSessionInfo(info)
 	}
 
 	return replInfos, nil
@@ -69,14 +70,14 @@ func (sm *StorageManager) DeleteSession(id string) error {
 
 // SearchSessions searches for sessions by query
 func (sm *StorageManager) SearchSessions(query string) ([]*SearchResult, error) {
-	storageResults, err := sm.backend.SearchSessions(query)
+	domainResults, err := sm.backend.SearchSessions(query)
 	if err != nil {
 		return nil, err
 	}
 
-	replResults := make([]*SearchResult, len(storageResults))
-	for i, result := range storageResults {
-		replResults[i] = FromStorageSearchResult(result)
+	replResults := make([]*SearchResult, len(domainResults))
+	for i, result := range domainResults {
+		replResults[i] = FromDomainSearchResult(result)
 	}
 
 	return replResults, nil
@@ -84,15 +85,15 @@ func (sm *StorageManager) SearchSessions(query string) ([]*SearchResult, error) 
 
 // ExportSession exports a session in the specified format
 func (sm *StorageManager) ExportSession(id string, format string, w io.Writer) error {
-	// Convert string format to storage.ExportFormat
-	var exportFormat storage.ExportFormat
+	// Convert string format to domain.ExportFormat
+	var exportFormat domain.ExportFormat
 	switch format {
 	case "json":
-		exportFormat = storage.ExportFormatJSON
+		exportFormat = domain.ExportFormatJSON
 	case "markdown":
-		exportFormat = storage.ExportFormatMarkdown
+		exportFormat = domain.ExportFormatMarkdown
 	case "text":
-		exportFormat = storage.ExportFormatText
+		exportFormat = domain.ExportFormatText
 	default:
 		return fmt.Errorf("unsupported export format: %s", format)
 	}

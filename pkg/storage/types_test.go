@@ -1,4 +1,4 @@
-// ABOUTME: Tests for storage types including Session, Message, and Attachment
+// ABOUTME: Tests for storage types and conversions between domain and storage types
 // ABOUTME: Ensures proper JSON marshaling/unmarshaling and type conversion
 
 package storage
@@ -8,222 +8,170 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSession_JSONMarshal(t *testing.T) {
-	session := &Session{
-		ID:   "test-session-id",
-		Name: "Test Session",
-		Messages: []Message{
-			{
-				ID:        "msg-1",
-				Role:      "user",
-				Content:   "Hello",
-				Timestamp: time.Now(),
-			},
-			{
-				ID:        "msg-2",
-				Role:      "assistant",
-				Content:   "Hi there!",
-				Timestamp: time.Now(),
-			},
-		},
-		Config: map[string]interface{}{
-			"temperature": 0.7,
-			"max_tokens":  100,
-		},
-		Created: time.Now(),
-		Updated: time.Now(),
-		Tags:    []string{"test", "example"},
-		Metadata: map[string]interface{}{
-			"source": "unit-test",
-		},
-		Model:        "gpt-4",
-		Provider:     "openai",
-		Temperature:  0.7,
-		MaxTokens:    100,
-		SystemPrompt: "You are a helpful assistant",
-	}
-
+func TestStorageSession_JSONMarshal(t *testing.T) {
+	// Create a domain session
+	domainSession := domain.NewSession("test-session-id")
+	domainSession.Name = "Test Session"
+	domainSession.Tags = []string{"test", "example"}
+	domainSession.Config["temperature"] = 0.7
+	domainSession.Config["max_tokens"] = 100
+	domainSession.Metadata["source"] = "unit-test"
+	
+	// Set up conversation
+	domainSession.Conversation.SetModel("openai", "gpt-4")
+	domainSession.Conversation.SetParameters(0.7, 100)
+	domainSession.Conversation.SetSystemPrompt("You are a helpful assistant")
+	domainSession.Conversation.AddMessage(*domain.NewMessage("msg-1", domain.MessageRoleUser, "Hello"))
+	domainSession.Conversation.AddMessage(*domain.NewMessage("msg-2", domain.MessageRoleAssistant, "Hi there!"))
+	
+	// Convert to storage session
+	storageSession := ToStorageSession(domainSession)
+	
 	// Test JSON marshaling
-	data, err := json.Marshal(session)
+	data, err := json.Marshal(storageSession)
 	require.NoError(t, err)
-	assert.NotEmpty(t, data)
-
+	
 	// Test JSON unmarshaling
-	var decoded Session
-	err = json.Unmarshal(data, &decoded)
+	var unmarshaled StorageSession
+	err = json.Unmarshal(data, &unmarshaled)
 	require.NoError(t, err)
-
-	assert.Equal(t, session.ID, decoded.ID)
-	assert.Equal(t, session.Name, decoded.Name)
-	assert.Len(t, decoded.Messages, 2)
-	assert.Equal(t, session.Model, decoded.Model)
-	assert.Equal(t, session.Provider, decoded.Provider)
-	assert.Equal(t, session.Temperature, decoded.Temperature)
-	assert.Equal(t, session.MaxTokens, decoded.MaxTokens)
-	assert.Equal(t, session.SystemPrompt, decoded.SystemPrompt)
-	assert.Equal(t, session.Tags, decoded.Tags)
+	
+	// Verify data
+	assert.Equal(t, storageSession.ID, unmarshaled.ID)
+	assert.Equal(t, storageSession.Name, unmarshaled.Name)
+	assert.Equal(t, storageSession.Model, unmarshaled.Model)
+	assert.Equal(t, storageSession.Provider, unmarshaled.Provider)
+	assert.Equal(t, storageSession.Temperature, unmarshaled.Temperature)
+	assert.Equal(t, storageSession.MaxTokens, unmarshaled.MaxTokens)
+	assert.Equal(t, storageSession.SystemPrompt, unmarshaled.SystemPrompt)
+	assert.Len(t, unmarshaled.Messages, 2)
+	assert.Equal(t, storageSession.Tags, unmarshaled.Tags)
+	
+	// Test conversion back to domain
+	convertedBack := ToDomainSession(&unmarshaled)
+	assert.NotNil(t, convertedBack)
+	assert.Equal(t, domainSession.ID, convertedBack.ID)
+	assert.Equal(t, domainSession.Name, convertedBack.Name)
+	assert.NotNil(t, convertedBack.Conversation)
+	assert.Len(t, convertedBack.Conversation.Messages, 2)
 }
 
-func TestMessage_JSONMarshal(t *testing.T) {
-	msg := &Message{
-		ID:        "msg-123",
-		Role:      "user",
-		Content:   "Test message",
-		Timestamp: time.Now(),
-		Attachments: []Attachment{
-			{
-				Type:     "image",
-				URL:      "https://example.com/image.jpg",
-				MimeType: "image/jpeg",
-				Name:     "test.jpg",
-				Size:     1024,
-			},
-		},
-		Metadata: map[string]interface{}{
-			"custom": "value",
-		},
-	}
-
-	// Test JSON marshaling
-	data, err := json.Marshal(msg)
-	require.NoError(t, err)
-	assert.NotEmpty(t, data)
-
-	// Test JSON unmarshaling
-	var decoded Message
-	err = json.Unmarshal(data, &decoded)
-	require.NoError(t, err)
-
-	assert.Equal(t, msg.ID, decoded.ID)
-	assert.Equal(t, msg.Role, decoded.Role)
-	assert.Equal(t, msg.Content, decoded.Content)
-	assert.Len(t, decoded.Attachments, 1)
-	assert.Equal(t, msg.Attachments[0].Type, decoded.Attachments[0].Type)
-	assert.Equal(t, msg.Attachments[0].URL, decoded.Attachments[0].URL)
+func TestToStorageSession_NilInput(t *testing.T) {
+	result := ToStorageSession(nil)
+	assert.Nil(t, result)
 }
 
-func TestAttachment_Types(t *testing.T) {
-	tests := []struct {
-		name string
-		att  Attachment
-	}{
-		{
-			name: "image attachment",
-			att: Attachment{
-				Type:     "image",
-				URL:      "https://example.com/image.jpg",
-				MimeType: "image/jpeg",
-				Name:     "test.jpg",
-				Size:     1024,
-			},
-		},
-		{
-			name: "text attachment",
-			att: Attachment{
-				Type:    "text",
-				Content: "This is text content",
-				Name:    "text.txt",
-			},
-		},
-		{
-			name: "file attachment",
-			att: Attachment{
-				Type:     "file",
-				URL:      "/path/to/file.pdf",
-				MimeType: "application/pdf",
-				Name:     "document.pdf",
-				Size:     2048,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Test JSON round trip
-			data, err := json.Marshal(tt.att)
-			require.NoError(t, err)
-
-			var decoded Attachment
-			err = json.Unmarshal(data, &decoded)
-			require.NoError(t, err)
-
-			assert.Equal(t, tt.att.Type, decoded.Type)
-			assert.Equal(t, tt.att.Name, decoded.Name)
-			if tt.att.URL != "" {
-				assert.Equal(t, tt.att.URL, decoded.URL)
-			}
-			if tt.att.Content != "" {
-				assert.Equal(t, tt.att.Content, decoded.Content)
-			}
-		})
-	}
+func TestToDomainSession_NilInput(t *testing.T) {
+	result := ToDomainSession(nil)
+	assert.Nil(t, result)
 }
 
-func TestSessionInfo_Conversion(t *testing.T) {
-	info := &SessionInfo{
-		ID:           "session-123",
-		Name:         "Test Session",
-		Created:      time.Now(),
-		Updated:      time.Now().Add(time.Hour),
-		MessageCount: 10,
-		Model:        "gpt-4",
-		Provider:     "openai",
-		Tags:         []string{"test", "example"},
-	}
+func TestDomainMessage_Conversion(t *testing.T) {
+	// Create domain message with attachment
+	msg := domain.NewMessage("msg-1", domain.MessageRoleUser, "Test message")
+	attachment := domain.NewAttachment("att-1", domain.AttachmentTypeImage)
+	attachment.Name = "test.jpg"
+	attachment.MimeType = "image/jpeg"
+	attachment.Content = []byte("image data")
+	msg.AddAttachment(*attachment)
+	
+	// Test that the message works correctly
+	assert.Equal(t, "msg-1", msg.ID)
+	assert.Equal(t, domain.MessageRoleUser, msg.Role)
+	assert.Equal(t, "Test message", msg.Content)
+	assert.Len(t, msg.Attachments, 1)
+}
 
-	// Test JSON marshaling
-	data, err := json.Marshal(info)
+func TestStorageSession_WithoutConversation(t *testing.T) {
+	// Create a minimal domain session without conversation data
+	domainSession := &domain.Session{
+		ID:       "test-id",
+		Name:     "Test",
+		Created:  time.Now(),
+		Updated:  time.Now(),
+		Tags:     []string{},
+		Config:   make(map[string]interface{}),
+		Metadata: make(map[string]interface{}),
+		// Conversation is nil
+	}
+	
+	// Convert to storage
+	storageSession := ToStorageSession(domainSession)
+	assert.NotNil(t, storageSession)
+	assert.Equal(t, domainSession.ID, storageSession.ID)
+	assert.Empty(t, storageSession.Messages)
+	assert.Empty(t, storageSession.Model)
+	
+	// Convert back to domain
+	convertedBack := ToDomainSession(storageSession)
+	assert.NotNil(t, convertedBack)
+	assert.Equal(t, domainSession.ID, convertedBack.ID)
+	assert.Nil(t, convertedBack.Conversation)
+}
+
+func TestStorageSession_CompleteRoundTrip(t *testing.T) {
+	// Create a complete domain session
+	session := domain.NewSession("complete-test")
+	session.Name = "Complete Test Session"
+	session.Tags = []string{"test", "complete", "roundtrip"}
+	session.Config["feature"] = "enabled"
+	session.Metadata["version"] = "1.0"
+	
+	// Add conversation with all fields
+	session.Conversation.SetModel("anthropic", "claude-3")
+	session.Conversation.SetParameters(0.8, 2000)
+	session.Conversation.SetSystemPrompt("You are Claude, an AI assistant.")
+	
+	// Add messages with attachments
+	userMsg := domain.NewMessage("msg-1", domain.MessageRoleUser, "Please analyze this image")
+	imageAtt := domain.NewAttachment("att-1", domain.AttachmentTypeImage)
+	imageAtt.Name = "screenshot.png"
+	imageAtt.MimeType = "image/png"
+	imageAtt.URL = "https://example.com/image.png"
+	userMsg.AddAttachment(*imageAtt)
+	session.Conversation.AddMessage(*userMsg)
+	
+	assistantMsg := domain.NewMessage("msg-2", domain.MessageRoleAssistant, "I can see the image shows...")
+	session.Conversation.AddMessage(*assistantMsg)
+	
+	// Convert to storage format
+	storageSession := ToStorageSession(session)
+	
+	// Simulate JSON persistence
+	jsonData, err := json.MarshalIndent(storageSession, "", "  ")
 	require.NoError(t, err)
-
-	// Test JSON unmarshaling
-	var decoded SessionInfo
-	err = json.Unmarshal(data, &decoded)
+	
+	// Parse back from JSON
+	var parsedStorage StorageSession
+	err = json.Unmarshal(jsonData, &parsedStorage)
 	require.NoError(t, err)
-
-	assert.Equal(t, info.ID, decoded.ID)
-	assert.Equal(t, info.Name, decoded.Name)
-	assert.Equal(t, info.MessageCount, decoded.MessageCount)
-	assert.Equal(t, info.Model, decoded.Model)
-	assert.Equal(t, info.Provider, decoded.Provider)
-	assert.Equal(t, info.Tags, decoded.Tags)
-}
-
-func TestSearchResult_Structure(t *testing.T) {
-	result := &SearchResult{
-		Session: &SessionInfo{
-			ID:   "session-123",
-			Name: "Test Session",
-		},
-		Matches: []SearchMatch{
-			{
-				Type:     "message",
-				Role:     "user",
-				Content:  "...found text...",
-				Context:  "Message 1 (user)",
-				Position: 0,
-			},
-			{
-				Type:    "system_prompt",
-				Content: "...prompt match...",
-				Context: "System Prompt",
-			},
-		},
-	}
-
-	// Verify structure
-	assert.NotNil(t, result.Session)
-	assert.Len(t, result.Matches, 2)
-	assert.Equal(t, "message", result.Matches[0].Type)
-	assert.Equal(t, "system_prompt", result.Matches[1].Type)
-}
-
-func TestExportFormat_Constants(t *testing.T) {
-	// Verify export format constants
-	assert.Equal(t, ExportFormat("json"), ExportFormatJSON)
-	assert.Equal(t, ExportFormat("markdown"), ExportFormatMarkdown)
-	assert.Equal(t, ExportFormat("text"), ExportFormatText)
+	
+	// Convert back to domain
+	finalSession := ToDomainSession(&parsedStorage)
+	
+	// Verify everything is preserved
+	assert.Equal(t, session.ID, finalSession.ID)
+	assert.Equal(t, session.Name, finalSession.Name)
+	assert.Equal(t, session.Tags, finalSession.Tags)
+	assert.Equal(t, session.Config["feature"], finalSession.Config["feature"])
+	assert.Equal(t, session.Metadata["version"], finalSession.Metadata["version"])
+	
+	// Verify conversation
+	assert.NotNil(t, finalSession.Conversation)
+	assert.Equal(t, session.Conversation.Model, finalSession.Conversation.Model)
+	assert.Equal(t, session.Conversation.Provider, finalSession.Conversation.Provider)
+	assert.Equal(t, session.Conversation.Temperature, finalSession.Conversation.Temperature)
+	assert.Equal(t, session.Conversation.MaxTokens, finalSession.Conversation.MaxTokens)
+	assert.Equal(t, session.Conversation.SystemPrompt, finalSession.Conversation.SystemPrompt)
+	
+	// Verify messages
+	assert.Len(t, finalSession.Conversation.Messages, 2)
+	assert.Equal(t, "Please analyze this image", finalSession.Conversation.Messages[0].Content)
+	assert.Len(t, finalSession.Conversation.Messages[0].Attachments, 1)
+	assert.Equal(t, "screenshot.png", finalSession.Conversation.Messages[0].Attachments[0].Name)
 }

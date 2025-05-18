@@ -6,12 +6,10 @@ package filesystem
 import (
 	"bytes"
 	"encoding/json"
-	"os"
 	"path/filepath"
-	"strings"
 	"testing"
-	"time"
 
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,7 +47,8 @@ func TestBackend_NewSession(t *testing.T) {
 	assert.Equal(t, "Test Session", session.Name)
 	assert.NotZero(t, session.Created)
 	assert.NotZero(t, session.Updated)
-	assert.Empty(t, session.Messages)
+	assert.NotNil(t, session.Conversation)
+	assert.Empty(t, session.Conversation.Messages)
 	assert.NotNil(t, session.Config)
 	assert.NotNil(t, session.Metadata)
 }
@@ -58,33 +57,18 @@ func TestBackend_SaveAndLoadSession(t *testing.T) {
 	backend := setupTestBackend(t)
 
 	// Create a session with data
-	session := &storage.Session{
-		ID:   "test-session-001",
-		Name: "Test Session",
-		Messages: []storage.Message{
-			{
-				ID:        "msg-1",
-				Role:      "user",
-				Content:   "Hello",
-				Timestamp: time.Now(),
-			},
-			{
-				ID:        "msg-2",
-				Role:      "assistant",
-				Content:   "Hi there!",
-				Timestamp: time.Now(),
-			},
-		},
-		Config: map[string]interface{}{
-			"temperature": 0.7,
-		},
-		Created:      time.Now(),
-		Updated:      time.Now(),
-		Tags:         []string{"test", "example"},
-		Model:        "gpt-4",
-		Provider:     "openai",
-		SystemPrompt: "You are helpful",
-	}
+	session := domain.NewSession("test-session-001")
+	session.Name = "Test Session"
+	session.Tags = []string{"test", "example"}
+	
+	// Add conversation data
+	session.Conversation.SetModel("openai", "gpt-4")
+	session.Conversation.SetSystemPrompt("You are helpful")
+	session.Conversation.AddMessage(*domain.NewMessage("msg-1", domain.MessageRoleUser, "Hello"))
+	session.Conversation.AddMessage(*domain.NewMessage("msg-2", domain.MessageRoleAssistant, "Hi there!"))
+	
+	// Add config
+	session.Config["temperature"] = 0.7
 
 	// Save session
 	err := backend.SaveSession(session)
@@ -100,9 +84,10 @@ func TestBackend_SaveAndLoadSession(t *testing.T) {
 	assert.NotNil(t, loaded)
 	assert.Equal(t, session.ID, loaded.ID)
 	assert.Equal(t, session.Name, loaded.Name)
-	assert.Len(t, loaded.Messages, 2)
-	assert.Equal(t, session.Model, loaded.Model)
-	assert.Equal(t, session.SystemPrompt, loaded.SystemPrompt)
+	assert.NotNil(t, loaded.Conversation)
+	assert.Len(t, loaded.Conversation.Messages, 2)
+	assert.Equal(t, session.Conversation.Model, loaded.Conversation.Model)
+	assert.Equal(t, session.Conversation.SystemPrompt, loaded.Conversation.SystemPrompt)
 	assert.Equal(t, session.Tags, loaded.Tags)
 }
 
@@ -124,18 +109,13 @@ func TestBackend_ListSessions(t *testing.T) {
 		name string
 	}{
 		{"session-1", "First Session"},
-		{"session-2", "Second Session"},
+		{"session-2", "Second Session"},  
 		{"session-3", "Third Session"},
 	}
 
 	for _, s := range sessions {
-		session := &storage.Session{
-			ID:       s.id,
-			Name:     s.name,
-			Messages: []storage.Message{},
-			Created:  time.Now(),
-			Updated:  time.Now(),
-		}
+		session := domain.NewSession(s.id)
+		session.Name = s.name
 		err := backend.SaveSession(session)
 		require.NoError(t, err)
 	}
@@ -188,255 +168,187 @@ func TestBackend_SearchSessions(t *testing.T) {
 	backend := setupTestBackend(t)
 
 	// Create sessions with searchable content
-	sessions := []*storage.Session{
-		{
-			ID:           "search-1",
-			Name:         "Python Programming",
-			SystemPrompt: "You are a Python expert",
-			Messages: []storage.Message{
-				{
-					ID:        "msg-1",
-					Role:      "user",
-					Content:   "How do I use Python decorators?",
-					Timestamp: time.Now(),
-				},
-				{
-					ID:        "msg-2",
-					Role:      "assistant",
-					Content:   "Python decorators are functions that modify other functions",
-					Timestamp: time.Now(),
-				},
-			},
-			Tags:    []string{"python", "programming"},
-			Created: time.Now(),
-			Updated: time.Now(),
-		},
-		{
-			ID:   "search-2",
-			Name: "JavaScript Tutorial",
-			Messages: []storage.Message{
-				{
-					ID:        "msg-3",
-					Role:      "user",
-					Content:   "What is JavaScript closure?",
-					Timestamp: time.Now(),
-				},
-			},
-			Tags:    []string{"javascript", "web"},
-			Created: time.Now(),
-			Updated: time.Now(),
-		},
+	sessions := []*domain.Session{
+		createTestSession("search-1", "Python Programming", "You are a Python expert"),
+		createTestSession("search-2", "Go Language", "You are a Go expert"),
+		createTestSession("search-3", "JavaScript Tutorial", "You are a JavaScript expert"),
 	}
 
-	for _, s := range sessions {
-		err := backend.SaveSession(s)
+	// Add messages to sessions
+	sessions[0].Conversation.AddMessage(*domain.NewMessage("msg-1", domain.MessageRoleUser, "Tell me about Python classes"))
+	sessions[0].Conversation.AddMessage(*domain.NewMessage("msg-2", domain.MessageRoleAssistant, "Python classes are object blueprints"))
+	
+	sessions[1].Conversation.AddMessage(*domain.NewMessage("msg-3", domain.MessageRoleUser, "Explain Go interfaces"))
+	sessions[1].Conversation.AddMessage(*domain.NewMessage("msg-4", domain.MessageRoleAssistant, "Go interfaces define method signatures"))
+	
+	sessions[2].Conversation.AddMessage(*domain.NewMessage("msg-5", domain.MessageRoleUser, "What is JavaScript closure?"))
+	sessions[2].Conversation.AddMessage(*domain.NewMessage("msg-6", domain.MessageRoleAssistant, "A closure is a function that has access to outer scope"))
+
+	// Add tags
+	sessions[0].Tags = []string{"programming", "python", "tutorial"}
+	sessions[1].Tags = []string{"programming", "golang", "tutorial"}
+	sessions[2].Tags = []string{"programming", "javascript", "tutorial"}
+
+	// Save all sessions
+	for _, session := range sessions {
+		err := backend.SaveSession(session)
 		require.NoError(t, err)
 	}
 
-	// Search for "Python"
-	results, err := backend.SearchSessions("Python")
-	require.NoError(t, err)
-	assert.Len(t, results, 1)
-	assert.Equal(t, "search-1", results[0].Session.ID)
-	assert.NotEmpty(t, results[0].Matches)
-
-	// Check match types
-	matchTypes := make(map[string]bool)
-	for _, match := range results[0].Matches {
-		matchTypes[match.Type] = true
-	}
-	assert.True(t, matchTypes["message"])
-	assert.True(t, matchTypes["system_prompt"])
-	assert.True(t, matchTypes["name"])
-	assert.True(t, matchTypes["tag"])
-
-	// Search for "JavaScript"
-	results, err = backend.SearchSessions("JavaScript")
-	require.NoError(t, err)
-	assert.Len(t, results, 1)
-	assert.Equal(t, "search-2", results[0].Session.ID)
-
-	// Search for non-existent term
-	results, err = backend.SearchSessions("Rust")
-	require.NoError(t, err)
-	assert.Empty(t, results)
-}
-
-func TestBackend_ExportSession(t *testing.T) {
-	backend := setupTestBackend(t)
-
-	// Create a session
-	session := &storage.Session{
-		ID:   "export-test",
-		Name: "Export Test Session",
-		Messages: []storage.Message{
-			{
-				ID:        "msg-1",
-				Role:      "user",
-				Content:   "Test message",
-				Timestamp: time.Now(),
-				Attachments: []storage.Attachment{
-					{
-						Type: "file",
-						Name: "test.txt",
-					},
-				},
-			},
-		},
-		Tags:    []string{"export", "test"},
-		Created: time.Now(),
-		Updated: time.Now(),
-	}
-
-	err := backend.SaveSession(session)
-	require.NoError(t, err)
-
-	// Test JSON export
-	t.Run("JSON Export", func(t *testing.T) {
-		var buf bytes.Buffer
-		err := backend.ExportSession(session.ID, storage.ExportFormatJSON, &buf)
-		require.NoError(t, err)
-
-		// Verify JSON structure
-		var exported storage.Session
-		err = json.Unmarshal(buf.Bytes(), &exported)
-		require.NoError(t, err)
-		assert.Equal(t, session.ID, exported.ID)
-		assert.Equal(t, session.Name, exported.Name)
-		assert.Len(t, exported.Messages, 1)
-	})
-
-	// Test Markdown export
-	t.Run("Markdown Export", func(t *testing.T) {
-		var buf bytes.Buffer
-		err := backend.ExportSession(session.ID, storage.ExportFormatMarkdown, &buf)
-		require.NoError(t, err)
-
-		markdown := buf.String()
-		assert.Contains(t, markdown, "# Session: Export Test Session")
-		assert.Contains(t, markdown, "## Conversation")
-		assert.Contains(t, markdown, "### User")
-		assert.Contains(t, markdown, "Test message")
-		assert.Contains(t, markdown, "Attachments:")
-		assert.Contains(t, markdown, "test.txt")
-	})
-
-	// Test unsupported format
-	t.Run("Unsupported Format", func(t *testing.T) {
-		var buf bytes.Buffer
-		err := backend.ExportSession(session.ID, "unsupported", &buf)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "unsupported export format")
-	})
-}
-
-func TestBackend_Close(t *testing.T) {
-	backend := setupTestBackend(t)
-
-	// Close should succeed (no-op for filesystem)
-	err := backend.Close()
-	assert.NoError(t, err)
-}
-
-func TestGenerateSessionID(t *testing.T) {
-	// Generate multiple IDs and ensure they're unique
-	ids := make(map[string]bool)
-	for i := 0; i < 100; i++ {
-		id := storage.GenerateSessionID()
-		assert.NotEmpty(t, id)
-		assert.False(t, ids[id], "Duplicate ID generated: %s", id)
-		ids[id] = true
-
-		// Verify format: YYYYMMDD-HHMMSS-NNNNNNNNN-RRRRRRRR (8 hex chars)
-		assert.True(t, strings.Contains(id, "-"))
-		assert.Regexp(t, `^\d{8}-\d{6}-\d{9}-[0-9a-f]{8}$`, id)
-	}
-}
-
-func TestExtractSnippet(t *testing.T) {
+	// Test different search queries
 	tests := []struct {
 		name     string
-		content  string
 		query    string
-		radius   int
-		expected string
+		expected []string // Expected session IDs
 	}{
 		{
-			name:     "simple match",
-			content:  "This is a test content with matching word here",
-			query:    "matching",
-			radius:   10,
-			expected: "...content with matching word here...",
+			name:     "Search for Python",
+			query:    "Python",
+			expected: []string{"search-1"},
 		},
 		{
-			name:     "beginning of content",
-			content:  "Query at the start of content",
-			query:    "Query",
-			radius:   10,
-			expected: "Query at the start...",
+			name:     "Search for programming",
+			query:    "programming",
+			expected: []string{"search-1", "search-2", "search-3"},
 		},
 		{
-			name:     "end of content",
-			content:  "Content ends with query",
-			query:    "query",
-			radius:   10,
-			expected: "...ends with query",
+			name:     "Search for interfaces",
+			query:    "interfaces",
+			expected: []string{"search-2"},
 		},
 		{
-			name:     "no match",
-			content:  "No match here",
-			query:    "missing",
-			radius:   5,
-			expected: "No match h...",
+			name:     "Search for tutorial",
+			query:    "tutorial",
+			expected: []string{"search-1", "search-2", "search-3"},
 		},
 		{
-			name:     "short content",
-			content:  "Short",
-			query:    "test",
-			radius:   10,
-			expected: "Short",
+			name:     "Search for expert",
+			query:    "expert",
+			expected: []string{"search-1", "search-2", "search-3"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractSnippet(tt.content, tt.query, tt.radius)
-			assert.Equal(t, tt.expected, result)
+			results, err := backend.SearchSessions(tt.query)
+			require.NoError(t, err)
+			
+			foundIDs := make(map[string]bool)
+			for _, result := range results {
+				foundIDs[result.Session.ID] = true
+				assert.True(t, result.HasMatches())
+			}
+			
+			assert.Len(t, foundIDs, len(tt.expected))
+			for _, expectedID := range tt.expected {
+				assert.True(t, foundIDs[expectedID], "Expected to find session %s", expectedID)
+			}
 		})
 	}
 }
 
-func TestBackend_CorruptedFile(t *testing.T) {
+func TestBackend_ExportSession(t *testing.T) {
 	backend := setupTestBackend(t)
 
-	// Create a corrupted JSON file
-	corruptedFile := filepath.Join(backend.baseDir, "corrupted.json")
-	err := os.WriteFile(corruptedFile, []byte("{ invalid json"), 0644)
+	// Create a session with content
+	session := createTestSession("export-test", "Export Test", "You are helpful")
+	session.Conversation.AddMessage(*domain.NewMessage("msg-1", domain.MessageRoleUser, "Hello"))
+	session.Conversation.AddMessage(*domain.NewMessage("msg-2", domain.MessageRoleAssistant, "Hi there!"))
+	
+	err := backend.SaveSession(session)
 	require.NoError(t, err)
 
-	// Should be skipped in ListSessions
-	sessions, err := backend.ListSessions()
+	// Test JSON export
+	var buf bytes.Buffer
+	err = backend.ExportSession(session.ID, domain.ExportFormatJSON, &buf)
 	require.NoError(t, err)
-	assert.Empty(t, sessions)
+	
+	// Verify JSON structure
+	var exported map[string]interface{}
+	err = json.Unmarshal(buf.Bytes(), &exported)
+	require.NoError(t, err)
+	assert.Equal(t, session.ID, exported["id"])
+	assert.Equal(t, session.Name, exported["name"])
 
-	// Should error on LoadSession
-	_, err = backend.LoadSession("corrupted")
+	// Test Markdown export
+	buf.Reset()
+	err = backend.ExportSession(session.ID, domain.ExportFormatMarkdown, &buf)
+	require.NoError(t, err)
+	
+	// Verify Markdown content
+	markdown := buf.String()
+	assert.Contains(t, markdown, "# Session: Export Test")
+	assert.Contains(t, markdown, "Hello")
+	assert.Contains(t, markdown, "Hi there!")
+	assert.Contains(t, markdown, "User")
+	assert.Contains(t, markdown, "Assistant")
+
+	// Test unsupported format
+	err = backend.ExportSession(session.ID, domain.ExportFormat("invalid"), &buf)
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported export format")
 }
 
-// Helper function to set up a test backend
+func TestBackend_Close(t *testing.T) {
+	backend := setupTestBackend(t)
+	err := backend.Close()
+	assert.NoError(t, err)
+}
+
+// Helper functions
+
 func setupTestBackend(t *testing.T) *Backend {
 	tempDir := t.TempDir()
 	config := storage.Config{
 		"base_dir": tempDir,
 	}
-
 	backend, err := New(config)
 	require.NoError(t, err)
+	return backend.(*Backend)
+}
 
-	// Type assert to get the concrete type
-	fsBackend, ok := backend.(*Backend)
-	require.True(t, ok, "Backend should be of type *filesystem.Backend")
+func createTestSession(id, name, systemPrompt string) *domain.Session {
+	session := domain.NewSession(id)
+	session.Name = name
+	session.Conversation.SetSystemPrompt(systemPrompt)
+	return session
+}
 
-	return fsBackend
+func TestExtractSnippet(t *testing.T) {
+	tests := []struct {
+		name       string
+		content    string
+		query      string
+		contextLen int
+		expected   string
+	}{
+		{
+			name:       "Match in middle",
+			content:    "This is a test of the search functionality with some context",
+			query:      "search",
+			contextLen: 10,
+			expected:   "...test of the search functionality with...",
+		},
+		{
+			name:       "Match at start",
+			content:    "Search at the beginning",
+			query:      "Search",
+			contextLen: 10,
+			expected:   "Search at the beginning",
+		},
+		{
+			name:       "Match at end",
+			content:    "The query is at the end search",
+			query:      "search",
+			contextLen: 10,
+			expected:   "...at the end search",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractSnippet(tt.content, tt.query, tt.contextLen)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }

@@ -96,65 +96,65 @@ This document provides a detailed, phased implementation plan for the Magellai p
         - [x] Define shared enums and constants
         - [x] Add common interface definitions
 
-- [ ] Refactor storage package to use domain types
-    - [ ] Remove all duplicate type definitions from `pkg/storage/types.go`
-    - [ ] Update imports to use `pkg/domain/`
-    - [ ] Update `Backend` interface to use domain types
-    - [ ] Update filesystem implementation
-        - [ ] Modify all methods to use domain types
-        - [ ] Remove type conversion code
-        - [ ] Update JSON marshaling/unmarshaling
-    - [ ] Update SQLite implementation
+- [x] Refactor storage package to use domain types ✅
+    - [x] Remove all duplicate type definitions from `pkg/storage/types.go`
+    - [x] Update imports to use `pkg/domain/`
+    - [x] Update `Backend` interface to use domain types
+    - [x] Update filesystem implementation
+        - [x] Modify all methods to use domain types
+        - [x] Remove type conversion code
+        - [x] Update JSON marshaling/unmarshaling
+    - [ ] Update SQLite implementation (not implemented yet)
         - [ ] Modify all methods to use domain types
         - [ ] Update database schema mappings
         - [ ] Remove type conversion code
-    - [ ] Update storage factory to return domain types
-    - [ ] Remove obsolete conversion functions
+    - [x] Update storage factory to return domain types
+    - [x] Remove obsolete conversion functions
 
-- [ ] Refactor REPL package to use domain types
-    - [ ] Remove all duplicate type definitions from `pkg/repl/types.go`
-    - [ ] Update imports to use `pkg/domain/`
-    - [ ] Update `Conversation` to use domain types
-    - [ ] Update `SessionManager` to use domain types
-    - [ ] Update `StorageManager` to use domain types
-    - [ ] Remove or refactor `adapter.go`
-        - [ ] Identify remaining conversion needs
-        - [ ] Remove unnecessary conversions
-        - [ ] Keep only LLM-specific adaptations if needed
-    - [ ] Update all REPL commands to use domain types
-    - [ ] Update session export functionality
+- [x] Refactor REPL package to use domain types ✅
+    - [x] Remove all duplicate type definitions from `pkg/repl/types.go`
+    - [x] Update imports to use `pkg/domain/`
+    - [x] Update `Conversation` to use domain types
+    - [x] Update `SessionManager` to use domain types
+    - [x] Update `StorageManager` to use domain types
+    - [x] Remove or refactor `adapter.go`
+        - [x] Identify remaining conversion needs
+        - [x] Remove unnecessary conversions
+        - [x] Keep only LLM-specific adaptations if needed
+    - [x] Update all REPL commands to use domain types
+    - [x] Update session export functionality
 
-- [ ] Update LLM package integration
-    - [ ] Analyze current LLM `Message` type usage
-    - [ ] Create adapter between domain and LLM types if needed
-    - [ ] Update provider interfaces to use domain types where possible
-    - [ ] Ensure multimodal attachment support works with domain types
+- [x] Update LLM package integration ✅
+    - [x] Analyze current LLM `Message` type usage
+    - [x] Create adapter between domain and LLM types if needed
+    - [x] Update provider interfaces to use domain types where possible
+    - [x] Ensure multimodal attachment support works with domain types
 
 - [ ] Update configuration and models packages
     - [ ] Check for any type dependencies in config package
     - [ ] Update models package to use domain provider types
     - [ ] Ensure configuration values map to domain types
 
-- [ ] Comprehensive test updates
-    - [ ] Create domain package tests
-        - [ ] `pkg/domain/session_test.go`
-        - [ ] `pkg/domain/message_test.go`
-        - [ ] `pkg/domain/attachment_test.go`
-        - [ ] `pkg/domain/conversation_test.go`
-        - [ ] `pkg/domain/search_test.go`
-        - [ ] `pkg/domain/provider_test.go`
-    - [ ] Update storage package tests
-        - [ ] Fix filesystem tests for domain types
-        - [ ] Fix SQLite tests for domain types
-        - [ ] Update backend interface tests
-    - [ ] Update REPL package tests
-        - [ ] Fix session manager tests
-        - [ ] Fix storage manager tests
-        - [ ] Update conversation tests
-        - [ ] Fix command tests
-    - [ ] Update integration tests
-        - [ ] Ensure end-to-end functionality
-        - [ ] Test cross-package interactions
+- [x] Comprehensive test updates ✅
+    - [x] Create domain package tests ✅
+        - [x] `pkg/domain/session_test.go`
+        - [x] `pkg/domain/message_test.go`
+        - [x] `pkg/domain/attachment_test.go`
+        - [x] `pkg/domain/conversation_test.go`
+        - [x] `pkg/domain/search_test.go`
+        - [x] `pkg/domain/provider_test.go`
+    - [x] Update storage package tests ✅
+        - [x] Fix filesystem tests for domain types
+        - [ ] Fix SQLite tests for domain types (not implemented)
+        - [x] Update backend interface tests
+    - [x] Update REPL package tests ✅
+        - [x] Fix session manager tests
+        - [x] Fix storage manager tests
+        - [x] Update conversation tests
+        - [x] Fix command tests
+    - [x] Update integration tests ✅
+        - [x] Ensure end-to-end functionality
+        - [x] Test cross-package interactions
 
 - [ ] Documentation and architecture updates
     - [ ] Update architecture documentation

@@ -9,7 +9,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/lexlapax/magellai/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -214,10 +213,7 @@ func TestSessionManager_Delegation(t *testing.T) {
 	// Create a session to work with
 	session, err := sessionManager.NewSession("Delegation Test")
 	require.NoError(t, err)
-	backend.sessions[session.ID] = &storage.Session{
-		ID:   session.ID,
-		Name: session.Name,
-	}
+	backend.sessions[session.ID] = ToDomainSession(session)
 
 	// Test each delegated method
 	tests := []struct {

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/lexlapax/magellai/pkg/domain"
 )
 
 func TestBackendType_Constants(t *testing.T) {
@@ -38,98 +39,96 @@ func TestConfig_Type(t *testing.T) {
 
 // MockBackend implements the Backend interface for testing
 type MockBackend struct {
-	sessions map[string]*Session
+	sessions map[string]*domain.Session
 	closed   bool
 }
 
 func NewMockBackend() *MockBackend {
 	return &MockBackend{
-		sessions: make(map[string]*Session),
+		sessions: make(map[string]*domain.Session),
 	}
 }
 
-func (m *MockBackend) NewSession(name string) *Session {
-	return &Session{
-		ID:   "mock-" + name,
-		Name: name,
-	}
+func (mb *MockBackend) NewSession(name string) *domain.Session {
+	session := domain.NewSession(GenerateSessionID())
+	session.Name = name
+	return session
 }
 
-func (m *MockBackend) SaveSession(session *Session) error {
-	m.sessions[session.ID] = session
+func (mb *MockBackend) SaveSession(session *domain.Session) error {
+	mb.sessions[session.ID] = session
 	return nil
 }
 
-func (m *MockBackend) LoadSession(id string) (*Session, error) {
-	session, exists := m.sessions[id]
-	if !exists {
-		return nil, nil
+func (mb *MockBackend) LoadSession(id string) (*domain.Session, error) {
+	if session, ok := mb.sessions[id]; ok {
+		return session, nil
 	}
-	return session, nil
-}
-
-func (m *MockBackend) ListSessions() ([]*SessionInfo, error) {
-	var infos []*SessionInfo
-	for _, session := range m.sessions {
-		infos = append(infos, &SessionInfo{
-			ID:   session.ID,
-			Name: session.Name,
-		})
-	}
-	return infos, nil
-}
-
-func (m *MockBackend) DeleteSession(id string) error {
-	delete(m.sessions, id)
-	return nil
-}
-
-func (m *MockBackend) SearchSessions(query string) ([]*SearchResult, error) {
 	return nil, nil
 }
 
-func (m *MockBackend) ExportSession(id string, format ExportFormat, w io.Writer) error {
+func (mb *MockBackend) ListSessions() ([]*domain.SessionInfo, error) {
+	var sessions []*domain.SessionInfo
+	for _, session := range mb.sessions {
+		sessions = append(sessions, session.ToSessionInfo())
+	}
+	return sessions, nil
+}
+
+func (mb *MockBackend) DeleteSession(id string) error {
+	delete(mb.sessions, id)
 	return nil
 }
 
-func (m *MockBackend) Close() error {
-	m.closed = true
+func (mb *MockBackend) SearchSessions(query string) ([]*domain.SearchResult, error) {
+	return []*domain.SearchResult{}, nil
+}
+
+func (mb *MockBackend) ExportSession(id string, format domain.ExportFormat, w io.Writer) error {
 	return nil
 }
 
-// Compile-time check that MockBackend implements Backend
-var _ Backend = (*MockBackend)(nil)
+func (mb *MockBackend) Close() error {
+	mb.closed = true
+	return nil
+}
 
 func TestMockBackend_Implementation(t *testing.T) {
-	backend := NewMockBackend()
+	// This test ensures MockBackend properly implements the Backend interface
+	var _ Backend = (*MockBackend)(nil)
 
+	mock := NewMockBackend()
+	
 	// Test NewSession
-	session := backend.NewSession("test")
+	session := mock.NewSession("test")
 	assert.NotNil(t, session)
-	assert.Equal(t, "mock-test", session.ID)
 	assert.Equal(t, "test", session.Name)
-
+	
 	// Test SaveSession
-	err := backend.SaveSession(session)
+	err := mock.SaveSession(session)
 	assert.NoError(t, err)
-
+	
 	// Test LoadSession
-	loaded, err := backend.LoadSession(session.ID)
+	loaded, err := mock.LoadSession(session.ID)
 	assert.NoError(t, err)
 	assert.NotNil(t, loaded)
 	assert.Equal(t, session.ID, loaded.ID)
-
+	
 	// Test ListSessions
-	sessions, err := backend.ListSessions()
+	sessions, err := mock.ListSessions()
 	assert.NoError(t, err)
 	assert.Len(t, sessions, 1)
-
+	
 	// Test DeleteSession
-	err = backend.DeleteSession(session.ID)
+	err = mock.DeleteSession(session.ID)
 	assert.NoError(t, err)
-
+	
+	sessions, err = mock.ListSessions()
+	assert.NoError(t, err)
+	assert.Len(t, sessions, 0)
+	
 	// Test Close
-	err = backend.Close()
+	err = mock.Close()
 	assert.NoError(t, err)
-	assert.True(t, backend.closed)
+	assert.True(t, mock.closed)
 }

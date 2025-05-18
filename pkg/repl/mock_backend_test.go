@@ -9,12 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/storage"
 )
 
 // MockStorageBackend implements storage.Backend for testing
 type MockStorageBackend struct {
-	sessions map[string]*storage.Session
+	sessions map[string]*domain.Session
 	calls    map[string]int
 	err      error
 }
@@ -22,26 +23,25 @@ type MockStorageBackend struct {
 // NewMockStorageBackend creates a new mock storage backend
 func NewMockStorageBackend() *MockStorageBackend {
 	return &MockStorageBackend{
-		sessions: make(map[string]*storage.Session),
+		sessions: make(map[string]*domain.Session),
 		calls:    make(map[string]int),
 	}
 }
 
-func (m *MockStorageBackend) NewSession(name string) *storage.Session {
-	m.calls["NewSession"]++
-	return &storage.Session{
-		ID:       "test-session-" + fmt.Sprint(time.Now().Unix()),
-		Name:     name,
-		Messages: []storage.Message{},
-		Config:   make(map[string]interface{}),
-		Created:  time.Now(),
-		Updated:  time.Now(),
-		Metadata: make(map[string]interface{}),
-		Tags:     []string{},
-	}
+// AsBackend returns the mock as a storage.Backend interface
+func (m *MockStorageBackend) AsBackend() storage.Backend {
+	return m
 }
 
-func (m *MockStorageBackend) SaveSession(session *storage.Session) error {
+func (m *MockStorageBackend) NewSession(name string) *domain.Session {
+	m.calls["NewSession"]++
+	sessionID := "test-session-" + fmt.Sprint(time.Now().Unix())
+	session := domain.NewSession(sessionID)
+	session.Name = name
+	return session
+}
+
+func (m *MockStorageBackend) SaveSession(session *domain.Session) error {
 	m.calls["SaveSession"]++
 	if m.err != nil {
 		return m.err
@@ -50,7 +50,7 @@ func (m *MockStorageBackend) SaveSession(session *storage.Session) error {
 	return nil
 }
 
-func (m *MockStorageBackend) LoadSession(id string) (*storage.Session, error) {
+func (m *MockStorageBackend) LoadSession(id string) (*domain.Session, error) {
 	m.calls["LoadSession"]++
 	if m.err != nil {
 		return nil, m.err
@@ -62,21 +62,14 @@ func (m *MockStorageBackend) LoadSession(id string) (*storage.Session, error) {
 	return session, nil
 }
 
-func (m *MockStorageBackend) ListSessions() ([]*storage.SessionInfo, error) {
+func (m *MockStorageBackend) ListSessions() ([]*domain.SessionInfo, error) {
 	m.calls["ListSessions"]++
 	if m.err != nil {
 		return nil, m.err
 	}
-	var infos []*storage.SessionInfo
+	var infos []*domain.SessionInfo
 	for _, session := range m.sessions {
-		infos = append(infos, &storage.SessionInfo{
-			ID:           session.ID,
-			Name:         session.Name,
-			Created:      session.Created,
-			Updated:      session.Updated,
-			MessageCount: len(session.Messages),
-			Tags:         session.Tags,
-		})
+		infos = append(infos, session.ToSessionInfo())
 	}
 	return infos, nil
 }
@@ -94,34 +87,31 @@ func (m *MockStorageBackend) DeleteSession(id string) error {
 	return nil
 }
 
-func (m *MockStorageBackend) SearchSessions(query string) ([]*storage.SearchResult, error) {
+func (m *MockStorageBackend) SearchSessions(query string) ([]*domain.SearchResult, error) {
 	m.calls["SearchSessions"]++
 	if m.err != nil {
 		return nil, m.err
 	}
-	var results []*storage.SearchResult
+	var results []*domain.SearchResult
 	// Simple mock implementation
 	for _, session := range m.sessions {
 		if strings.Contains(strings.ToLower(session.Name), strings.ToLower(query)) {
-			results = append(results, &storage.SearchResult{
-				Session: &storage.SessionInfo{
-					ID:   session.ID,
-					Name: session.Name,
-				},
-				Matches: []storage.SearchMatch{
-					{
-						Type:    "name",
-						Content: session.Name,
-						Context: "Session Name",
-					},
-				},
-			})
+			sessionInfo := session.ToSessionInfo()
+			result := domain.NewSearchResult(sessionInfo)
+			result.AddMatch(domain.NewSearchMatch(
+				domain.SearchMatchTypeName,
+				"",
+				session.Name,
+				"Session Name",
+				-1,
+			))
+			results = append(results, result)
 		}
 	}
 	return results, nil
 }
 
-func (m *MockStorageBackend) ExportSession(id string, format storage.ExportFormat, w io.Writer) error {
+func (m *MockStorageBackend) ExportSession(id string, format domain.ExportFormat, w io.Writer) error {
 	m.calls["ExportSession"]++
 	if m.err != nil {
 		return m.err

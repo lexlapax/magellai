@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/lexlapax/magellai/internal/logging"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/storage"
 )
 
@@ -45,34 +46,31 @@ func init() {
 }
 
 // NewSession creates a new session
-func (b *Backend) NewSession(name string) *storage.Session {
-	now := time.Now()
-	sessionID := storage.GenerateSessionID()
-
+func (b *Backend) NewSession(name string) *domain.Session {
+	sessionID := generateSessionID()
+	
 	logging.LogInfo("Creating new session", "id", sessionID, "name", name)
 
-	return &storage.Session{
-		ID:       sessionID,
-		Name:     name,
-		Messages: []storage.Message{},
-		Config:   make(map[string]interface{}),
-		Created:  now,
-		Updated:  now,
-		Metadata: make(map[string]interface{}),
-	}
+	session := domain.NewSession(sessionID)
+	session.Name = name
+	
+	return session
 }
 
 // SaveSession persists a session to disk
-func (b *Backend) SaveSession(session *storage.Session) error {
+func (b *Backend) SaveSession(session *domain.Session) error {
 	start := time.Now()
-	session.Updated = time.Now()
+	session.UpdateTimestamp()
 
 	logging.LogInfo("Saving session", "id", session.ID, "name", session.Name)
 
 	filename := fmt.Sprintf("%s.json", session.ID)
 	filepath := filepath.Join(b.baseDir, filename)
 
-	data, err := json.MarshalIndent(session, "", "  ")
+	// Convert to storage format for better JSON structure
+	storageSession := storage.ToStorageSession(session)
+	
+	data, err := json.MarshalIndent(storageSession, "", "  ")
 	if err != nil {
 		logging.LogError(err, "Failed to marshal session", "id", session.ID)
 		return fmt.Errorf("failed to marshal session: %w", err)
@@ -88,7 +86,7 @@ func (b *Backend) SaveSession(session *storage.Session) error {
 }
 
 // LoadSession loads a session from disk by ID
-func (b *Backend) LoadSession(id string) (*storage.Session, error) {
+func (b *Backend) LoadSession(id string) (*domain.Session, error) {
 	start := time.Now()
 	logging.LogInfo("Loading session", "id", id)
 
@@ -103,18 +101,21 @@ func (b *Backend) LoadSession(id string) (*storage.Session, error) {
 		return nil, fmt.Errorf("failed to read session file: %w", err)
 	}
 
-	var session storage.Session
-	if err := json.Unmarshal(data, &session); err != nil {
+	var storageSession storage.StorageSession
+	if err := json.Unmarshal(data, &storageSession); err != nil {
 		logging.LogError(err, "Failed to unmarshal session", "id", id)
 		return nil, fmt.Errorf("failed to unmarshal session: %w", err)
 	}
 
+	// Convert back to domain session
+	session := storage.ToDomainSession(&storageSession)
+
 	logging.LogInfo("Session loaded successfully", "id", id, "duration", time.Since(start))
-	return &session, nil
+	return session, nil
 }
 
 // ListSessions returns a list of all available sessions
-func (b *Backend) ListSessions() ([]*storage.SessionInfo, error) {
+func (b *Backend) ListSessions() ([]*domain.SessionInfo, error) {
 	logging.LogDebug("Listing sessions", "baseDir", b.baseDir)
 
 	entries, err := os.ReadDir(b.baseDir)
@@ -122,7 +123,7 @@ func (b *Backend) ListSessions() ([]*storage.SessionInfo, error) {
 		return nil, fmt.Errorf("failed to read storage directory: %w", err)
 	}
 
-	var sessions []*storage.SessionInfo
+	var sessions []*domain.SessionInfo
 
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
@@ -136,26 +137,18 @@ func (b *Backend) ListSessions() ([]*storage.SessionInfo, error) {
 			continue
 		}
 
-		var session storage.Session
-		if err := json.Unmarshal(data, &session); err != nil {
+		var storageSession storage.StorageSession
+		if err := json.Unmarshal(data, &storageSession); err != nil {
 			logging.LogDebug("Failed to unmarshal session", "path", filepath, "error", err)
 			continue
 		}
 
-		info := &storage.SessionInfo{
-			ID:           session.ID,
-			Name:         session.Name,
-			Created:      session.Created,
-			Updated:      session.Updated,
-			MessageCount: len(session.Messages),
-			Model:        session.Model,
-			Provider:     session.Provider,
-			Tags:         session.Tags,
-		}
-
-		sessions = append(sessions, info)
+		// Convert to domain session and get session info
+		session := storage.ToDomainSession(&storageSession)
+		sessions = append(sessions, session.ToSessionInfo())
 	}
 
+	logging.LogInfo("Listed sessions", "count", len(sessions))
 	return sessions, nil
 }
 
@@ -168,82 +161,104 @@ func (b *Backend) DeleteSession(id string) error {
 
 	if err := os.Remove(filepath); err != nil {
 		if os.IsNotExist(err) {
+			logging.LogWarn("Session not found for deletion", "id", id)
 			return fmt.Errorf("session not found: %s", id)
 		}
+		logging.LogError(err, "Failed to delete session", "id", id)
 		return fmt.Errorf("failed to delete session: %w", err)
 	}
 
-	logging.LogInfo("Session deleted successfully", "id", id)
+	logging.LogInfo("Session deleted", "id", id)
 	return nil
 }
 
-// SearchSessions searches for sessions by text content
-func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) {
+// SearchSessions searches for sessions containing the given query
+func (b *Backend) SearchSessions(query string) ([]*domain.SearchResult, error) {
 	logging.LogInfo("Searching sessions", "query", query)
-
-	sessions, err := b.ListSessions()
-	if err != nil {
-		return nil, err
-	}
-
-	var results []*storage.SearchResult
 	lowerQuery := strings.ToLower(query)
 
-	for _, info := range sessions {
-		session, err := b.LoadSession(info.ID)
+	entries, err := os.ReadDir(b.baseDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read storage directory: %w", err)
+	}
+
+	var results []*domain.SearchResult
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+
+		filepath := filepath.Join(b.baseDir, entry.Name())
+		data, err := os.ReadFile(filepath)
 		if err != nil {
 			continue
 		}
 
-		var matches []storage.SearchMatch
+		var storageSession storage.StorageSession
+		if err := json.Unmarshal(data, &storageSession); err != nil {
+			continue
+		}
 
-		// Search in system prompt
-		if session.SystemPrompt != "" && strings.Contains(strings.ToLower(session.SystemPrompt), lowerQuery) {
-			matches = append(matches, storage.SearchMatch{
-				Type:    "system_prompt",
-				Content: extractSnippet(session.SystemPrompt, query, 50),
-				Context: "System Prompt",
-			})
+		// Convert to domain session for searching
+		session := storage.ToDomainSession(&storageSession)
+		sessionInfo := session.ToSessionInfo()
+		result := domain.NewSearchResult(sessionInfo)
+		
+		// Search in session name
+		if strings.Contains(strings.ToLower(session.Name), lowerQuery) {
+			result.AddMatch(domain.NewSearchMatch(
+				domain.SearchMatchTypeName,
+				"",
+				session.Name,
+				session.Name,
+				-1,
+			))
 		}
 
 		// Search in messages
-		for idx, msg := range session.Messages {
-			if strings.Contains(strings.ToLower(msg.Content), lowerQuery) {
-				matches = append(matches, storage.SearchMatch{
-					Type:     "message",
-					Role:     msg.Role,
-					Content:  extractSnippet(msg.Content, query, 50),
-					Context:  fmt.Sprintf("Message %d (%s)", idx+1, msg.Role),
-					Position: idx,
-				})
+		if session.Conversation != nil {
+			for i, msg := range session.Conversation.Messages {
+				if strings.Contains(strings.ToLower(msg.Content), lowerQuery) {
+					snippet := extractSnippet(msg.Content, lowerQuery, 50)
+					result.AddMatch(domain.NewSearchMatch(
+						domain.SearchMatchTypeMessage,
+						string(msg.Role),
+						msg.Content,
+						snippet,
+						i,
+					))
+				}
 			}
-		}
 
-		// Search in session name
-		if strings.Contains(strings.ToLower(session.Name), lowerQuery) {
-			matches = append(matches, storage.SearchMatch{
-				Type:    "name",
-				Content: session.Name,
-				Context: "Session Name",
-			})
+			// Search in system prompt
+			if strings.Contains(strings.ToLower(session.Conversation.SystemPrompt), lowerQuery) {
+				snippet := extractSnippet(session.Conversation.SystemPrompt, lowerQuery, 50)
+				result.AddMatch(domain.NewSearchMatch(
+					domain.SearchMatchTypeSystemPrompt,
+					"",
+					session.Conversation.SystemPrompt,
+					snippet,
+					-1,
+				))
+			}
 		}
 
 		// Search in tags
 		for _, tag := range session.Tags {
 			if strings.Contains(strings.ToLower(tag), lowerQuery) {
-				matches = append(matches, storage.SearchMatch{
-					Type:    "tag",
-					Content: tag,
-					Context: "Tag",
-				})
+				result.AddMatch(domain.NewSearchMatch(
+					domain.SearchMatchTypeTag,
+					"",
+					tag,
+					tag,
+					-1,
+				))
 			}
 		}
 
-		if len(matches) > 0 {
-			results = append(results, &storage.SearchResult{
-				Session: info,
-				Matches: matches,
-			})
+		if result.HasMatches() {
+			results = append(results, result)
 		}
 	}
 
@@ -251,8 +266,8 @@ func (b *Backend) SearchSessions(query string) ([]*storage.SearchResult, error) 
 	return results, nil
 }
 
-// ExportSession exports a session to a writer in the specified format
-func (b *Backend) ExportSession(id string, format storage.ExportFormat, w io.Writer) error {
+// ExportSession exports a session in the specified format
+func (b *Backend) ExportSession(id string, format domain.ExportFormat, w io.Writer) error {
 	logging.LogInfo("Exporting session", "id", id, "format", format)
 
 	session, err := b.LoadSession(id)
@@ -261,122 +276,138 @@ func (b *Backend) ExportSession(id string, format storage.ExportFormat, w io.Wri
 	}
 
 	switch format {
-	case storage.ExportFormatJSON:
+	case domain.ExportFormatJSON:
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "  ")
-		return encoder.Encode(session)
+		if err := encoder.Encode(session); err != nil {
+			return fmt.Errorf("failed to encode session as JSON: %w", err)
+		}
 
-	case storage.ExportFormatMarkdown:
-		return b.exportMarkdown(session, w)
+	case domain.ExportFormatMarkdown:
+		if err := exportMarkdown(session, w); err != nil {
+			return fmt.Errorf("failed to export session as Markdown: %w", err)
+		}
 
 	default:
 		return fmt.Errorf("unsupported export format: %s", format)
 	}
+
+	logging.LogInfo("Session exported", "id", id, "format", format)
+	return nil
 }
 
-// Close cleans up resources (no-op for filesystem)
+// Close cleans up resources (no-op for filesystem backend)
 func (b *Backend) Close() error {
+	logging.LogDebug("Closing filesystem backend")
 	return nil
 }
 
-// exportMarkdown exports a session as markdown
-func (b *Backend) exportMarkdown(session *storage.Session, w io.Writer) error {
-	fmt.Fprintf(w, "# Session: %s\n\n", session.Name)
-	fmt.Fprintf(w, "ID: %s\n", session.ID)
-	fmt.Fprintf(w, "Created: %s\n", session.Created.Format(time.RFC3339))
-	fmt.Fprintf(w, "Updated: %s\n\n", session.Updated.Format(time.RFC3339))
+// Helper functions
 
-	if len(session.Tags) > 0 {
-		fmt.Fprintf(w, "Tags: %s\n\n", strings.Join(session.Tags, ", "))
-	}
-
-	fmt.Fprintln(w, "## Conversation")
-
-	for _, msg := range session.Messages {
-		// Capitalize first letter of role
-		role := msg.Role
-		if len(role) > 0 {
-			role = strings.ToUpper(role[:1]) + role[1:]
-		}
-		fmt.Fprintf(w, "### %s\n", role)
-		fmt.Fprintf(w, "*%s*\n\n", msg.Timestamp.Format(time.RFC3339))
-		fmt.Fprintf(w, "%s\n\n", msg.Content)
-
-		if len(msg.Attachments) > 0 {
-			fmt.Fprintln(w, "Attachments:")
-			for _, att := range msg.Attachments {
-				name := att.Name
-				if name == "" {
-					name = att.Type + "_attachment"
-				}
-				fmt.Fprintf(w, "- %s (%s)\n", name, att.MimeType)
-			}
-			fmt.Fprintln(w)
-		}
-	}
-
-	return nil
+func generateSessionID() string {
+	return fmt.Sprintf("session_%d", time.Now().UnixNano())
 }
 
-// extractSnippet extracts a snippet with context around the matched query
-func extractSnippet(content, query string, contextRadius int) string {
-	lowerContent := strings.ToLower(content)
-	lowerQuery := strings.ToLower(query)
-
-	idx := strings.Index(lowerContent, lowerQuery)
+func extractSnippet(content, searchTerm string, contextLen int) string {
+	idx := strings.Index(strings.ToLower(content), strings.ToLower(searchTerm))
 	if idx == -1 {
-		if len(content) <= contextRadius*2 {
-			return content
-		}
-		return content[:contextRadius*2] + "..."
+		return ""
 	}
 
-	start := idx - contextRadius
-	end := idx + len(query) + contextRadius
-
-	prefix := ""
-	suffix := ""
-
+	// Calculate start and end positions for context
+	start := idx - contextLen
 	if start < 0 {
 		start = 0
-	} else {
-		prefix = "..."
 	}
 
+	end := idx + len(searchTerm) + contextLen
 	if end > len(content) {
 		end = len(content)
-	} else {
-		suffix = "..."
 	}
 
+	// Adjust to word boundaries if possible
+	if start > 0 {
+		// Find start of word
+		for start > 0 && content[start-1] != ' ' {
+			start--
+		}
+	}
+
+	// Adjust end to include full word
+	if end < len(content) {
+		// If we're not at a space, extend to include the current word
+		for end < len(content) && content[end] != ' ' {
+			end++
+		}
+		// Now we're at a space, include one more word
+		if end < len(content) && content[end] == ' ' {
+			end++ // Skip the space
+			// Include the next word
+			for end < len(content) && content[end] != ' ' {
+				end++
+			}
+		}
+	}
+
+	// Extract the snippet
 	snippet := content[start:end]
 
-	// Adjust to word boundaries
-	if start > 0 && !isWordBoundary(content[start-1]) {
-		for i := start; i > 0; i-- {
-			if isWordBoundary(content[i-1]) {
-				start = i
-				snippet = content[start:end]
-				break
-			}
-		}
+	// Add ellipsis if we didn't start at the beginning
+	if start > 0 {
+		snippet = "..." + snippet
 	}
 
-	if end < len(content) && !isWordBoundary(content[end-1]) {
-		for i := end; i < len(content); i++ {
-			if isWordBoundary(content[i]) {
-				end = i
-				snippet = content[start:end]
-				break
-			}
-		}
+	// Add ellipsis if we didn't reach the end
+	if end < len(content) {
+		snippet = snippet + "..."
 	}
 
-	return prefix + strings.TrimSpace(snippet) + suffix
+	return snippet
 }
 
-// isWordBoundary checks if a character is a word boundary
-func isWordBoundary(c byte) bool {
-	return c == ' ' || c == '\n' || c == '\t' || c == '\r' ||
-		c == '.' || c == '!' || c == '?' || c == ',' || c == ';' || c == ':'
+func exportMarkdown(session *domain.Session, w io.Writer) error {
+	fmt.Fprintf(w, "# Session: %s\n\n", session.Name)
+	fmt.Fprintf(w, "**ID:** %s\n", session.ID)
+	fmt.Fprintf(w, "**Created:** %s\n", session.Created.Format(time.RFC3339))
+	fmt.Fprintf(w, "**Updated:** %s\n", session.Updated.Format(time.RFC3339))
+	
+	// Add tags if present
+	if len(session.Tags) > 0 {
+		fmt.Fprintf(w, "Tags: %s\n", strings.Join(session.Tags, ", "))
+	}
+	fmt.Fprintf(w, "\n")
+
+	if session.Conversation != nil {
+		if session.Conversation.SystemPrompt != "" {
+			fmt.Fprintf(w, "## System Prompt\n\n%s\n\n", session.Conversation.SystemPrompt)
+		}
+
+		fmt.Fprintf(w, "## Conversation\n\n")
+		for _, msg := range session.Conversation.Messages {
+			role := string(msg.Role)
+			if len(role) > 0 {
+				role = strings.ToUpper(role[:1]) + role[1:]
+			}
+			fmt.Fprintf(w, "### %s\n\n", role)
+			fmt.Fprintf(w, "%s\n\n", msg.Content)
+			
+			if len(msg.Attachments) > 0 {
+				fmt.Fprintf(w, "**Attachments:**\n")
+				for _, att := range msg.Attachments {
+					name := att.GetDisplayName()
+					if name == "" {
+						name = string(att.Type) + "_attachment"
+					}
+					if att.MimeType != "" {
+						fmt.Fprintf(w, "- %s (%s)\n", name, att.MimeType)
+					} else {
+						fmt.Fprintf(w, "- %s (%s)\n", name, att.Type)
+					}
+				}
+				fmt.Fprintf(w, "\n")
+			}
+		}
+	}
+
+	return nil
 }

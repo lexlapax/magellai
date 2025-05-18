@@ -1,21 +1,21 @@
-// ABOUTME: Adapters to convert between REPL types and storage types
-// ABOUTME: Provides clean separation between REPL concerns and storage abstraction
+// ABOUTME: Adapters to convert between REPL types and domain types
+// ABOUTME: Provides clean separation between REPL concerns and domain abstraction
 
 package repl
 
 import (
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
-	"github.com/lexlapax/magellai/pkg/storage"
 )
 
-// ToStorageSession converts a REPL session to a storage session
-func ToStorageSession(replSession *Session) *storage.Session {
+// ToDomainSession converts a REPL session to a domain session
+func ToDomainSession(replSession *Session) *domain.Session {
 	if replSession == nil {
 		return nil
 	}
 
-	// Convert conversation to storage session fields
-	storageSession := &storage.Session{
+	// Convert to domain session
+	domainSession := &domain.Session{
 		ID:       replSession.ID,
 		Name:     replSession.Name,
 		Config:   replSession.Config,
@@ -25,65 +25,73 @@ func ToStorageSession(replSession *Session) *storage.Session {
 		Metadata: replSession.Metadata,
 	}
 
-	// Copy conversation fields if present
+	// Convert conversation if present
 	if replSession.Conversation != nil {
-		storageSession.Model = replSession.Conversation.Model
-		storageSession.Provider = replSession.Conversation.Provider
-		storageSession.Temperature = replSession.Conversation.Temperature
-		storageSession.MaxTokens = replSession.Conversation.MaxTokens
-		storageSession.SystemPrompt = replSession.Conversation.SystemPrompt
+		domainSession.Conversation = &domain.Conversation{
+			ID:           replSession.Conversation.ID,
+			Model:        replSession.Conversation.Model,
+			Provider:     replSession.Conversation.Provider,
+			Temperature:  replSession.Conversation.Temperature,
+			MaxTokens:    replSession.Conversation.MaxTokens,
+			SystemPrompt: replSession.Conversation.SystemPrompt,
+			Created:      replSession.Conversation.Created,
+			Updated:      replSession.Conversation.Updated,
+			Messages:     make([]domain.Message, len(replSession.Conversation.Messages)),
+		}
 
 		// Convert messages
-		storageSession.Messages = make([]storage.Message, len(replSession.Conversation.Messages))
 		for i, msg := range replSession.Conversation.Messages {
-			storageSession.Messages[i] = ToStorageMessage(msg)
+			domainSession.Conversation.Messages[i] = ToDomainMessage(msg)
 		}
 	}
 
-	return storageSession
+	return domainSession
 }
 
-// FromStorageSession converts a storage session to a REPL session
-func FromStorageSession(storageSession *storage.Session) *Session {
-	if storageSession == nil {
+// FromDomainSession converts a domain session to a REPL session
+func FromDomainSession(domainSession *domain.Session) *Session {
+	if domainSession == nil {
 		return nil
 	}
 
-	// Create conversation from storage session fields
-	conversation := &Conversation{
-		ID:           storageSession.ID,
-		Model:        storageSession.Model,
-		Provider:     storageSession.Provider,
-		Temperature:  storageSession.Temperature,
-		MaxTokens:    storageSession.MaxTokens,
-		SystemPrompt: storageSession.SystemPrompt,
-		Created:      storageSession.Created,
-		Updated:      storageSession.Updated,
-		Messages:     make([]Message, len(storageSession.Messages)),
+	replSession := &Session{
+		ID:       domainSession.ID,
+		Name:     domainSession.Name,
+		Config:   domainSession.Config,
+		Created:  domainSession.Created,
+		Updated:  domainSession.Updated,
+		Tags:     domainSession.Tags,
+		Metadata: domainSession.Metadata,
 	}
 
-	// Convert messages
-	for i, msg := range storageSession.Messages {
-		conversation.Messages[i] = FromStorageMessage(msg)
+	// Convert conversation if present
+	if domainSession.Conversation != nil {
+		replSession.Conversation = &Conversation{
+			ID:           domainSession.Conversation.ID,
+			Model:        domainSession.Conversation.Model,
+			Provider:     domainSession.Conversation.Provider,
+			Temperature:  domainSession.Conversation.Temperature,
+			MaxTokens:    domainSession.Conversation.MaxTokens,
+			SystemPrompt: domainSession.Conversation.SystemPrompt,
+			Created:      domainSession.Conversation.Created,
+			Updated:      domainSession.Conversation.Updated,
+			Messages:     make([]Message, len(domainSession.Conversation.Messages)),
+		}
+
+		// Convert messages
+		for i, msg := range domainSession.Conversation.Messages {
+			replSession.Conversation.Messages[i] = FromDomainMessage(msg)
+		}
 	}
 
-	return &Session{
-		ID:           storageSession.ID,
-		Name:         storageSession.Name,
-		Conversation: conversation,
-		Config:       storageSession.Config,
-		Created:      storageSession.Created,
-		Updated:      storageSession.Updated,
-		Tags:         storageSession.Tags,
-		Metadata:     storageSession.Metadata,
-	}
+	return replSession
 }
 
-// ToStorageMessage converts a REPL message to a storage message
-func ToStorageMessage(replMsg Message) storage.Message {
-	storageMsg := storage.Message{
+// ToDomainMessage converts a REPL message to a domain message
+func ToDomainMessage(replMsg Message) domain.Message {
+	domainMsg := domain.Message{
 		ID:        replMsg.ID,
-		Role:      replMsg.Role,
+		Role:      domain.MessageRole(replMsg.Role),
 		Content:   replMsg.Content,
 		Timestamp: replMsg.Timestamp,
 		Metadata:  replMsg.Metadata,
@@ -91,67 +99,68 @@ func ToStorageMessage(replMsg Message) storage.Message {
 
 	// Convert attachments
 	if len(replMsg.Attachments) > 0 {
-		storageMsg.Attachments = make([]storage.Attachment, len(replMsg.Attachments))
+		domainMsg.Attachments = make([]domain.Attachment, len(replMsg.Attachments))
 		for i, att := range replMsg.Attachments {
-			storageMsg.Attachments[i] = llmAttachmentToStorage(att)
+			domainMsg.Attachments[i] = llmAttachmentToDomain(att)
 		}
 	}
 
-	return storageMsg
+	return domainMsg
 }
 
-// FromStorageMessage converts a storage message to a REPL message
-func FromStorageMessage(storageMsg storage.Message) Message {
+// FromDomainMessage converts a domain message to a REPL message
+func FromDomainMessage(domainMsg domain.Message) Message {
 	replMsg := Message{
-		ID:        storageMsg.ID,
-		Role:      storageMsg.Role,
-		Content:   storageMsg.Content,
-		Timestamp: storageMsg.Timestamp,
-		Metadata:  storageMsg.Metadata,
+		ID:        domainMsg.ID,
+		Role:      string(domainMsg.Role),
+		Content:   domainMsg.Content,
+		Timestamp: domainMsg.Timestamp,
+		Metadata:  domainMsg.Metadata,
 	}
 
 	// Convert attachments
-	if len(storageMsg.Attachments) > 0 {
-		replMsg.Attachments = make([]llm.Attachment, len(storageMsg.Attachments))
-		for i, att := range storageMsg.Attachments {
-			replMsg.Attachments[i] = storageAttachmentToLLM(att)
+	if len(domainMsg.Attachments) > 0 {
+		replMsg.Attachments = make([]llm.Attachment, len(domainMsg.Attachments))
+		for i, att := range domainMsg.Attachments {
+			replMsg.Attachments[i] = domainAttachmentToLLM(att)
 		}
 	}
 
 	return replMsg
 }
 
-// ToStorageSearchResult converts REPL search results to storage search results
-func ToStorageSearchResult(replResult *SearchResult) *storage.SearchResult {
+// ToDomainSearchResult converts REPL search results to domain search results
+func ToDomainSearchResult(replResult *SearchResult) *domain.SearchResult {
 	if replResult == nil {
 		return nil
 	}
 
-	return &storage.SearchResult{
-		Session: ToStorageSessionInfo(replResult.Session),
-		Matches: ToStorageSearchMatches(replResult.Matches),
+	result := domain.NewSearchResult(ToDomainSessionInfo(replResult.Session))
+	for _, match := range replResult.Matches {
+		result.AddMatch(ToDomainSearchMatch(match))
 	}
+	return result
 }
 
-// FromStorageSearchResult converts storage search results to REPL search results
-func FromStorageSearchResult(storageResult *storage.SearchResult) *SearchResult {
-	if storageResult == nil {
+// FromDomainSearchResult converts domain search results to REPL search results
+func FromDomainSearchResult(domainResult *domain.SearchResult) *SearchResult {
+	if domainResult == nil {
 		return nil
 	}
 
 	return &SearchResult{
-		Session: FromStorageSessionInfo(storageResult.Session),
-		Matches: FromStorageSearchMatches(storageResult.Matches),
+		Session: FromDomainSessionInfo(domainResult.Session),
+		Matches: FromDomainSearchMatches(domainResult.Matches),
 	}
 }
 
-// ToStorageSessionInfo converts REPL session info to storage session info
-func ToStorageSessionInfo(replInfo *SessionInfo) *storage.SessionInfo {
+// ToDomainSessionInfo converts REPL session info to domain session info
+func ToDomainSessionInfo(replInfo *SessionInfo) *domain.SessionInfo {
 	if replInfo == nil {
 		return nil
 	}
 
-	return &storage.SessionInfo{
+	return &domain.SessionInfo{
 		ID:           replInfo.ID,
 		Name:         replInfo.Name,
 		Created:      replInfo.Created,
@@ -161,41 +170,37 @@ func ToStorageSessionInfo(replInfo *SessionInfo) *storage.SessionInfo {
 	}
 }
 
-// FromStorageSessionInfo converts storage session info to REPL session info
-func FromStorageSessionInfo(storageInfo *storage.SessionInfo) *SessionInfo {
-	if storageInfo == nil {
+// FromDomainSessionInfo converts domain session info to REPL session info
+func FromDomainSessionInfo(domainInfo *domain.SessionInfo) *SessionInfo {
+	if domainInfo == nil {
 		return nil
 	}
 
 	return &SessionInfo{
-		ID:           storageInfo.ID,
-		Name:         storageInfo.Name,
-		Created:      storageInfo.Created,
-		Updated:      storageInfo.Updated,
-		MessageCount: storageInfo.MessageCount,
-		Tags:         storageInfo.Tags,
+		ID:           domainInfo.ID,
+		Name:         domainInfo.Name,
+		Created:      domainInfo.Created,
+		Updated:      domainInfo.Updated,
+		MessageCount: domainInfo.MessageCount,
+		Tags:         domainInfo.Tags,
 	}
 }
 
-// ToStorageSearchMatches converts REPL search matches to storage search matches
-func ToStorageSearchMatches(replMatches []SearchMatch) []storage.SearchMatch {
-	storageMatches := make([]storage.SearchMatch, len(replMatches))
-	for i, match := range replMatches {
-		storageMatches[i] = storage.SearchMatch{
-			Type:     match.Type,
-			Role:     match.Role,
-			Content:  match.Content,
-			Context:  match.Context,
-			Position: match.Position,
-		}
-	}
-	return storageMatches
+// ToDomainSearchMatch converts a REPL search match to a domain search match
+func ToDomainSearchMatch(replMatch SearchMatch) domain.SearchMatch {
+	return domain.NewSearchMatch(
+		replMatch.Type,
+		replMatch.Role,
+		replMatch.Content,
+		replMatch.Context,
+		replMatch.Position,
+	)
 }
 
-// FromStorageSearchMatches converts storage search matches to REPL search matches
-func FromStorageSearchMatches(storageMatches []storage.SearchMatch) []SearchMatch {
-	replMatches := make([]SearchMatch, len(storageMatches))
-	for i, match := range storageMatches {
+// FromDomainSearchMatches converts domain search matches to REPL search matches
+func FromDomainSearchMatches(domainMatches []domain.SearchMatch) []SearchMatch {
+	replMatches := make([]SearchMatch, len(domainMatches))
+	for i, match := range domainMatches {
 		replMatches[i] = SearchMatch{
 			Type:     match.Type,
 			Role:     match.Role,
@@ -209,22 +214,22 @@ func FromStorageSearchMatches(storageMatches []storage.SearchMatch) []SearchMatc
 
 // Helper functions for attachment conversion
 
-func llmAttachmentToStorage(llmAtt llm.Attachment) storage.Attachment {
-	return storage.Attachment{
-		Type:     string(llmAtt.Type),
+func llmAttachmentToDomain(llmAtt llm.Attachment) domain.Attachment {
+	return domain.Attachment{
+		Type:     domain.AttachmentType(llmAtt.Type),
 		URL:      llmAtt.FilePath, // Use FilePath as URL for compatibility
 		MimeType: llmAtt.MimeType,
 		Name:     llmAtt.FilePath, // Map FilePath to Name
-		Content:  llmAtt.Content,
+		Content:  []byte(llmAtt.Content),
 		Metadata: make(map[string]interface{}), // LLM attachments don't have metadata
 	}
 }
 
-func storageAttachmentToLLM(storageAtt storage.Attachment) llm.Attachment {
+func domainAttachmentToLLM(domainAtt domain.Attachment) llm.Attachment {
 	return llm.Attachment{
-		Type:     llm.AttachmentType(storageAtt.Type),
-		MimeType: storageAtt.MimeType,
-		FilePath: storageAtt.Name, // Map Name back to FilePath
-		Content:  storageAtt.Content,
+		Type:     llm.AttachmentType(domainAtt.Type),
+		MimeType: domainAtt.MimeType,
+		FilePath: domainAtt.Name, // Map Name back to FilePath
+		Content:  string(domainAtt.Content),
 	}
 }
