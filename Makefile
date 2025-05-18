@@ -1,6 +1,6 @@
 # ABOUTME: Makefile for building, testing, and managing the Magellai project
 # ABOUTME: Provides commands for building, testing, linting, and documentation
-.PHONY: all build test test-integration test-all test-race test-coverage clean clean-cache clean-testcache clean-modcache clean-all install fmt lint vet help docker-build docker-test release-build release docs
+.PHONY: all build test test-integration test-all test-race test-coverage test-sqlite clean clean-cache clean-testcache clean-modcache clean-all install fmt lint vet help docker-build docker-test release-build release docs
 
 # Build variables
 BINARY_NAME=magellai
@@ -78,6 +78,11 @@ test-coverage-html:
 	$(GO_TEST) -coverprofile=coverage.out ./...
 	$(GO_CMD) tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report saved to coverage.html"
+
+## test-sqlite: Run tests with SQLite support
+test-sqlite:
+	@echo "Running tests with SQLite support..."
+	$(GO_TEST) -tags="sqlite" ./...
 
 ## lint: Run linter
 lint:

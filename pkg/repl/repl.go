@@ -6,6 +6,7 @@ package repl
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/lexlapax/magellai/internal/logging"
+	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/lexlapax/magellai/pkg/storage"
 	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
@@ -46,6 +48,8 @@ type REPL struct {
 	autoSaveTimer *time.Timer
 	lastSaveTime  time.Time
 	autoRecovery  *AutoRecoveryManager
+	registry      *command.Registry
+	cmdHistory    []string // Command history
 }
 
 // REPLOptions contains options for creating a new REPL
@@ -217,6 +221,14 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 		exitOnEOF:    true,
 		autoSave:     autoSave,
 		lastSaveTime: time.Now(),
+		registry:     command.NewRegistry(),
+		cmdHistory:   make([]string, 0),
+	}
+
+	// Register all REPL commands
+	if err := RegisterREPLCommands(repl, repl.registry); err != nil {
+		logging.LogError(err, "Failed to register REPL commands")
+		return nil, fmt.Errorf("failed to register REPL commands: %w", err)
 	}
 
 	// Setup auto-save timer if enabled
@@ -520,169 +532,82 @@ func (r *REPL) processMessage(message string) error {
 func (r *REPL) handleCommand(cmd string) error {
 	logging.LogDebug("Handling command", "cmd", cmd)
 
+	// Add to command history
+	r.cmdHistory = append(r.cmdHistory, cmd)
+
 	parts := strings.Fields(cmd)
 	if len(parts) == 0 {
 		return nil
 	}
 
-	command := strings.ToLower(parts[0])
+	commandName := strings.TrimPrefix(parts[0], "/")
 	args := parts[1:]
-	logging.LogDebug("Parsed command", "command", command, "argCount", len(args))
+	logging.LogDebug("Parsed command", "command", commandName, "argCount", len(args))
 
-	switch command {
-	case "/help":
-		logging.LogDebug("Showing help")
-		return r.showHelp()
-	case "/exit", "/quit":
-		logging.LogInfo("User requested exit")
-		// Save session before exiting
-		if err := r.manager.SaveSession(r.session); err != nil {
-			logging.LogWarn("Failed to save session on exit", "error", err)
-			fmt.Fprintf(r.writer, "Warning: Failed to save session: %v\n", err)
-		}
-		fmt.Fprintln(r.writer, "Goodbye!")
-		os.Exit(0)
-		return nil // This line is never reached but satisfies the compiler
-	case "/save":
-		logging.LogDebug("Saving session", "args", args)
-		return r.saveSession(args)
-	case "/load":
-		logging.LogDebug("Loading session", "args", args)
-		return r.loadSession(args)
-	case "/reset":
-		logging.LogDebug("Resetting conversation")
-		return r.resetConversation()
-	case "/model":
-		logging.LogDebug("Showing model")
-		return r.showModel()
-	case "/system":
-		return r.setSystemPrompt(args)
-	case "/history":
-		return r.showHistory()
-	case "/sessions":
-		return r.listSessions()
-	case "/attach":
-		return r.attachFile(args)
-	case "/attachments":
-		return r.listAttachments()
-	case "/config":
-		if len(args) == 0 {
-			return fmt.Errorf("usage: /config show|set <key> <value>")
-		}
-		subcommand := args[0]
-		switch subcommand {
-		case "show":
-			return r.showConfig()
-		case "set":
-			if len(args) < 2 {
-				return fmt.Errorf("usage: /config set <key> <value>")
-			}
-			return r.setConfig(args[1:])
-		default:
-			return fmt.Errorf("unknown config subcommand: %s", subcommand)
-		}
-	case "/export":
-		return r.exportSession(args)
-	case "/search":
-		return r.searchSessions(args)
-	case "/tags":
-		return r.listTags()
-	case "/tag":
-		return r.addTag(args)
-	case "/untag":
-		return r.removeTag(args)
-	case "/metadata":
-		return r.showMetadata()
-	case "/meta":
-		if len(args) == 0 {
-			return fmt.Errorf("usage: /meta set <key> <value> or /meta del <key>")
-		}
-		subcommand := args[0]
-		switch subcommand {
-		case "set":
-			if len(args) < 3 {
-				return fmt.Errorf("usage: /meta set <key> <value>")
-			}
-			return r.setMetadata(args[1], strings.Join(args[2:], " "))
-		case "del":
-			if len(args) < 2 {
-				return fmt.Errorf("usage: /meta del <key>")
-			}
-			return r.deleteMetadata(args[1])
-		default:
-			return fmt.Errorf("unknown meta subcommand: %s", subcommand)
-		}
-	case "/branch":
-		return r.cmdBranch(args)
-	case "/branches":
-		return r.cmdBranches(args)
-	case "/tree":
-		return r.cmdTree(args)
-	case "/switch":
-		return r.cmdSwitch(args)
-	case "/merge":
-		return r.cmdMerge(args)
-	case "/recover":
-		return r.cmdRecover(args)
-	default:
-		return fmt.Errorf("unknown command: %s", command)
+	// Look up command in registry
+	cmdInterface, err := r.registry.Get(commandName)
+	if err != nil {
+		// Command not found in registry, check legacy commands
+		commandName = "/" + commandName
+		return r.handleLegacyCommand(commandName, args)
 	}
+
+	// Create execution context
+	execCtx := CreateCommandContext(args, r.reader, r.writer, r.writer)
+	execCtx.Config = r.config
+
+	// Execute the command
+	ctx := context.Background()
+	if err := cmdInterface.Execute(ctx, execCtx); err != nil {
+		// Handle special exit case
+		if errors.Is(err, io.EOF) {
+			os.Exit(0)
+		}
+		return err
+	}
+
+	return nil
+}
+
+// handleLegacyCommand handles commands not yet migrated to the registry
+func (r *REPL) handleLegacyCommand(command string, args []string) error {
+	logging.LogDebug("Handling legacy command", "command", command, "argCount", len(args))
+
+	// Most commands should be handled by the registry
+	// This should return unknown command error
+	return fmt.Errorf("unknown command: %s", command)
 }
 
 // handleSpecialCommand handles special commands (starting with :)
 func (r *REPL) handleSpecialCommand(cmd string) error {
 	logging.LogDebug("Handling special command", "cmd", cmd)
 
+	// Add to command history
+	r.cmdHistory = append(r.cmdHistory, cmd)
+
 	parts := strings.Fields(cmd)
 	if len(parts) == 0 {
 		return nil
 	}
 
-	command := strings.ToLower(parts[0])
+	commandName := parts[0] // Keep the : prefix for special commands
 	args := parts[1:]
-	logging.LogDebug("Parsed special command", "command", command, "argCount", len(args))
+	logging.LogDebug("Parsed special command", "command", commandName, "argCount", len(args))
 
-	switch command {
-	case ":model":
-		logging.LogDebug("Switching model", "args", args)
-		return r.switchModel(args)
-	case ":stream":
-		logging.LogDebug("Toggling streaming", "args", args)
-		return r.toggleStreaming(args)
-	case ":temperature":
-		logging.LogDebug("Setting temperature", "args", args)
-		return r.setTemperature(args)
-	case ":max_tokens":
-		logging.LogDebug("Setting max tokens", "args", args)
-		return r.setMaxTokens(args)
-	case ":multiline":
-		logging.LogDebug("Toggling multiline")
-		return r.toggleMultiline()
-	case ":verbosity":
-		logging.LogDebug("Setting verbosity", "args", args)
-		return r.setVerbosity(args)
-	case ":output":
-		logging.LogDebug("Setting output format", "args", args)
-		return r.setOutputFormat(args)
-	case ":profile":
-		logging.LogDebug("Switching profile", "args", args)
-		return r.switchProfile(args)
-	case ":attach":
-		logging.LogDebug("Attaching file", "args", args)
-		return r.attachFile(args)
-	case ":attach-remove":
-		logging.LogDebug("Removing attachment", "args", args)
-		return r.removeAttachment(args)
-	case ":attach-list":
-		logging.LogDebug("Listing attachments")
-		return r.listAttachments()
-	case ":system":
-		logging.LogDebug("Setting system prompt", "args", args)
-		return r.setSystemPrompt(args)
-	default:
-		logging.LogDebug("Unknown special command", "command", command)
-		return fmt.Errorf("unknown special command: %s", command)
+	// Look up command in registry
+	cmdInterface, err := r.registry.Get(commandName)
+	if err != nil {
+		// Command not found in registry
+		return fmt.Errorf("unknown special command: %s", commandName)
 	}
+
+	// Create execution context
+	execCtx := CreateCommandContext(args, r.reader, r.writer, r.writer)
+	execCtx.Config = r.config
+
+	// Execute the command
+	ctx := context.Background()
+	return cmdInterface.Execute(ctx, execCtx)
 }
 
 // Command implementations follow...
