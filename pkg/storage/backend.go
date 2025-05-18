@@ -31,6 +31,14 @@ type Backend interface {
 
 	// ExportSession exports a session in the specified format
 	ExportSession(id string, format domain.ExportFormat, w io.Writer) error
+	
+	// Branch-specific operations
+	
+	// GetChildren returns all direct child branches of a session
+	GetChildren(sessionID string) ([]*domain.SessionInfo, error)
+	
+	// GetBranchTree returns the full branch tree starting from a session
+	GetBranchTree(sessionID string) (*domain.BranchTree, error)
 
 	// Close cleans up any resources used by the backend
 	Close() error

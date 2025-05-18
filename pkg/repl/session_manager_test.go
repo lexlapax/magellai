@@ -173,7 +173,7 @@ func TestSessionManager_Integration(t *testing.T) {
 	assert.Equal(t, 1, backend.calls["SaveSession"])
 
 	// Test loading the session
-	loaded, err := sessionManager.LoadSession(session.ID)
+	loaded, err := sessionManager.StorageManager.LoadSession(session.ID)
 	assert.NoError(t, err)
 	assert.NotNil(t, loaded)
 	assert.Equal(t, session.ID, loaded.ID)
@@ -196,7 +196,7 @@ func TestSessionManager_Integration(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify deletion
-	_, err = sessionManager.LoadSession(session.ID)
+	_, err = sessionManager.StorageManager.LoadSession(session.ID)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "session not found")
 }
@@ -225,7 +225,7 @@ func TestSessionManager_Delegation(t *testing.T) {
 			name:   "LoadSession",
 			method: "LoadSession",
 			test: func() {
-				_, _ = sessionManager.LoadSession(session.ID)
+				_, _ = sessionManager.StorageManager.LoadSession(session.ID)
 			},
 		},
 		{

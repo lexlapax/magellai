@@ -42,3 +42,32 @@ func (sm *SessionManager) NewSession(name string) (*Session, error) {
 	logging.LogInfo("Session created successfully", "id", session.ID, "name", name)
 	return session, nil
 }
+
+// GetCurrentSession returns the currently active session
+func (sm *SessionManager) GetCurrentSession() *Session {
+	return sm.StorageManager.CurrentSession()
+}
+
+// LoadSession loads a session by ID
+func (sm *SessionManager) LoadSession(session *Session) error {
+	logging.LogInfo("Loading session", "id", session.ID)
+	sm.StorageManager.SetCurrentSession(session)
+	return nil
+}
+
+// GenerateSessionID generates a new unique session ID
+func (sm *SessionManager) GenerateSessionID() string {
+	return sm.StorageManager.GenerateSessionID()
+}
+
+// hasUnsavedChanges checks if the current session has unsaved changes
+func (sm *SessionManager) hasUnsavedChanges() bool {
+	// This is a simplified check - in practice might track modifications
+	current := sm.GetCurrentSession()
+	if current == nil {
+		return false
+	}
+	// Check if session has been modified since last save
+	// For now, assume any session with messages might have changes
+	return current.Conversation != nil && len(current.Conversation.Messages) > 0
+}

@@ -25,8 +25,8 @@ This document provides a detailed, phased implementation plan for the Magellai p
   - [x] Auto-save functionality ✅
   - [x] Session export formats (JSON, Markdown) ✅
   - [x] Session search by content ✅
-  - [ ] Session tags and metadata
-  - [ ] Session branching/forking
+  - [x] Session tags and metadata ✅
+  - [x] Session branching/forking ✅
   - [ ] Session merging
 
 
@@ -72,7 +72,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Update existing package docs
     - [ ] Create migration guide
 - [ ] Update README with new architecture
-- [ ] Create ARCHITECTURE.md if needed
+- [ ] Create docs/technical/architecture.md if needed
 
 ### 4.8 Final validation and rollout *(REVISIT - moved from 4.6)*
 - [ ] Run full test suite

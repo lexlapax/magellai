@@ -23,8 +23,8 @@ The project follows a library-first design where the core intelligence (LLM prov
     ✅ Auto-save functionality - Complete
     ✅ Session export formats (JSON, Markdown) - Complete
     ✅ Session search by content - Complete
-    🔲 Session tags and metadata - Pending
-    🔲 Session branching/forking - Pending
+    ✅ Session tags and metadata - Complete
+    ✅ Session branching/forking - Complete
     🔲 Session merging - Pending
   🔲 Phase 4.3: Error Handling & Recovery - Pending
   🔲 Phase 4.4: REPL Integration with Unified Command System - Pending

@@ -116,7 +116,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	if opts.SessionID != "" {
 		// Resume existing session
 		logging.LogInfo("Resuming existing session", "sessionID", opts.SessionID)
-		session, err = manager.LoadSession(opts.SessionID)
+		session, err = manager.StorageManager.LoadSession(opts.SessionID)
 		if err != nil {
 			logging.LogError(err, "Failed to load session", "sessionID", opts.SessionID)
 			return nil, fmt.Errorf("failed to load session: %w", err)
@@ -476,6 +476,14 @@ func (r *REPL) handleCommand(cmd string) error {
 		default:
 			return fmt.Errorf("unknown meta subcommand: %s", subcommand)
 		}
+	case "/branch":
+		return r.cmdBranch(args)
+	case "/branches":
+		return r.cmdBranches(args)
+	case "/tree":
+		return r.cmdTree(args)
+	case "/switch":
+		return r.cmdSwitch(args)
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}
@@ -567,6 +575,10 @@ COMMANDS:
   /metadata          Show session metadata
   /meta set <k> <v>  Set metadata value
   /meta del <key>    Delete metadata key
+  /branch <name> [at <n>]  Create a new branch at message n
+  /branches          List all branches of current session
+  /tree              Show session branch tree
+  /switch <id>       Switch to a different branch
 
 SPECIAL COMMANDS:
   :model <name>         Switch to a different model

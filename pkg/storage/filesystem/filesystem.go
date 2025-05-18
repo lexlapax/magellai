@@ -411,3 +411,59 @@ func exportMarkdown(session *domain.Session, w io.Writer) error {
 
 	return nil
 }
+
+// GetChildren returns all direct child branches of a session
+func (b *Backend) GetChildren(sessionID string) ([]*domain.SessionInfo, error) {
+	logging.LogDebug("Getting children for session", "sessionID", sessionID)
+	
+	// Load the parent session to get child IDs
+	parent, err := b.LoadSession(sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load parent session: %w", err)
+	}
+	
+	children := make([]*domain.SessionInfo, 0, len(parent.ChildIDs))
+	
+	// Load each child session info
+	for _, childID := range parent.ChildIDs {
+		child, err := b.LoadSession(childID)
+		if err != nil {
+			logging.LogDebug("Failed to load child session", "childID", childID, "error", err)
+			continue // Skip missing children
+		}
+		children = append(children, child.ToSessionInfo())
+	}
+	
+	return children, nil
+}
+
+// GetBranchTree returns the full branch tree starting from a session
+func (b *Backend) GetBranchTree(sessionID string) (*domain.BranchTree, error) {
+	logging.LogDebug("Getting branch tree for session", "sessionID", sessionID)
+	
+	// Load the root session
+	session, err := b.LoadSession(sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load session: %w", err)
+	}
+	
+	// Create the tree node
+	tree := &domain.BranchTree{
+		Session:  session.ToSessionInfo(),
+		Children: make([]*domain.BranchTree, 0),
+	}
+	
+	// Recursively build the tree
+	if len(session.ChildIDs) > 0 {
+		for _, childID := range session.ChildIDs {
+			childTree, err := b.GetBranchTree(childID)
+			if err != nil {
+				logging.LogDebug("Failed to get child tree", "childID", childID, "error", err)
+				continue // Skip missing children
+			}
+			tree.Children = append(tree.Children, childTree)
+		}
+	}
+	
+	return tree, nil
+}

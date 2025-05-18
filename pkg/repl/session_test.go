@@ -74,7 +74,7 @@ func TestSessionManager_SaveAndLoadSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Load session
-	loaded, err := sm.LoadSession(session.ID)
+	loaded, err := sm.StorageManager.LoadSession(session.ID)
 	require.NoError(t, err)
 
 	assert.Equal(t, session.ID, loaded.ID)
@@ -90,7 +90,7 @@ func TestSessionManager_LoadSessionNotFound(t *testing.T) {
 	sm, cleanup := setupTestSessionManager(t)
 	defer cleanup()
 
-	_, err := sm.LoadSession("nonexistent-id")
+	_, err := sm.StorageManager.LoadSession("nonexistent-id")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "session not found")
 }
@@ -155,7 +155,7 @@ func TestSessionManager_DeleteSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify it exists
-	loaded, err := sm.LoadSession(session.ID)
+	loaded, err := sm.StorageManager.LoadSession(session.ID)
 	require.NoError(t, err)
 	assert.Equal(t, session.ID, loaded.ID)
 
@@ -164,7 +164,7 @@ func TestSessionManager_DeleteSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify it's gone
-	_, err = sm.LoadSession(session.ID)
+	_, err = sm.StorageManager.LoadSession(session.ID)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "session not found")
 }

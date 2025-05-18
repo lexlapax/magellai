@@ -6,6 +6,7 @@ package repl
 import (
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/storage"
@@ -98,4 +99,32 @@ func IsBackendAvailable(backendType storage.BackendType) bool {
 // GetAvailableBackends returns the list of available storage backends
 func GetAvailableBackends() []storage.BackendType {
 	return storage.GetAvailableBackends()
+}
+
+// CurrentSession holds the current active session (temporary implementation)
+var currentSession *Session
+
+// CurrentSession returns the current active session
+func (sm *StorageManager) CurrentSession() *Session {
+	return currentSession
+}
+
+// SetCurrentSession sets the current active session
+func (sm *StorageManager) SetCurrentSession(session *Session) {
+	currentSession = session
+}
+
+// GenerateSessionID generates a new unique session ID
+func (sm *StorageManager) GenerateSessionID() string {
+	return fmt.Sprintf("session_%d", time.Now().UnixNano())
+}
+
+// GetChildren returns all direct child branches of a session
+func (sm *StorageManager) GetChildren(sessionID string) ([]*SessionInfo, error) {
+	return sm.backend.GetChildren(sessionID)
+}
+
+// GetBranchTree returns the full branch tree starting from a session
+func (sm *StorageManager) GetBranchTree(sessionID string) (*domain.BranchTree, error) {
+	return sm.backend.GetBranchTree(sessionID)
 }

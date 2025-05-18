@@ -4,6 +4,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 )
 
@@ -18,6 +19,12 @@ type Session struct {
 	Updated      time.Time              `json:"updated"`
 	Tags         []string               `json:"tags,omitempty"`
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	
+	// Branching support
+	ParentID     string                 `json:"parent_id,omitempty"`     // ID of the parent session if this is a branch
+	BranchPoint  int                    `json:"branch_point,omitempty"`  // Message index where the branch occurred
+	BranchName   string                 `json:"branch_name,omitempty"`   // Optional name for this branch
+	ChildIDs     []string               `json:"child_ids,omitempty"`     // IDs of child branches
 }
 
 // SessionInfo provides summary information about a session.
@@ -31,6 +38,12 @@ type SessionInfo struct {
 	Model        string    `json:"model,omitempty"`
 	Provider     string    `json:"provider,omitempty"`
 	Tags         []string  `json:"tags,omitempty"`
+	
+	// Branch information
+	ParentID     string    `json:"parent_id,omitempty"`
+	BranchName   string    `json:"branch_name,omitempty"`
+	ChildCount   int       `json:"child_count,omitempty"`
+	IsBranch     bool      `json:"is_branch,omitempty"`
 }
 
 // NewSession creates a new session with the given ID.
@@ -78,11 +91,15 @@ func (s *Session) RemoveTag(tag string) {
 // ToSessionInfo creates a SessionInfo summary from the full Session.
 func (s *Session) ToSessionInfo() *SessionInfo {
 	info := &SessionInfo{
-		ID:      s.ID,
-		Name:    s.Name,
-		Created: s.Created,
-		Updated: s.Updated,
-		Tags:    s.Tags,
+		ID:         s.ID,
+		Name:       s.Name,
+		Created:    s.Created,
+		Updated:    s.Updated,
+		Tags:       s.Tags,
+		ParentID:   s.ParentID,
+		BranchName: s.BranchName,
+		ChildCount: len(s.ChildIDs),
+		IsBranch:   s.IsBranch(),
 	}
 
 	if s.Conversation != nil {
@@ -92,4 +109,114 @@ func (s *Session) ToSessionInfo() *SessionInfo {
 	}
 
 	return info
+}
+
+// CreateBranch creates a new branch from this session at the specified message index.
+// Returns the new branched session.
+func (s *Session) CreateBranch(branchID string, branchName string, messageIndex int) (*Session, error) {
+	if messageIndex < 0 || messageIndex > len(s.Conversation.Messages) {
+		return nil, errors.New("invalid message index for branching")
+	}
+	
+	now := time.Now()
+	branch := &Session{
+		ID:         branchID,
+		Name:       branchName,
+		Created:    now,
+		Updated:    now,
+		Tags:       append([]string{}, s.Tags...), // Copy tags
+		Config:     copyMap(s.Config),
+		ParentID:   s.ID,
+		BranchPoint: messageIndex,
+		BranchName:  branchName,
+		ChildIDs:   []string{},
+		Metadata:   make(map[string]interface{}),
+	}
+	
+	// Create the conversation with messages up to the branch point
+	branch.Conversation = &Conversation{
+		ID:           branchID,
+		Model:        s.Conversation.Model,
+		Provider:     s.Conversation.Provider,
+		Temperature:  s.Conversation.Temperature,
+		MaxTokens:    s.Conversation.MaxTokens,
+		SystemPrompt: s.Conversation.SystemPrompt,
+		Created:      now,
+		Updated:      now,
+		Messages:     make([]Message, 0, messageIndex),
+		Metadata:     copyMap(s.Conversation.Metadata),
+	}
+	
+	// Copy messages up to the branch point
+	for i := 0; i < messageIndex && i < len(s.Conversation.Messages); i++ {
+		msgCopy := s.Conversation.Messages[i]
+		msgCopy.ID = generateMessageID() // Generate new ID for the copy
+		branch.Conversation.Messages = append(branch.Conversation.Messages, msgCopy)
+	}
+	
+	// Add this branch to the parent's child list
+	s.AddChild(branchID)
+	
+	return branch, nil
+}
+
+// AddChild adds a child branch ID to this session.
+func (s *Session) AddChild(childID string) {
+	// Check if child ID already exists
+	for _, id := range s.ChildIDs {
+		if id == childID {
+			return
+		}
+	}
+	s.ChildIDs = append(s.ChildIDs, childID)
+	s.UpdateTimestamp()
+}
+
+// RemoveChild removes a child branch ID from this session.
+func (s *Session) RemoveChild(childID string) {
+	filtered := make([]string, 0, len(s.ChildIDs))
+	for _, id := range s.ChildIDs {
+		if id != childID {
+			filtered = append(filtered, id)
+		}
+	}
+	s.ChildIDs = filtered
+	s.UpdateTimestamp()
+}
+
+// IsBranch returns true if this session is a branch of another session.
+func (s *Session) IsBranch() bool {
+	return s.ParentID != ""
+}
+
+// HasBranches returns true if this session has child branches.
+func (s *Session) HasBranches() bool {
+	return len(s.ChildIDs) > 0
+}
+
+// GetBranchDepth returns the depth of this branch in the tree (0 for root).
+func (s *Session) GetBranchDepth() int {
+	if s.ParentID == "" {
+		return 0
+	}
+	// This is a simple implementation. In practice, you'd need to traverse the parent chain.
+	return 1 // Placeholder - would need repository access to compute full depth
+}
+
+// Helper function to deep copy a map
+func copyMap(src map[string]interface{}) map[string]interface{} {
+	if src == nil {
+		return nil
+	}
+	dst := make(map[string]interface{})
+	for k, v := range src {
+		dst[k] = v
+	}
+	return dst
+}
+
+// Helper function to generate a new message ID
+func generateMessageID() string {
+	// This is a placeholder. In practice, you'd use a proper ID generation method.
+	return time.Now().Format("20060102150405.000000")
 }

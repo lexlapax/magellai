@@ -36,7 +36,7 @@ func (r *REPL) loadSession(args []string) error {
 	}
 
 	sessionID := args[0]
-	session, err := r.manager.LoadSession(sessionID)
+	session, err := r.manager.StorageManager.LoadSession(sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to load session: %w", err)
 	}

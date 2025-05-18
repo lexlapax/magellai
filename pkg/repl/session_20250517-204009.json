@@ -1,0 +1,29 @@
+{
+  "id": "session_1747539609415359000",
+  "name": "Interactive Chat",
+  "conversation": {
+    "id": "session_1747539609415359000",
+    "messages": [
+      {
+        "id": "20624b61-5f81-4617-b6fd-7260b88e342f",
+        "role": "user",
+        "content": "Test message",
+        "timestamp": "2025-05-17T20:40:09.415528-07:00"
+      },
+      {
+        "id": "23e84c93-93b3-49c0-ab01-3d1af78b5251",
+        "role": "assistant",
+        "content": "Test response",
+        "timestamp": "2025-05-17T20:40:09.415534-07:00"
+      }
+    ],
+    "model": "mock/test-model",
+    "provider": "mock",
+    "temperature": 0.7,
+    "max_tokens": 0,
+    "created": "2025-05-17T20:40:09.415362-07:00",
+    "updated": "2025-05-17T20:40:09.415534-07:00"
+  },
+  "created": "2025-05-17T20:40:09.415362-07:00",
+  "updated": "2025-05-17T20:40:09.415534-07:00"
+}

@@ -472,3 +472,56 @@ Implementation details:
     - [x] Verify JSON serialization compatibility
     - [x] Test database migration if schema changes
     - [x] Ensure existing sessions can be loaded
+
+### 4.2.2 Session tags and metadata ✅
+- [x] Implement tag management functionality in domain layer
+    - [x] Tag fields already exist in Session and SessionInfo structs
+    - [x] AddTag method implemented for adding tags
+    - [x] RemoveTag method implemented for removing tags
+    - [x] Tags are persisted in storage backends
+    - [x] Tags are included in session search functionality
+    
+- [x] Implement metadata management functionality in domain layer
+    - [x] Metadata field already exists in Session struct
+    - [x] Metadata is persisted in storage backends
+    - [x] Special handling for pending_attachments metadata
+    
+- [x] Implement REPL commands for tag management
+    - [x] `/tags` - List all tags for current session
+    - [x] `/tag <tag>` - Add a tag to current session
+    - [x] `/untag <tag>` - Remove a tag from current session
+    
+- [x] Implement REPL commands for metadata management
+    - [x] `/metadata` - Show session metadata
+    - [x] `/meta set <key> <value>` - Set metadata value
+    - [x] `/meta del <key>` - Delete metadata key
+    
+- [x] Update help text with new commands
+- [x] Implement auto-save after tag/metadata operations
+- [x] Add proper logging for all operations
+- [x] Create helper functions for attachment display names
+- [x] Fix all compilation and linter issues
+- [x] Update command tests to match new implementations
+
+Implementation details:
+- Tags integrated with existing search functionality
+- Metadata commands handle internal keys properly
+- Auto-save triggered after tag/metadata changes
+- Comprehensive error handling and user feedback
+
+- [x] Session branching/forking ✅
+  - [x] Added branching support to domain Session type with ParentID, BranchPoint, BranchName, and ChildIDs fields
+  - [x] Implemented CreateBranch method on Session that creates a new branch at a specified message index
+  - [x] Added branch management methods: AddChild, RemoveChild, IsBranch, HasBranches
+  - [x] Extended SessionInfo to include branch information (ParentID, BranchName, ChildCount, IsBranch)
+  - [x] Added GetChildren and GetBranchTree methods to storage backend interface
+  - [x] Implemented branch operations in filesystem storage backend
+  - [x] Created comprehensive tests for branch functionality
+  - [x] Added REPL commands for branching:
+    - /branch <name> [at <message_index>] - Create a new branch
+    - /branches - List all branches of current session
+    - /tree - Show session branch tree
+    - /switch <branch_id> - Switch to a different branch
+  - [x] Updated help text to include new branch commands
+  - [x] Fixed storage interface method calls throughout REPL
+  - [x] Updated mock backend to implement new branch methods

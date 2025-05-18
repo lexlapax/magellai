@@ -128,3 +128,56 @@ func (m *MockStorageBackend) Close() error {
 	m.calls["Close"]++
 	return m.err
 }
+
+// GetChildren returns all direct child branches of a session
+func (m *MockStorageBackend) GetChildren(sessionID string) ([]*domain.SessionInfo, error) {
+	m.calls["GetChildren"]++
+	if m.err != nil {
+		return nil, m.err
+	}
+	
+	// Find the session
+	session, exists := m.sessions[sessionID]
+	if !exists {
+		return nil, fmt.Errorf("session not found: %s", sessionID)
+	}
+	
+	// Get info for all child sessions
+	children := make([]*domain.SessionInfo, 0, len(session.ChildIDs))
+	for _, childID := range session.ChildIDs {
+		if child, exists := m.sessions[childID]; exists {
+			children = append(children, child.ToSessionInfo())
+		}
+	}
+	
+	return children, nil
+}
+
+// GetBranchTree returns the full branch tree starting from a session
+func (m *MockStorageBackend) GetBranchTree(sessionID string) (*domain.BranchTree, error) {
+	m.calls["GetBranchTree"]++
+	if m.err != nil {
+		return nil, m.err
+	}
+	
+	// Find the session
+	session, exists := m.sessions[sessionID]
+	if !exists {
+		return nil, fmt.Errorf("session not found: %s", sessionID)
+	}
+	
+	// Create the tree node
+	tree := &domain.BranchTree{
+		Session:  session.ToSessionInfo(),
+		Children: make([]*domain.BranchTree, 0),
+	}
+	
+	// Recursively build the tree
+	for _, childID := range session.ChildIDs {
+		if childTree, err := m.GetBranchTree(childID); err == nil {
+			tree.Children = append(tree.Children, childTree)
+		}
+	}
+	
+	return tree, nil
+}
