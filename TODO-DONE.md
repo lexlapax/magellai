@@ -572,7 +572,7 @@ Implementation details:
     - [x] Practical examples (merging-examples.md)
     - [x] Feature summary (session-merging.md)
 
-### 4.3 Error Handling & Recovery *(PARTIALLY COMPLETE)* ✅ (2025-05-17)
+### 4.3 Error Handling & Recovery ✅ (2025-05-17)
 - [x] Ensure loglevels are implemented at the library level with cmd line just passing the argument through ✅
   - [x] set default loglevel to warn ✅
     - Changed default log level from "info" to "warn" across the codebase
@@ -580,7 +580,7 @@ Implementation details:
     - Environment variable MAGELLAI_LOG_LEVEL is now properly respected
     - Fixed double logger initialization issues
 
-- [ ] Implement robust error handling: *(PARTIALLY COMPLETE)*
+- [x] Implement robust error handling: ✅
   - [x] Graceful network error recovery ✅
     - Created errorhandler.go with retry logic and exponential backoff
     - Implemented intelligent error classification for retryable vs non-retryable errors
@@ -594,10 +594,16 @@ Implementation details:
     - Includes timeout handling for each operation
     - Chain of providers can be configured with different models/providers
     
-  - [ ] Session auto-recovery after crashes *(REVISIT)*
-    - Complex implementation requiring crash detection infrastructure
-    - May need process monitoring and state persistence
-    - Deferred for future implementation
+  - [x] Session auto-recovery after crashes ✅
+    - Created auto_recovery.go with comprehensive crash recovery system
+    - Implemented automatic periodic saving of session state
+    - Added graceful shutdown signal handling (SIGTERM, SIGINT)
+    - Recovery state includes full session data and metadata
+    - Configurable recovery intervals and retention policies
+    - Backup rotation with configurable count
+    - Recovery prompt on REPL startup when crash is detected
+    - Manual recovery commands (/recover) for user control
+    - Integrated with auto-save for efficient state management
     
   - [x] Partial response handling ✅
     - Created partial_response.go with streaming recovery logic
@@ -626,4 +632,7 @@ Implementation Files Created:
 - pkg/llm/context_manager.go - Context length management
 - pkg/llm/errorhandler_test.go - Tests for error handling
 - pkg/llm/resilient_provider_test.go - Tests for resilient provider
+- pkg/repl/auto_recovery.go - Automatic session recovery system
+- pkg/repl/auto_recovery_test.go - Auto-recovery unit tests
+- pkg/repl/commands_recovery.go - Manual recovery commands
 - All tests passing, comprehensive error recovery in place

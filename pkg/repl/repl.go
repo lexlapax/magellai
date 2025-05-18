@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/lexlapax/magellai/internal/logging"
@@ -43,6 +45,7 @@ type REPL struct {
 	autoSave      bool
 	autoSaveTimer *time.Timer
 	lastSaveTime  time.Time
+	autoRecovery  *AutoRecoveryManager
 }
 
 // REPLOptions contains options for creating a new REPL
@@ -113,6 +116,46 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	manager := &SessionManager{StorageManager: backend}
 
 	var session *Session
+	
+	// Check for crash recovery first if no specific session is requested
+	if opts.SessionID == "" {
+		// Create auto-recovery manager to check for recoverable sessions
+		tempAutoRecovery, err := NewAutoRecoveryManager(DefaultAutoRecoveryConfig(), backend)
+		if err == nil {
+			recoveryState, err := tempAutoRecovery.CheckRecovery()
+			if err == nil && recoveryState != nil {
+				fmt.Fprintf(opts.Writer, "Found recoverable session from previous crash.\n")
+				fmt.Fprintf(opts.Writer, "Session ID: %s\n", recoveryState.SessionID)
+				fmt.Fprintf(opts.Writer, "Session Name: %s\n", recoveryState.SessionName)
+				fmt.Fprintf(opts.Writer, "Last saved: %s\n", recoveryState.Timestamp.Format("2006-01-02 15:04:05"))
+				fmt.Fprint(opts.Writer, "Recover this session? (y/n): ")
+				
+				reader := bufio.NewReader(opts.Reader)
+				response, _ := reader.ReadString('\n')
+				response = strings.TrimSpace(strings.ToLower(response))
+				
+				if response == "y" || response == "yes" {
+					session, err = tempAutoRecovery.RecoverSession(recoveryState)
+					if err != nil {
+						logging.LogWarn("Failed to recover session", "error", err)
+					} else {
+						logging.LogInfo("Recovered session from crash", "id", session.ID)
+						fmt.Fprintf(opts.Writer, "Session recovered successfully.\n\n")
+						// Clear the recovery state since we've recovered
+						if err := tempAutoRecovery.ClearRecoveryState(); err != nil {
+							logging.LogWarn("Failed to clear recovery state after recovery", "error", err)
+						}
+					}
+				} else {
+					// User declined recovery, clear the state
+					if err := tempAutoRecovery.ClearRecoveryState(); err != nil {
+						logging.LogWarn("Failed to clear recovery state after decline", "error", err)
+					}
+				}
+			}
+		}
+	}
+	
 	if opts.SessionID != "" {
 		// Resume existing session
 		logging.LogInfo("Resuming existing session", "sessionID", opts.SessionID)
@@ -191,6 +234,36 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 		logging.LogInfo("Auto-save enabled", "interval", duration)
 	}
 
+	// Initialize auto-recovery
+	autoRecoveryConfig := DefaultAutoRecoveryConfig()
+	if cfg.Exists("session.auto_recovery") {
+		// Allow configuration override
+		if cfg.Exists("session.auto_recovery.enabled") {
+			autoRecoveryConfig.Enabled = cfg.GetBool("session.auto_recovery.enabled")
+		}
+		if cfg.Exists("session.auto_recovery.interval") {
+			interval := cfg.GetString("session.auto_recovery.interval")
+			if duration, err := time.ParseDuration(interval); err == nil {
+				autoRecoveryConfig.SaveInterval = duration
+			}
+		}
+		if cfg.Exists("session.auto_recovery.max_age") {
+			age := cfg.GetString("session.auto_recovery.max_age")
+			if duration, err := time.ParseDuration(age); err == nil {
+				autoRecoveryConfig.MaxRecoveryAge = duration
+			}
+		}
+	}
+
+	autoRecovery, err := NewAutoRecoveryManager(autoRecoveryConfig, manager.StorageManager)
+	if err != nil {
+		logging.LogWarn("Failed to create auto-recovery manager", "error", err)
+		// Continue without auto-recovery
+	} else {
+		repl.autoRecovery = autoRecovery
+		logging.LogInfo("Auto-recovery initialized", "enabled", autoRecoveryConfig.Enabled)
+	}
+
 	return repl, nil
 }
 
@@ -203,11 +276,47 @@ func (r *REPL) Run() error {
 	fmt.Fprintf(r.writer, "Model: %s\n", r.session.Conversation.Model)
 	fmt.Fprintf(r.writer, "Session: %s\n\n", r.session.ID)
 
-	// Cleanup function to stop auto-save
+	// Start auto-recovery if available
+	if r.autoRecovery != nil {
+		if err := r.autoRecovery.Start(); err != nil {
+			logging.LogWarn("Failed to start auto-recovery", "error", err)
+		}
+	}
+
+	// Setup signal handler for graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	
+	go func() {
+		sig := <-sigChan
+		logging.LogInfo("Received signal, saving recovery state", "signal", sig)
+		
+		// Force save recovery state
+		if r.autoRecovery != nil {
+			if err := r.autoRecovery.ForceRecoverySave(); err != nil {
+				logging.LogError(err, "Failed to save recovery state on signal")
+			} else {
+				logging.LogInfo("Recovery state saved successfully")
+			}
+		}
+		
+		// Exit
+		os.Exit(0)
+	}()
+
+	// Cleanup function to stop auto-save and auto-recovery
 	defer func() {
 		if r.autoSave {
 			r.stopAutoSave()
 			logging.LogInfo("Stopped auto-save timer")
+		}
+		if r.autoRecovery != nil {
+			r.autoRecovery.Stop()
+			// Save recovery state one final time
+			if err := r.autoRecovery.SaveRecoveryState(); err != nil {
+				logging.LogWarn("Failed to save final recovery state", "error", err)
+			}
+			logging.LogInfo("Stopped auto-recovery")
 		}
 	}()
 
@@ -315,6 +424,15 @@ func (r *REPL) processMessage(message string) error {
 	// Add user message to conversation
 	logging.LogDebug("Adding user message to conversation", "attachmentCount", len(attachments))
 	AddMessageToConversation(r.session.Conversation, "user", message, attachments)
+	
+	// Save recovery state after user message
+	if r.autoRecovery != nil {
+		go func() {
+			if err := r.autoRecovery.SaveRecoveryState(); err != nil {
+				logging.LogWarn("Failed to save recovery state after user message", "error", err)
+			}
+		}()
+	}
 
 	// Get conversation history
 	messages := GetHistory(r.session.Conversation)
@@ -361,6 +479,15 @@ func (r *REPL) processMessage(message string) error {
 
 		// Add assistant message to conversation
 		AddMessageToConversation(r.session.Conversation, "assistant", fullResponse.String(), nil)
+		
+		// Trigger recovery save after message
+		if r.autoRecovery != nil {
+			go func() {
+				if err := r.autoRecovery.SaveRecoveryState(); err != nil {
+					logging.LogWarn("Failed to save recovery state after message", "error", err)
+				}
+			}()
+		}
 	} else {
 		logging.LogDebug("Using non-streaming mode")
 		// Non-streaming response
@@ -375,6 +502,15 @@ func (r *REPL) processMessage(message string) error {
 
 		// Add assistant message to conversation
 		AddMessageToConversation(r.session.Conversation, "assistant", resp.Content, nil)
+		
+		// Trigger recovery save after message
+		if r.autoRecovery != nil {
+			go func() {
+				if err := r.autoRecovery.SaveRecoveryState(); err != nil {
+					logging.LogWarn("Failed to save recovery state after message", "error", err)
+				}
+			}()
+		}
 	}
 
 	return nil
@@ -486,6 +622,8 @@ func (r *REPL) handleCommand(cmd string) error {
 		return r.cmdSwitch(args)
 	case "/merge":
 		return r.cmdMerge(args)
+	case "/recover":
+		return r.cmdRecover(args)
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}

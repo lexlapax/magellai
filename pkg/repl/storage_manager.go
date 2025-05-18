@@ -14,7 +14,8 @@ import (
 
 // StorageManager manages sessions using the storage backend abstraction
 type StorageManager struct {
-	backend storage.Backend
+	backend     storage.Backend
+	backendType storage.BackendType
 }
 
 // NewStorageManager creates a new storage manager with the specified backend
@@ -24,7 +25,8 @@ func NewStorageManager(backend storage.Backend) (*StorageManager, error) {
 	}
 
 	return &StorageManager{
-		backend: backend,
+		backend:     backend,
+		backendType: storage.FileSystemBackend, // Default to filesystem
 	}, nil
 }
 
@@ -88,7 +90,12 @@ func CreateStorageManager(backendType storage.BackendType, config storage.Config
 		return nil, err
 	}
 
-	return NewStorageManager(backend)
+	sm, err := NewStorageManager(backend)
+	if err != nil {
+		return nil, err
+	}
+	sm.backendType = backendType
+	return sm, nil
 }
 
 // IsBackendAvailable checks if a storage backend is available
