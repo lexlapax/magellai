@@ -42,7 +42,7 @@ func DefaultAutoRecoveryConfig() *AutoRecoveryConfig {
 			RecoveryDirectory: filepath.Join(configDir, "recovery"),
 		}
 	}
-	
+
 	return &AutoRecoveryConfig{
 		Enabled:           true,
 		SaveInterval:      30 * time.Second,
@@ -60,15 +60,16 @@ type AutoRecoveryManager struct {
 	stopChan       chan struct{}
 	saveTicker     *time.Ticker
 	lastSave       time.Time
+	done           chan struct{}
 }
 
 // RecoveryState represents the state saved for recovery
 type RecoveryState struct {
-	SessionID        string             `json:"session_id"`
-	SessionName      string             `json:"session_name"`
-	ConversationData *domain.Session    `json:"conversation_data,omitempty"`
-	Timestamp        time.Time          `json:"timestamp"`
-	AppVersion       string             `json:"app_version,omitempty"`
+	SessionID        string              `json:"session_id"`
+	SessionName      string              `json:"session_name"`
+	ConversationData *domain.Session     `json:"conversation_data,omitempty"`
+	Timestamp        time.Time           `json:"timestamp"`
+	AppVersion       string              `json:"app_version,omitempty"`
 	StorageBackend   storage.BackendType `json:"storage_backend"`
 }
 
@@ -87,6 +88,7 @@ func NewAutoRecoveryManager(config *AutoRecoveryConfig, storageManager *StorageM
 		config:         config,
 		storageManager: storageManager,
 		stopChan:       make(chan struct{}),
+		done:           make(chan struct{}),
 	}, nil
 }
 
@@ -98,8 +100,9 @@ func (arm *AutoRecoveryManager) Start() error {
 	}
 
 	arm.saveTicker = time.NewTicker(arm.config.SaveInterval)
-	
+
 	go func() {
+		defer close(arm.done)
 		for {
 			select {
 			case <-arm.saveTicker.C:
@@ -121,6 +124,7 @@ func (arm *AutoRecoveryManager) Start() error {
 func (arm *AutoRecoveryManager) Stop() {
 	if arm.saveTicker != nil {
 		close(arm.stopChan)
+		<-arm.done // Wait for goroutine to finish
 		logging.LogDebug("Auto-recovery stopped")
 	}
 }
@@ -146,6 +150,11 @@ func (arm *AutoRecoveryManager) SaveRecoveryState() error {
 		logging.LogWarn("Failed to rotate recovery backups", "error", err)
 	}
 
+	// Ensure recovery directory exists
+	if err := os.MkdirAll(arm.config.RecoveryDirectory, 0755); err != nil {
+		return fmt.Errorf("failed to create recovery directory: %w", err)
+	}
+
 	// Save state to file
 	recoveryPath := filepath.Join(arm.config.RecoveryDirectory, arm.config.RecoveryFile)
 	data, err := json.MarshalIndent(state, "", "  ")
@@ -165,7 +174,7 @@ func (arm *AutoRecoveryManager) SaveRecoveryState() error {
 // CheckRecovery checks if a recoverable session exists
 func (arm *AutoRecoveryManager) CheckRecovery() (*RecoveryState, error) {
 	recoveryPath := filepath.Join(arm.config.RecoveryDirectory, arm.config.RecoveryFile)
-	
+
 	// Check if recovery file exists
 	if _, err := os.Stat(recoveryPath); os.IsNotExist(err) {
 		return nil, nil
@@ -199,8 +208,8 @@ func (arm *AutoRecoveryManager) RecoverSession(state *RecoveryState) (*domain.Se
 
 	// Check if backend types match
 	if state.StorageBackend != arm.storageManager.backendType {
-		logging.LogWarn("Storage backend mismatch in recovery", 
-			"saved", state.StorageBackend, 
+		logging.LogWarn("Storage backend mismatch in recovery",
+			"saved", state.StorageBackend,
 			"current", arm.storageManager.backendType)
 	}
 
@@ -214,7 +223,7 @@ func (arm *AutoRecoveryManager) RecoverSession(state *RecoveryState) (*domain.Se
 	// If not found in storage, use the recovery data
 	logging.LogInfo("Recovering session from crash", "id", state.SessionID)
 	recoveredSession := state.ConversationData
-	
+
 	// Save the recovered session to storage
 	if err := arm.storageManager.SaveSession(recoveredSession); err != nil {
 		logging.LogWarn("Failed to save recovered session", "error", err)
@@ -226,7 +235,7 @@ func (arm *AutoRecoveryManager) RecoverSession(state *RecoveryState) (*domain.Se
 // ClearRecoveryState removes the recovery state file
 func (arm *AutoRecoveryManager) ClearRecoveryState() error {
 	recoveryPath := filepath.Join(arm.config.RecoveryDirectory, arm.config.RecoveryFile)
-	
+
 	if err := os.Remove(recoveryPath); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to remove recovery file: %w", err)
 	}
@@ -242,12 +251,12 @@ func (arm *AutoRecoveryManager) rotateBackups() error {
 	}
 
 	recoveryPath := filepath.Join(arm.config.RecoveryDirectory, arm.config.RecoveryFile)
-	
+
 	// Rotate existing backups
 	for i := arm.config.BackupCount - 1; i > 0; i-- {
 		oldPath := fmt.Sprintf("%s.%d", recoveryPath, i)
 		newPath := fmt.Sprintf("%s.%d", recoveryPath, i+1)
-		
+
 		if _, err := os.Stat(oldPath); err == nil {
 			if err := os.Rename(oldPath, newPath); err != nil {
 				logging.LogWarn("Failed to rotate backup", "from", oldPath, "to", newPath, "error", err)

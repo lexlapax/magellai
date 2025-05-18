@@ -53,12 +53,12 @@ type BranchTree struct {
 
 // BranchNode represents a node in a branch visualization.
 type BranchNode struct {
-	ID          string       `json:"id"`
-	Name        string       `json:"name"`
-	BranchPoint int          `json:"branch_point"`
-	MessageCount int         `json:"message_count"`
-	Created     time.Time    `json:"created"`
-	Children    []BranchNode `json:"children,omitempty"`
+	ID           string       `json:"id"`
+	Name         string       `json:"name"`
+	BranchPoint  int          `json:"branch_point"`
+	MessageCount int          `json:"message_count"`
+	Created      time.Time    `json:"created"`
+	Children     []BranchNode `json:"children,omitempty"`
 }
 
 // DefaultConversationSettings defines default settings for new conversations.
@@ -79,7 +79,7 @@ type SessionRepository interface {
 	Delete(id string) error
 	List() ([]*SessionInfo, error)
 	Search(query string) ([]*SearchResult, error)
-	
+
 	// Branch-specific operations
 	GetChildren(sessionID string) ([]*SessionInfo, error)
 	GetBranchTree(sessionID string) (*BranchTree, error)

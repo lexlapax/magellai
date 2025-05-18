@@ -134,7 +134,7 @@ func TestExecuteMergeWithBranch(t *testing.T) {
 	// Create sessions
 	target := createTestSession("target")
 	addTestMessage(target, "user", "Base message")
-	
+
 	source := createTestSession("source")
 	addTestMessage(source, "user", "Branch message")
 

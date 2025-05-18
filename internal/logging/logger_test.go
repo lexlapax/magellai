@@ -252,9 +252,9 @@ func TestVerbosityConfiguration(t *testing.T) {
 		verbosity   int
 		expectLevel slog.Level
 	}{
-		{"no verbosity", 0, slog.LevelWarn},   // Default is warn now
-		{"verbosity 1", 1, slog.LevelInfo},    // -v gives info level
-		{"verbosity 2", 2, slog.LevelDebug},   // -vv gives debug level
+		{"no verbosity", 0, slog.LevelWarn}, // Default is warn now
+		{"verbosity 1", 1, slog.LevelInfo},  // -v gives info level
+		{"verbosity 2", 2, slog.LevelDebug}, // -vv gives debug level
 	}
 
 	for _, tt := range tests {
@@ -267,7 +267,7 @@ func TestVerbosityConfiguration(t *testing.T) {
 				config.Level = "info"
 			case 2:
 				config.Level = "debug"
-			// 0 keeps default warn level
+				// 0 keeps default warn level
 			}
 
 			// Parse and check level

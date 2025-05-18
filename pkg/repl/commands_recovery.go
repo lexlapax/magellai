@@ -59,7 +59,7 @@ func (r *REPL) showRecoveryStatus() error {
 	fmt.Fprintf(r.writer, "  Session Name: %s\n", state.SessionName)
 	fmt.Fprintf(r.writer, "  Last Saved: %s\n", state.Timestamp.Format("2006-01-02 15:04:05"))
 	fmt.Fprintf(r.writer, "  Storage Backend: %s\n", state.StorageBackend)
-	
+
 	// Show last save time
 	lastSave := r.autoRecovery.GetLastSaveTime()
 	if !lastSave.IsZero() {
@@ -137,7 +137,7 @@ func (r *REPL) restoreFromRecovery() error {
 	fmt.Fprintf(r.writer, "  Session ID: %s\n", state.SessionID)
 	fmt.Fprintf(r.writer, "  Session Name: %s\n", state.SessionName)
 	fmt.Fprintf(r.writer, "  Last Saved: %s\n", state.Timestamp.Format("2006-01-02 15:04:05"))
-	
+
 	// Ask for confirmation
 	fmt.Fprint(r.writer, "Restore this session? (y/n): ")
 	response, err := r.reader.ReadString('\n')
@@ -175,7 +175,7 @@ func (r *REPL) restoreFromRecovery() error {
 
 	// Switch to recovered session
 	r.session = session
-	
+
 	// Clear recovery state after successful recovery
 	if err := r.autoRecovery.ClearRecoveryState(); err != nil {
 		logging.LogWarn("Failed to clear recovery state after successful recovery", "error", err)
@@ -184,7 +184,7 @@ func (r *REPL) restoreFromRecovery() error {
 	fmt.Fprintf(r.writer, "Session recovered successfully\n")
 	fmt.Fprintf(r.writer, "Session ID: %s\n", session.ID)
 	fmt.Fprintf(r.writer, "Messages: %d\n", len(session.Conversation.Messages))
-	
+
 	logging.LogInfo("Session manually recovered", "id", session.ID)
 	return nil
 }

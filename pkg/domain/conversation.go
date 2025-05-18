@@ -121,16 +121,16 @@ func (c *Conversation) Clone() *Conversation {
 		Messages:     make([]Message, len(c.Messages)),
 		Metadata:     make(map[string]interface{}),
 	}
-	
+
 	// Deep copy messages
 	for i, msg := range c.Messages {
 		clone.Messages[i] = msg.Clone()
 	}
-	
+
 	// Deep copy metadata
 	for k, v := range c.Metadata {
 		clone.Metadata[k] = v
 	}
-	
+
 	return clone
 }

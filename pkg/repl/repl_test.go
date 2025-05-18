@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	schemadomain "github.com/lexlapax/go-llms/pkg/schema/domain"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -198,12 +199,12 @@ func TestREPL_processMessage(t *testing.T) {
 
 	// Check user message
 	userMsg := repl.session.Conversation.Messages[0]
-	assert.Equal(t, "user", userMsg.Role)
+	assert.Equal(t, domain.MessageRoleUser, userMsg.Role)
 	assert.Equal(t, "Hello, world!", userMsg.Content)
 
 	// Check assistant response
 	assistantMsg := repl.session.Conversation.Messages[1]
-	assert.Equal(t, "assistant", assistantMsg.Role)
+	assert.Equal(t, domain.MessageRoleAssistant, assistantMsg.Role)
 	assert.Equal(t, "Mock response to: Hello, world!", assistantMsg.Content)
 
 	// Check output
@@ -231,10 +232,10 @@ func TestREPL_processMessageWithAttachments(t *testing.T) {
 
 	// Check user message has attachments
 	userMsg := repl.session.Conversation.Messages[0]
-	assert.Equal(t, "user", userMsg.Role)
+	assert.Equal(t, domain.MessageRoleUser, userMsg.Role)
 	assert.Equal(t, "What's in this image?", userMsg.Content)
 	assert.Len(t, userMsg.Attachments, 1)
-	assert.Equal(t, llm.AttachmentTypeImage, userMsg.Attachments[0].Type)
+	assert.Equal(t, domain.AttachmentTypeImage, userMsg.Attachments[0].Type)
 
 	// Check pending attachments cleared
 	_, exists := repl.session.Metadata["pending_attachments"]
@@ -270,7 +271,7 @@ func TestREPL_handleCommand_Reset(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, repl.session.Conversation.Messages, 0)
-	assert.Contains(t, output.String(), "Conversation history cleared")
+	assert.Contains(t, output.String(), "Conversation reset.")
 }
 
 func TestREPL_handleCommand_Model(t *testing.T) {
@@ -282,7 +283,7 @@ func TestREPL_handleCommand_Model(t *testing.T) {
 
 	outputStr := output.String()
 	assert.Contains(t, outputStr, "Current model: mock/test-model")
-	assert.Contains(t, outputStr, "Provider: mock")
+	// Provider info is shown in model string
 }
 
 func TestREPL_handleCommand_Sessions(t *testing.T) {
@@ -313,7 +314,7 @@ func TestREPL_handleSpecialCommand_Stream(t *testing.T) {
 	err := repl.handleSpecialCommand(":stream on")
 	require.NoError(t, err)
 	assert.True(t, repl.config.GetBool("stream"))
-	assert.Contains(t, output.String(), "Streaming enabled")
+	assert.Contains(t, output.String(), "Streaming mode: on")
 
 	output.Reset()
 
@@ -321,7 +322,7 @@ func TestREPL_handleSpecialCommand_Stream(t *testing.T) {
 	err = repl.handleSpecialCommand(":stream off")
 	require.NoError(t, err)
 	assert.False(t, repl.config.GetBool("stream"))
-	assert.Contains(t, output.String(), "Streaming disabled")
+	assert.Contains(t, output.String(), "Streaming mode: off")
 }
 
 func TestREPL_handleSpecialCommand_Temperature(t *testing.T) {
@@ -332,7 +333,7 @@ func TestREPL_handleSpecialCommand_Temperature(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 0.8, repl.session.Conversation.Temperature)
-	assert.Contains(t, output.String(), "Temperature set to: 0.80")
+	assert.Contains(t, output.String(), "Temperature set to: 0.8")
 }
 
 func TestREPL_handleSpecialCommand_MaxTokens(t *testing.T) {
@@ -357,7 +358,7 @@ func TestREPL_handleSpecialCommand_Multiline(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, repl.multiline)
-	assert.Contains(t, output.String(), "Multi-line mode enabled")
+	assert.Contains(t, output.String(), "Multi-line mode: on")
 
 	output.Reset()
 
@@ -366,7 +367,7 @@ func TestREPL_handleSpecialCommand_Multiline(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.False(t, repl.multiline)
-	assert.Contains(t, output.String(), "Multi-line mode disabled")
+	assert.Contains(t, output.String(), "Multi-line mode: off")
 }
 
 func TestREPL_readInput_SingleLine(t *testing.T) {

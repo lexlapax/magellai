@@ -48,7 +48,10 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ### 4.7 Fix tests, test-integration issue
   - [ ] find all remaining test issues and update TODO.md with fix tasks
 
-### 4.8 Documentation and architecture updates *(REVISIT - moved from 4.6)*
+### 4.8 Run code, abstraction, redundancy checks and fixes
+  - [ ] analyze entire codebase for inconsistent abstractions, unneeded functions, duplicate functions, inconsistent errors and arguments and create todo list under this task section.
+
+### 4.9 Documentation and architecture updates *(REVISIT - moved from 4.6)*
 - [ ] Update architecture documentation
     - [ ] Create domain layer diagrams
     - [ ] Update package relationship diagrams
@@ -60,7 +63,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [ ] Update README with new architecture
 - [ ] Create docs/technical/architecture.md if needed
 
-### 4.9 Final validation and rollout *(REVISIT - moved from 4.6)*
+### 4.10 Final validation and rollout *(REVISIT - moved from 4.6)*
 - [ ] Run full test suite
 - [ ] Manual testing of all features
 - [ ] Update CHANGELOG.md

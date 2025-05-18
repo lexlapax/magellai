@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	
+
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/domain"
 )
@@ -18,10 +18,10 @@ func (r *REPL) cmdBranch(args []string) error {
 	if len(args) < 1 {
 		return fmt.Errorf("usage: /branch <name> [at <message_index>]")
 	}
-	
+
 	branchName := args[0]
 	messageIndex := len(r.session.Conversation.Messages) // Default to end
-	
+
 	// Parse optional message index
 	if len(args) >= 3 && args[1] == "at" {
 		idx, err := strconv.Atoi(args[2])
@@ -30,37 +30,37 @@ func (r *REPL) cmdBranch(args []string) error {
 		}
 		messageIndex = idx
 	}
-	
+
 	// Get current session
 	currentSession := r.session
 	if currentSession == nil {
 		return errors.New("no active session")
 	}
-	
+
 	// Generate new branch ID
 	branchID := r.manager.GenerateSessionID()
-	
+
 	// Create the branch
 	branch, err := currentSession.CreateBranch(branchID, branchName, messageIndex)
 	if err != nil {
 		return fmt.Errorf("failed to create branch: %v", err)
 	}
-	
+
 	// Save both the parent and the new branch
 	if err := r.manager.SaveSession(currentSession); err != nil {
 		return fmt.Errorf("failed to update parent session: %v", err)
 	}
-	
+
 	if err := r.manager.SaveSession(branch); err != nil {
 		return fmt.Errorf("failed to save new branch: %v", err)
 	}
-	
+
 	logging.LogInfo("Created branch", "id", branchID, "name", branchName, "at", messageIndex)
-	
+
 	// Optionally switch to the new branch
 	fmt.Fprintf(r.writer, "Created branch '%s' (ID: %s) at message %d\n", branchName, branchID, messageIndex)
 	fmt.Fprintf(r.writer, "To switch to this branch, use: /switch %s\n", branchID)
-	
+
 	return nil
 }
 
@@ -70,9 +70,9 @@ func (r *REPL) cmdBranches(args []string) error {
 	if currentSession == nil {
 		return errors.New("no active session")
 	}
-	
+
 	var sessionToList *domain.Session
-	
+
 	// If current session is a branch, list siblings too
 	if currentSession.IsBranch() {
 		parent, err := r.manager.StorageManager.LoadSession(currentSession.ParentID)
@@ -85,18 +85,18 @@ func (r *REPL) cmdBranches(args []string) error {
 		sessionToList = currentSession
 		fmt.Fprintf(r.writer, "Branches of current session:\n")
 	}
-	
+
 	if len(sessionToList.ChildIDs) == 0 {
 		fmt.Fprintln(r.writer, "No branches found.")
 		return nil
 	}
-	
+
 	// Get info for all child branches
 	children, err := r.manager.GetChildren(sessionToList.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get child branches: %v", err)
 	}
-	
+
 	// Display branches
 	fmt.Fprintln(r.writer, "")
 	for _, child := range children {
@@ -104,7 +104,7 @@ func (r *REPL) cmdBranches(args []string) error {
 		if child.ID == currentSession.ID {
 			indicator = "*" // Mark current branch
 		}
-		
+
 		fmt.Fprintf(r.writer, "%s %s - %s (ID: %s) - %d messages, created %s\n",
 			indicator,
 			child.BranchName,
@@ -114,7 +114,7 @@ func (r *REPL) cmdBranches(args []string) error {
 			child.Created.Format("2006-01-02 15:04"),
 		)
 	}
-	
+
 	return nil
 }
 
@@ -124,7 +124,7 @@ func (r *REPL) cmdTree(args []string) error {
 	if currentSession == nil {
 		return errors.New("no active session")
 	}
-	
+
 	// Find the root of the tree
 	rootID := currentSession.ID
 	if currentSession.IsBranch() {
@@ -134,17 +134,17 @@ func (r *REPL) cmdTree(args []string) error {
 			rootID = root.ID
 		}
 	}
-	
+
 	// Get the branch tree
 	tree, err := r.manager.GetBranchTree(rootID)
 	if err != nil {
 		return fmt.Errorf("failed to get branch tree: %v", err)
 	}
-	
+
 	// Display the tree
 	fmt.Fprintln(r.writer, "Session Branch Tree:")
 	displayTree(r.writer, tree, "", currentSession.ID)
-	
+
 	return nil
 }
 
@@ -153,15 +153,15 @@ func displayTree(out interface{}, tree *domain.BranchTree, prefix string, curren
 	if tree == nil || tree.Session == nil {
 		return
 	}
-	
+
 	// Determine if this is the current session
 	marker := ""
 	if tree.Session.ID == currentID {
 		marker = " *"
 	}
-	
+
 	// Display this node
-	fmt.Fprintf(out.(interface{ Write([]byte) (int, error) }), 
+	fmt.Fprintf(out.(interface{ Write([]byte) (int, error) }),
 		"%s%s (ID: %s) - %d messages%s\n",
 		prefix,
 		tree.Session.Name,
@@ -169,7 +169,7 @@ func displayTree(out interface{}, tree *domain.BranchTree, prefix string, curren
 		tree.Session.MessageCount,
 		marker,
 	)
-	
+
 	// Display children
 	for i, child := range tree.Children {
 		var childPrefix string
@@ -189,15 +189,15 @@ func (r *REPL) cmdSwitch(args []string) error {
 	if len(args) < 1 {
 		return fmt.Errorf("usage: /switch <branch_id>")
 	}
-	
+
 	branchID := args[0]
-	
+
 	// Get the target branch
 	branch, err := r.manager.StorageManager.LoadSession(branchID)
 	if err != nil {
 		return fmt.Errorf("failed to get branch: %v", err)
 	}
-	
+
 	// Save current session if it has unsaved changes
 	currentSession := r.session
 	if currentSession != nil && r.hasUnsavedChanges() {
@@ -205,20 +205,20 @@ func (r *REPL) cmdSwitch(args []string) error {
 			logging.LogWarn("Failed to save current session before switching", "error", err)
 		}
 	}
-	
+
 	// Switch to the new branch
 	r.session = branch
-	
+
 	logging.LogInfo("Switched to branch", "id", branchID, "name", branch.Name)
 	fmt.Fprintf(r.writer, "Switched to branch '%s' (ID: %s)\n", branch.Name, branchID)
-	
+
 	// Show branch info
 	if branch.IsBranch() {
 		fmt.Fprintf(r.writer, "Branch of: parent session (ID: %s)\n", branch.ParentID)
 		fmt.Fprintf(r.writer, "Branched at message: %d\n", branch.BranchPoint)
 	}
 	fmt.Fprintf(r.writer, "Messages: %d\n", len(branch.Conversation.Messages))
-	
+
 	return nil
 }
 
@@ -233,17 +233,17 @@ func (r *REPL) cmdMerge(args []string) error {
 	if len(args) < 1 {
 		return fmt.Errorf("usage: /merge <source_session_id> [--type <continuation|rebase>] [--create-branch] [--branch-name <name>]")
 	}
-	
+
 	// Parse arguments
 	sourceID := args[0]
 	targetID := r.session.ID
-	
+
 	// Default options
 	mergeType := domain.MergeTypeContinuation
 	createBranch := false
 	branchName := ""
 	mergePoint := len(r.session.Conversation.Messages)
-	
+
 	// Parse flags
 	for i := 1; i < len(args); i++ {
 		switch args[i] {
@@ -269,7 +269,7 @@ func (r *REPL) cmdMerge(args []string) error {
 			}
 		}
 	}
-	
+
 	// Create merge options
 	options := domain.MergeOptions{
 		Type:         mergeType,
@@ -279,19 +279,19 @@ func (r *REPL) cmdMerge(args []string) error {
 		CreateBranch: createBranch,
 		BranchName:   branchName,
 	}
-	
+
 	// Perform the merge
 	result, err := r.manager.StorageManager.MergeSessions(targetID, sourceID, options)
 	if err != nil {
 		return fmt.Errorf("failed to merge sessions: %w", err)
 	}
-	
+
 	// Display results
 	fmt.Fprintf(r.writer, "Successfully merged %d messages from %s into %s\n", result.MergedCount, sourceID, targetID)
-	
+
 	if result.NewBranchID != "" {
 		fmt.Fprintf(r.writer, "Created new branch: %s\n", result.NewBranchID)
-		
+
 		// Ask if user wants to switch to the new branch
 		fmt.Fprint(r.writer, "Switch to new branch? (y/n): ")
 		var response string
@@ -299,11 +299,11 @@ func (r *REPL) cmdMerge(args []string) error {
 			logging.LogWarn("Failed to read user response", "error", err)
 			return nil
 		}
-		
+
 		if response == "y" || response == "yes" {
 			return r.cmdSwitch([]string{result.NewBranchID})
 		}
 	}
-	
+
 	return nil
 }

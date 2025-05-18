@@ -59,4 +59,3 @@ func (sm *SessionManager) LoadSession(session *Session) error {
 func (sm *SessionManager) GenerateSessionID() string {
 	return sm.StorageManager.GenerateSessionID()
 }
-

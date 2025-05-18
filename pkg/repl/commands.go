@@ -94,7 +94,7 @@ func (r *REPL) switchModel(args []string) error {
 	}
 
 	modelName := args[0]
-	
+
 	// Try to parse the model name
 	parts := strings.Split(modelName, "/")
 	if len(parts) != 2 {
@@ -421,7 +421,7 @@ func (r *REPL) showHistory() error {
 	for i, msg := range r.session.Conversation.Messages {
 		role := title(string(msg.Role))
 		fmt.Fprintf(r.writer, "\n%d. %s:\n%s\n", i+1, role, msg.Content)
-		
+
 		if len(msg.Attachments) > 0 {
 			fmt.Fprintln(r.writer, "Attachments:")
 			for _, att := range msg.Attachments {
@@ -440,7 +440,7 @@ func (r *REPL) showHistory() error {
 // showConfig displays the current configuration
 func (r *REPL) showConfig() error {
 	fmt.Fprintln(r.writer, "Current configuration:")
-	
+
 	// Show relevant config values
 	fmt.Fprintf(r.writer, "  Model: %s\n", r.session.Conversation.Model)
 	fmt.Fprintf(r.writer, "  Stream: %v\n", r.config.GetBool("stream"))
@@ -448,7 +448,7 @@ func (r *REPL) showConfig() error {
 	fmt.Fprintf(r.writer, "  Max tokens: %d\n", r.session.Conversation.MaxTokens)
 	fmt.Fprintf(r.writer, "  Verbosity: %s\n", r.config.GetString("verbosity"))
 	fmt.Fprintf(r.writer, "  Auto-save: %v\n", r.autoSave)
-	
+
 	return nil
 }
 
@@ -504,7 +504,7 @@ func (r *REPL) exportSession(args []string) error {
 
 	format := strings.ToLower(args[0])
 	var filename string
-	
+
 	if len(args) > 1 {
 		filename = args[1]
 	} else {
@@ -553,7 +553,7 @@ func (r *REPL) searchSessions(args []string) error {
 	for _, result := range results {
 		fmt.Fprintf(r.writer, "\n%s - %s\n", result.Session.ID, result.Session.Name)
 		fmt.Fprintf(r.writer, "  Matches: %d\n", result.GetMatchCount())
-		
+
 		// Show a sample of matches
 		for _, match := range result.Matches {
 			if match.Type == "message" {
@@ -601,16 +601,16 @@ func (r *REPL) addTag(args []string) error {
 
 	tag := strings.Join(args, " ")
 	r.session.AddTag(tag)
-	
+
 	fmt.Fprintf(r.writer, "Tag '%s' added to session.\n", tag)
-	
+
 	// Auto-save if enabled
 	if r.autoSave {
 		if err := r.performAutoSave(); err != nil {
 			fmt.Fprintf(r.writer, "Warning: Failed to auto-save after adding tag: %v\n", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -622,16 +622,16 @@ func (r *REPL) removeTag(args []string) error {
 
 	tag := strings.Join(args, " ")
 	r.session.RemoveTag(tag)
-	
+
 	fmt.Fprintf(r.writer, "Tag '%s' removed from session.\n", tag)
-	
+
 	// Auto-save if enabled
 	if r.autoSave {
 		if err := r.performAutoSave(); err != nil {
 			fmt.Fprintf(r.writer, "Warning: Failed to auto-save after removing tag: %v\n", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -661,16 +661,16 @@ func (r *REPL) setMetadata(key, value string) error {
 
 	r.session.Metadata[key] = value
 	r.session.UpdateTimestamp()
-	
+
 	fmt.Fprintf(r.writer, "Metadata '%s' set to '%s'.\n", key, value)
-	
+
 	// Auto-save if enabled
 	if r.autoSave {
 		if err := r.performAutoSave(); err != nil {
 			fmt.Fprintf(r.writer, "Warning: Failed to auto-save after setting metadata: %v\n", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -687,15 +687,15 @@ func (r *REPL) deleteMetadata(key string) error {
 
 	delete(r.session.Metadata, key)
 	r.session.UpdateTimestamp()
-	
+
 	fmt.Fprintf(r.writer, "Metadata key '%s' deleted.\n", key)
-	
+
 	// Auto-save if enabled
 	if r.autoSave {
 		if err := r.performAutoSave(); err != nil {
 			fmt.Fprintf(r.writer, "Warning: Failed to auto-save after deleting metadata: %v\n", err)
 		}
 	}
-	
+
 	return nil
 }

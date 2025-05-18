@@ -26,12 +26,12 @@ type TokenCounter interface {
 
 // PriorityConfig defines how to prioritize messages when truncating
 type PriorityConfig struct {
-	KeepSystemMessage   bool    // Always keep system message
-	KeepFirstN         int     // Keep first N messages after system
-	KeepLastN          int     // Keep last N messages
-	MaxTokens          int     // Maximum context tokens
-	ReserveTokens      int     // Reserve tokens for response
-	ImportanceDecay    float64 // Decay factor for message importance by age
+	KeepSystemMessage bool    // Always keep system message
+	KeepFirstN        int     // Keep first N messages after system
+	KeepLastN         int     // Keep last N messages
+	MaxTokens         int     // Maximum context tokens
+	ReserveTokens     int     // Reserve tokens for response
+	ImportanceDecay   float64 // Decay factor for message importance by age
 }
 
 // DefaultPriorityConfig returns sensible defaults for context management
@@ -41,14 +41,14 @@ func DefaultPriorityConfig(modelInfo ModelInfo) PriorityConfig {
 	if maxContext == 0 {
 		maxContext = 4096 // Default fallback
 	}
-	
+
 	return PriorityConfig{
 		KeepSystemMessage: true,
-		KeepFirstN:       1,
-		KeepLastN:        3,
-		MaxTokens:        maxContext * 3 / 4,
-		ReserveTokens:    maxContext / 4,
-		ImportanceDecay:  0.9,
+		KeepFirstN:        1,
+		KeepLastN:         3,
+		MaxTokens:         maxContext * 3 / 4,
+		ReserveTokens:     maxContext / 4,
+		ImportanceDecay:   0.9,
 	}
 }
 
@@ -67,34 +67,34 @@ func (m *ContextManager) OptimizeContext(messages []Message) ([]Message, error) 
 	if len(messages) == 0 {
 		return messages, nil
 	}
-	
+
 	currentTokens := m.tokenCounter.CountMessageTokens(messages)
-	
+
 	m.logger.Debug("Optimizing context",
 		"messageCount", len(messages),
 		"currentTokens", currentTokens,
 		"maxTokens", m.priorityConfig.MaxTokens)
-	
+
 	// If already within limits, return as-is
 	if currentTokens <= m.priorityConfig.MaxTokens {
 		return messages, nil
 	}
-	
+
 	// Apply optimization strategies
 	optimized := m.applyPrioritization(messages)
 	finalTokens := m.tokenCounter.CountMessageTokens(optimized)
-	
+
 	m.logger.Info("Context optimized",
 		"originalMessages", len(messages),
 		"optimizedMessages", len(optimized),
 		"originalTokens", currentTokens,
 		"optimizedTokens", finalTokens)
-	
+
 	if finalTokens > m.priorityConfig.MaxTokens {
 		return optimized, fmt.Errorf("unable to fit context within limit: %d > %d tokens",
 			finalTokens, m.priorityConfig.MaxTokens)
 	}
-	
+
 	return optimized, nil
 }
 
@@ -103,10 +103,10 @@ func (m *ContextManager) applyPrioritization(messages []Message) []Message {
 	if len(messages) == 0 {
 		return messages
 	}
-	
+
 	var result []Message
 	systemIdx := -1
-	
+
 	// Find system message
 	for i, msg := range messages {
 		if strings.ToLower(msg.Role) == "system" {
@@ -114,49 +114,49 @@ func (m *ContextManager) applyPrioritization(messages []Message) []Message {
 			break
 		}
 	}
-	
+
 	// Always keep system message if present and configured
 	if systemIdx >= 0 && m.priorityConfig.KeepSystemMessage {
 		result = append(result, messages[systemIdx])
 	}
-	
+
 	// Determine conversation messages (excluding system)
 	convStart := 0
 	if systemIdx >= 0 {
 		convStart = systemIdx + 1
 	}
 	conversation := messages[convStart:]
-	
+
 	if len(conversation) == 0 {
 		return result
 	}
-	
+
 	// Apply keep first/last rules
 	keepIndices := make(map[int]bool)
-	
+
 	// Keep first N
 	for i := 0; i < m.priorityConfig.KeepFirstN && i < len(conversation); i++ {
 		keepIndices[i] = true
 	}
-	
+
 	// Keep last N
 	for i := len(conversation) - m.priorityConfig.KeepLastN; i < len(conversation); i++ {
 		if i >= 0 {
 			keepIndices[i] = true
 		}
 	}
-	
+
 	// Calculate importance scores for middle messages
 	importance := m.calculateImportance(conversation)
-	
+
 	// Add messages by importance until we hit token limit
 	for idx := range keepIndices {
 		result = append(result, conversation[idx])
 	}
-	
+
 	// Sort remaining messages by importance
 	remaining := m.selectByImportance(conversation, keepIndices, importance)
-	
+
 	// Add messages until we hit the limit
 	for _, msg := range remaining {
 		test := append(result, msg)
@@ -167,49 +167,49 @@ func (m *ContextManager) applyPrioritization(messages []Message) []Message {
 			break
 		}
 	}
-	
+
 	// Ensure messages are in chronological order
 	result = m.sortChronologically(result)
-	
+
 	return result
 }
 
 // calculateImportance assigns importance scores to messages
 func (m *ContextManager) calculateImportance(messages []Message) []float64 {
 	scores := make([]float64, len(messages))
-	
+
 	for i, msg := range messages {
 		score := 1.0
-		
+
 		// Base score on content length (longer = potentially more important)
 		contentLength := float64(len(msg.Content))
 		score *= (contentLength / 100.0)
 		if score > 2.0 {
 			score = 2.0 // Cap length factor
 		}
-		
+
 		// Apply age decay
 		age := len(messages) - i
 		score *= m.exponentialDecay(age, m.priorityConfig.ImportanceDecay)
-		
+
 		// Boost for user messages (they provide context)
 		if strings.ToLower(msg.Role) == "user" {
 			score *= 1.2
 		}
-		
+
 		// Boost for messages with attachments
 		if len(msg.Attachments) > 0 {
 			score *= 1.5
 		}
-		
+
 		// Boost for messages containing questions
 		if m.containsQuestion(msg.Content) {
 			score *= 1.3
 		}
-		
+
 		scores[i] = score
 	}
-	
+
 	return scores
 }
 
@@ -222,13 +222,13 @@ func (m *ContextManager) exponentialDecay(age int, factor float64) float64 {
 func (m *ContextManager) containsQuestion(content string) bool {
 	questionIndicators := []string{"?", "how ", "what ", "when ", "where ", "why ", "who ", "which "}
 	contentLower := strings.ToLower(content)
-	
+
 	for _, indicator := range questionIndicators {
 		if strings.Contains(contentLower, indicator) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -239,9 +239,9 @@ func (m *ContextManager) selectByImportance(messages []Message, keep map[int]boo
 		score   float64
 		index   int
 	}
-	
+
 	var candidates []scoredMessage
-	
+
 	for i, msg := range messages {
 		if !keep[i] {
 			candidates = append(candidates, scoredMessage{
@@ -251,7 +251,7 @@ func (m *ContextManager) selectByImportance(messages []Message, keep map[int]boo
 			})
 		}
 	}
-	
+
 	// Sort by score descending
 	for i := 0; i < len(candidates); i++ {
 		for j := i + 1; j < len(candidates); j++ {
@@ -260,13 +260,13 @@ func (m *ContextManager) selectByImportance(messages []Message, keep map[int]boo
 			}
 		}
 	}
-	
+
 	// Extract messages
 	var result []Message
 	for _, sm := range candidates {
 		result = append(result, sm.message)
 	}
-	
+
 	return result
 }
 
@@ -281,20 +281,20 @@ func (m *ContextManager) sortChronologically(messages []Message) []Message {
 func (m *ContextManager) EstimateTokenReduction(messages []Message) map[string]int {
 	original := m.tokenCounter.CountMessageTokens(messages)
 	estimates := make(map[string]int)
-	
+
 	// Estimate removal of oldest messages
 	if len(messages) > 3 {
 		reduced := messages[len(messages)-3:]
 		estimates["remove_oldest"] = original - m.tokenCounter.CountMessageTokens(reduced)
 	}
-	
+
 	// Estimate summarization savings (rough estimate)
 	estimates["summarize_old"] = original / 3
-	
+
 	// Estimate attachment removal
 	noAttachments := m.removeAttachments(messages)
 	estimates["remove_attachments"] = original - m.tokenCounter.CountMessageTokens(noAttachments)
-	
+
 	return estimates
 }
 
@@ -329,25 +329,25 @@ func (t *EstimatedTokenCounter) CountTokens(text string) int {
 	// Basic estimation
 	chars := len(text)
 	tokens := int(float64(chars) / t.charactersPerToken)
-	
+
 	// Account for whitespace (roughly)
 	words := len(strings.Fields(text))
 	tokens += words / 2
-	
+
 	return tokens
 }
 
 // CountMessageTokens estimates tokens in messages
 func (t *EstimatedTokenCounter) CountMessageTokens(messages []Message) int {
 	total := 0
-	
+
 	for _, msg := range messages {
 		// Role tokens (system, user, assistant)
 		total += 5
-		
+
 		// Content tokens
 		total += t.CountTokens(msg.Content)
-		
+
 		// Attachment tokens (rough estimate)
 		for _, att := range msg.Attachments {
 			switch att.Type {
@@ -359,19 +359,19 @@ func (t *EstimatedTokenCounter) CountMessageTokens(messages []Message) int {
 				total += 100 // File reference tokens
 			}
 		}
-		
+
 		// Message separator tokens
 		total += 10
 	}
-	
+
 	return total
 }
 
 // SlidingWindowManager implements a sliding window approach to context
 type SlidingWindowManager struct {
-	windowSize    int
-	overlapSize   int
-	tokenCounter  TokenCounter
+	windowSize   int
+	overlapSize  int
+	tokenCounter TokenCounter
 }
 
 // NewSlidingWindowManager creates a sliding window context manager
@@ -388,22 +388,22 @@ func (s *SlidingWindowManager) GetWindow(messages []Message, maxTokens int) []Me
 	if len(messages) == 0 {
 		return messages
 	}
-	
+
 	// Start from the end and work backwards
 	window := []Message{}
 	currentTokens := 0
-	
+
 	for i := len(messages) - 1; i >= 0; i-- {
 		msg := messages[i]
 		msgTokens := s.tokenCounter.CountTokens(msg.Content)
-		
+
 		if currentTokens+msgTokens > maxTokens {
 			break
 		}
-		
+
 		window = append([]Message{msg}, window...)
 		currentTokens += msgTokens
 	}
-	
+
 	return window
 }

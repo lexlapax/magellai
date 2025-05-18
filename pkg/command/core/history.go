@@ -49,22 +49,28 @@ func (c *HistoryCommand) Execute(ctx context.Context, exec *command.ExecutionCon
 		c.format = "json" // default format
 	}
 
-	// Get session storage directory
-	paths, err := configdir.GetPaths()
-	if err != nil {
-		return fmt.Errorf("failed to get config paths: %v", err)
-	}
+	// Check if session manager is provided in the execution context (for testing)
+	var sessionManager *repl.SessionManager
+	if sm, ok := exec.Data["session_manager"].(*repl.SessionManager); ok {
+		sessionManager = sm
+	} else {
+		// Get session storage directory
+		paths, err := configdir.GetPaths()
+		if err != nil {
+			return fmt.Errorf("failed to get config paths: %v", err)
+		}
 
-	// Create storage manager using filesystem backend
-	manager, err := repl.CreateStorageManager(storage.FileSystemBackend, storage.Config{
-		"base_dir": paths.Sessions,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create storage manager: %v", err)
-	}
+		// Create storage manager using filesystem backend
+		manager, err := repl.CreateStorageManager(storage.FileSystemBackend, storage.Config{
+			"base_dir": paths.Sessions,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create storage manager: %v", err)
+		}
 
-	// Create session manager wrapping storage manager
-	sessionManager := &repl.SessionManager{StorageManager: manager}
+		// Create session manager wrapping storage manager
+		sessionManager = &repl.SessionManager{StorageManager: manager}
+	}
 
 	switch c.subcommand {
 	case "list":
@@ -221,6 +227,18 @@ func (c *HistoryCommand) executeSearch(ctx context.Context, exec *command.Execut
 			result.Session.Name,
 			created,
 			tags)
+
+		// Show matching content snippets
+		for _, match := range result.Matches {
+			snippet := strings.TrimSpace(match.Content)
+			if match.Context != "" {
+				snippet = strings.TrimSpace(match.Context)
+			}
+			if len(snippet) > 100 {
+				snippet = snippet[:97] + "..."
+			}
+			fmt.Fprintf(w, "\t└─ %s: %s\n", match.Type, snippet)
+		}
 	}
 
 	w.Flush()

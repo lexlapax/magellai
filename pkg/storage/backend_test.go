@@ -110,18 +110,18 @@ func (mb *MockBackend) GetBranchTree(sessionID string) (*domain.BranchTree, erro
 	if !exists {
 		return nil, nil
 	}
-	
+
 	tree := &domain.BranchTree{
 		Session:  session.ToSessionInfo(),
 		Children: make([]*domain.BranchTree, 0),
 	}
-	
+
 	for _, childID := range session.ChildIDs {
 		if childTree, err := mb.GetBranchTree(childID); err == nil && childTree != nil {
 			tree.Children = append(tree.Children, childTree)
 		}
 	}
-	
+
 	return tree, nil
 }
 
@@ -130,26 +130,26 @@ func (mb *MockBackend) MergeSessions(targetID, sourceID string, options domain.M
 	if !exists {
 		return nil, nil
 	}
-	
+
 	sourceSession, exists := mb.sessions[sourceID]
 	if !exists {
 		return nil, nil
 	}
-	
+
 	// Execute the merge
 	mergedSession, result, err := targetSession.ExecuteMerge(sourceSession, options)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Save the merged session
 	mb.sessions[mergedSession.ID] = mergedSession
-	
+
 	// Update parent if needed
 	if options.CreateBranch {
 		mb.sessions[targetID] = targetSession
 	}
-	
+
 	return result, nil
 }
 

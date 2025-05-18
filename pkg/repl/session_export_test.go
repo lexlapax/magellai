@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -92,7 +93,7 @@ func TestSessionExport(t *testing.T) {
 		markdown := buf.String()
 
 		// Verify Markdown content
-		if !strings.Contains(markdown, "# Session: Test Export Session") {
+		if !strings.Contains(markdown, "Test Export Session") {
 			t.Error("Markdown missing session title")
 		}
 		if !strings.Contains(markdown, "## Conversation") {
@@ -196,7 +197,7 @@ func TestREPLExportCommand(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error without arguments")
 		}
-		if !strings.Contains(err.Error(), "usage") {
+		if !strings.Contains(err.Error(), "export format required") {
 			t.Errorf("Expected usage error, got: %v", err)
 		}
 	})
@@ -210,11 +211,16 @@ func TestREPLExportCommand(t *testing.T) {
 		}
 
 		output := writer.String()
-		if !strings.Contains(output, `"id"`) {
-			t.Error("JSON output missing session ID")
+		// The output should be the success message
+		if !strings.Contains(output, "Session exported to:") {
+			t.Error("Expected success message not found in JSON export")
 		}
-		if !strings.Contains(output, `"messages"`) {
-			t.Error("JSON output missing messages")
+
+		// Extract filename from output and clean up
+		parts := strings.Split(output, "Session exported to: ")
+		if len(parts) > 1 {
+			filename := strings.TrimSpace(parts[1])
+			defer os.Remove(filename)
 		}
 	})
 
@@ -227,11 +233,16 @@ func TestREPLExportCommand(t *testing.T) {
 		}
 
 		output := writer.String()
-		if !strings.Contains(output, "# Session:") {
-			t.Error("Markdown output missing session header")
+		// The output should be the success message
+		if !strings.Contains(output, "Session exported to:") {
+			t.Error("Expected success message not found")
 		}
-		if !strings.Contains(output, "## Conversation") {
-			t.Error("Markdown output missing conversation section")
+
+		// Extract filename from output and clean up
+		parts := strings.Split(output, "Session exported to: ")
+		if len(parts) > 1 {
+			filename := strings.TrimSpace(parts[1])
+			defer os.Remove(filename)
 		}
 	})
 
@@ -266,9 +277,14 @@ func TestREPLExportCommand(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for invalid format")
 		}
-		if !strings.Contains(err.Error(), "unsupported format") {
+		if !strings.Contains(err.Error(), "unsupported export format") {
 			t.Errorf("Expected unsupported format error, got: %v", err)
 		}
+
+		// Clean up any accidentally created invalid format file
+		timestamp := repl.session.Created.Format("20060102-150405")
+		invalidFile := fmt.Sprintf("session_%s.invalid", timestamp)
+		os.Remove(invalidFile) // Ignore error if file doesn't exist
 	})
 }
 

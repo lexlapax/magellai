@@ -135,13 +135,13 @@ func (m *MockStorageBackend) GetChildren(sessionID string) ([]*domain.SessionInf
 	if m.err != nil {
 		return nil, m.err
 	}
-	
+
 	// Find the session
 	session, exists := m.sessions[sessionID]
 	if !exists {
 		return nil, fmt.Errorf("session not found: %s", sessionID)
 	}
-	
+
 	// Get info for all child sessions
 	children := make([]*domain.SessionInfo, 0, len(session.ChildIDs))
 	for _, childID := range session.ChildIDs {
@@ -149,7 +149,7 @@ func (m *MockStorageBackend) GetChildren(sessionID string) ([]*domain.SessionInf
 			children = append(children, child.ToSessionInfo())
 		}
 	}
-	
+
 	return children, nil
 }
 
@@ -159,26 +159,26 @@ func (m *MockStorageBackend) GetBranchTree(sessionID string) (*domain.BranchTree
 	if m.err != nil {
 		return nil, m.err
 	}
-	
+
 	// Find the session
 	session, exists := m.sessions[sessionID]
 	if !exists {
 		return nil, fmt.Errorf("session not found: %s", sessionID)
 	}
-	
+
 	// Create the tree node
 	tree := &domain.BranchTree{
 		Session:  session.ToSessionInfo(),
 		Children: make([]*domain.BranchTree, 0),
 	}
-	
+
 	// Recursively build the tree
 	for _, childID := range session.ChildIDs {
 		if childTree, err := m.GetBranchTree(childID); err == nil {
 			tree.Children = append(tree.Children, childTree)
 		}
 	}
-	
+
 	return tree, nil
 }
 
@@ -188,31 +188,31 @@ func (m *MockStorageBackend) MergeSessions(targetID, sourceID string, options do
 	if m.err != nil {
 		return nil, m.err
 	}
-	
+
 	// Load both sessions
 	targetSession, ok := m.sessions[targetID]
 	if !ok {
 		return nil, fmt.Errorf("target session not found: %s", targetID)
 	}
-	
+
 	sourceSession, ok := m.sessions[sourceID]
 	if !ok {
 		return nil, fmt.Errorf("source session not found: %s", sourceID)
 	}
-	
+
 	// Execute the merge
 	mergedSession, result, err := targetSession.ExecuteMerge(sourceSession, options)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Save the merged session
 	m.sessions[mergedSession.ID] = mergedSession
-	
+
 	// Update parent if needed
 	if options.CreateBranch {
 		m.sessions[targetID] = targetSession
 	}
-	
+
 	return result, nil
 }

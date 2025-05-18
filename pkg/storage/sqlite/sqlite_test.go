@@ -385,15 +385,15 @@ func TestBackend_ConcurrentAccess(t *testing.T) {
 func setupTestBackend(t *testing.T) *Backend {
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "test.db")
-	
+
 	config := storage.Config{
 		"base_dir": tmpDir,
 		"db_path":  dbPath,
 	}
-	
+
 	backend, err := New(config)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
-	
+
 	return backend.(*Backend)
 }

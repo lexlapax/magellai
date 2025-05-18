@@ -415,15 +415,15 @@ func exportMarkdown(session *domain.Session, w io.Writer) error {
 // GetChildren returns all direct child branches of a session
 func (b *Backend) GetChildren(sessionID string) ([]*domain.SessionInfo, error) {
 	logging.LogDebug("Getting children for session", "sessionID", sessionID)
-	
+
 	// Load the parent session to get child IDs
 	parent, err := b.LoadSession(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load parent session: %w", err)
 	}
-	
+
 	children := make([]*domain.SessionInfo, 0, len(parent.ChildIDs))
-	
+
 	// Load each child session info
 	for _, childID := range parent.ChildIDs {
 		child, err := b.LoadSession(childID)
@@ -433,26 +433,26 @@ func (b *Backend) GetChildren(sessionID string) ([]*domain.SessionInfo, error) {
 		}
 		children = append(children, child.ToSessionInfo())
 	}
-	
+
 	return children, nil
 }
 
 // GetBranchTree returns the full branch tree starting from a session
 func (b *Backend) GetBranchTree(sessionID string) (*domain.BranchTree, error) {
 	logging.LogDebug("Getting branch tree for session", "sessionID", sessionID)
-	
+
 	// Load the root session
 	session, err := b.LoadSession(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load session: %w", err)
 	}
-	
+
 	// Create the tree node
 	tree := &domain.BranchTree{
 		Session:  session.ToSessionInfo(),
 		Children: make([]*domain.BranchTree, 0),
 	}
-	
+
 	// Recursively build the tree
 	if len(session.ChildIDs) > 0 {
 		for _, childID := range session.ChildIDs {
@@ -464,40 +464,40 @@ func (b *Backend) GetBranchTree(sessionID string) (*domain.BranchTree, error) {
 			tree.Children = append(tree.Children, childTree)
 		}
 	}
-	
+
 	return tree, nil
 }
 
 // MergeSessions merges two sessions according to the specified options
 func (b *Backend) MergeSessions(targetID, sourceID string, options domain.MergeOptions) (*domain.MergeResult, error) {
 	logging.LogInfo("Merging sessions", "target", targetID, "source", sourceID, "type", options.Type)
-	
+
 	// Load both sessions
 	targetSession, err := b.LoadSession(targetID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load target session: %w", err)
 	}
-	
+
 	sourceSession, err := b.LoadSession(sourceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load source session: %w", err)
 	}
-	
+
 	// Update the merge options with actual IDs
 	options.TargetID = targetID
 	options.SourceID = sourceID
-	
+
 	// Execute the merge
 	mergedSession, result, err := targetSession.ExecuteMerge(sourceSession, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute merge: %w", err)
 	}
-	
+
 	// Save the merged session
 	if err := b.SaveSession(mergedSession); err != nil {
 		return nil, fmt.Errorf("failed to save merged session: %w", err)
 	}
-	
+
 	// If the merge created a new branch, update the parent
 	if result.NewBranchID != "" && options.CreateBranch {
 		// Save the updated parent that now has the new child
@@ -505,7 +505,7 @@ func (b *Backend) MergeSessions(targetID, sourceID string, options domain.MergeO
 			logging.LogWarn("Failed to update parent session with new child", "parentID", targetID, "error", err)
 		}
 	}
-	
+
 	logging.LogInfo("Sessions merged successfully", "target", targetID, "source", sourceID, "mergedCount", result.MergedCount)
 	return result, nil
 }

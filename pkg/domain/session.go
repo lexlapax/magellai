@@ -19,12 +19,12 @@ type Session struct {
 	Updated      time.Time              `json:"updated"`
 	Tags         []string               `json:"tags,omitempty"`
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
-	
+
 	// Branching support
-	ParentID     string                 `json:"parent_id,omitempty"`     // ID of the parent session if this is a branch
-	BranchPoint  int                    `json:"branch_point,omitempty"`  // Message index where the branch occurred
-	BranchName   string                 `json:"branch_name,omitempty"`   // Optional name for this branch
-	ChildIDs     []string               `json:"child_ids,omitempty"`     // IDs of child branches
+	ParentID    string   `json:"parent_id,omitempty"`    // ID of the parent session if this is a branch
+	BranchPoint int      `json:"branch_point,omitempty"` // Message index where the branch occurred
+	BranchName  string   `json:"branch_name,omitempty"`  // Optional name for this branch
+	ChildIDs    []string `json:"child_ids,omitempty"`    // IDs of child branches
 }
 
 // SessionInfo provides summary information about a session.
@@ -38,12 +38,12 @@ type SessionInfo struct {
 	Model        string    `json:"model,omitempty"`
 	Provider     string    `json:"provider,omitempty"`
 	Tags         []string  `json:"tags,omitempty"`
-	
+
 	// Branch information
-	ParentID     string    `json:"parent_id,omitempty"`
-	BranchName   string    `json:"branch_name,omitempty"`
-	ChildCount   int       `json:"child_count,omitempty"`
-	IsBranch     bool      `json:"is_branch,omitempty"`
+	ParentID   string `json:"parent_id,omitempty"`
+	BranchName string `json:"branch_name,omitempty"`
+	ChildCount int    `json:"child_count,omitempty"`
+	IsBranch   bool   `json:"is_branch,omitempty"`
 }
 
 // NewSession creates a new session with the given ID.
@@ -117,22 +117,22 @@ func (s *Session) CreateBranch(branchID string, branchName string, messageIndex 
 	if messageIndex < 0 || messageIndex > len(s.Conversation.Messages) {
 		return nil, errors.New("invalid message index for branching")
 	}
-	
+
 	now := time.Now()
 	branch := &Session{
-		ID:         branchID,
-		Name:       branchName,
-		Created:    now,
-		Updated:    now,
-		Tags:       append([]string{}, s.Tags...), // Copy tags
-		Config:     copyMap(s.Config),
-		ParentID:   s.ID,
+		ID:          branchID,
+		Name:        branchName,
+		Created:     now,
+		Updated:     now,
+		Tags:        append([]string{}, s.Tags...), // Copy tags
+		Config:      copyMap(s.Config),
+		ParentID:    s.ID,
 		BranchPoint: messageIndex,
 		BranchName:  branchName,
-		ChildIDs:   []string{},
-		Metadata:   make(map[string]interface{}),
+		ChildIDs:    []string{},
+		Metadata:    make(map[string]interface{}),
 	}
-	
+
 	// Create the conversation with messages up to the branch point
 	branch.Conversation = &Conversation{
 		ID:           branchID,
@@ -146,17 +146,17 @@ func (s *Session) CreateBranch(branchID string, branchName string, messageIndex 
 		Messages:     make([]Message, 0, messageIndex),
 		Metadata:     copyMap(s.Conversation.Metadata),
 	}
-	
+
 	// Copy messages up to the branch point
 	for i := 0; i < messageIndex && i < len(s.Conversation.Messages); i++ {
 		msgCopy := s.Conversation.Messages[i]
 		msgCopy.ID = generateMessageID() // Generate new ID for the copy
 		branch.Conversation.Messages = append(branch.Conversation.Messages, msgCopy)
 	}
-	
+
 	// Add this branch to the parent's child list
 	s.AddChild(branchID)
-	
+
 	return branch, nil
 }
 
@@ -246,19 +246,19 @@ type MergeOptions struct {
 
 // MergeResult contains the result of a merge operation
 type MergeResult struct {
-	SessionID      string
-	MergedCount    int
-	ConflictCount  int
-	Conflicts      []MergeConflict
-	NewBranchID    string // If a new branch was created
+	SessionID     string
+	MergedCount   int
+	ConflictCount int
+	Conflicts     []MergeConflict
+	NewBranchID   string // If a new branch was created
 }
 
 // MergeConflict represents a conflict during merge
 type MergeConflict struct {
-	Index        int
-	SourceMsg    Message
-	TargetMsg    Message
-	Resolution   string
+	Index      int
+	SourceMsg  Message
+	TargetMsg  Message
+	Resolution string
 }
 
 // CanMerge checks if this session can be merged with another
@@ -266,16 +266,16 @@ func (s *Session) CanMerge(other *Session) error {
 	if s.ID == other.ID {
 		return errors.New("cannot merge session with itself")
 	}
-	
+
 	if s.Conversation == nil || other.Conversation == nil {
 		return errors.New("both sessions must have conversations")
 	}
-	
+
 	// Check for circular dependencies
 	if s.IsAncestorOf(other) || other.IsAncestorOf(s) {
 		return nil // Valid merge scenarios
 	}
-	
+
 	// For now, allow any two sessions to merge
 	return nil
 }
@@ -285,11 +285,11 @@ func (s *Session) IsAncestorOf(other *Session) bool {
 	if other.ParentID == "" {
 		return false
 	}
-	
+
 	if other.ParentID == s.ID {
 		return true
 	}
-	
+
 	// Would need repository access to check full ancestry
 	return false
 }
@@ -299,7 +299,7 @@ func (s *Session) PrepareForMerge(source *Session, options MergeOptions) (*Sessi
 	if err := s.CanMerge(source); err != nil {
 		return nil, err
 	}
-	
+
 	// Create a new session for the merge if requested
 	var mergeSession *Session
 	if options.CreateBranch {
@@ -308,25 +308,25 @@ func (s *Session) PrepareForMerge(source *Session, options MergeOptions) (*Sessi
 		if branchName == "" {
 			branchName = "Merge of " + source.Name + " into " + s.Name
 		}
-		
+
 		mergeSession = &Session{
-			ID:           branchID,
-			Name:         branchName,
-			Created:      time.Now(),
-			Updated:      time.Now(),
-			Tags:         append([]string{}, s.Tags...),
-			Config:       copyMap(s.Config),
-			ParentID:     s.ID,
-			BranchPoint:  options.MergePoint,
-			BranchName:   branchName,
-			ChildIDs:     []string{},
-			Metadata:     make(map[string]interface{}),
+			ID:          branchID,
+			Name:        branchName,
+			Created:     time.Now(),
+			Updated:     time.Now(),
+			Tags:        append([]string{}, s.Tags...),
+			Config:      copyMap(s.Config),
+			ParentID:    s.ID,
+			BranchPoint: options.MergePoint,
+			BranchName:  branchName,
+			ChildIDs:    []string{},
+			Metadata:    make(map[string]interface{}),
 		}
-		
+
 		// Copy the target conversation
 		mergeSession.Conversation = s.Conversation.Clone()
 		mergeSession.Conversation.ID = branchID
-		
+
 		// Add merge metadata
 		if mergeSession.Metadata == nil {
 			mergeSession.Metadata = make(map[string]interface{})
@@ -335,12 +335,12 @@ func (s *Session) PrepareForMerge(source *Session, options MergeOptions) (*Sessi
 		mergeSession.Metadata["merge_target"] = s.ID
 		mergeSession.Metadata["merge_type"] = options.Type
 		mergeSession.Metadata["merge_date"] = time.Now()
-		
+
 		s.AddChild(branchID)
 	} else {
 		mergeSession = s
 	}
-	
+
 	return mergeSession, nil
 }
 
@@ -356,16 +356,16 @@ func (s *Session) ExecuteMerge(source *Session, options MergeOptions) (*Session,
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	result := &MergeResult{
-		SessionID:   mergeSession.ID,
-		Conflicts:   []MergeConflict{},
+		SessionID: mergeSession.ID,
+		Conflicts: []MergeConflict{},
 	}
-	
+
 	if options.CreateBranch {
 		result.NewBranchID = mergeSession.ID
 	}
-	
+
 	switch options.Type {
 	case MergeTypeContinuation:
 		// Append all messages from source after the merge point
@@ -374,7 +374,7 @@ func (s *Session) ExecuteMerge(source *Session, options MergeOptions) (*Session,
 			// If source is a branch of target, start after branch point
 			startIndex = source.BranchPoint
 		}
-		
+
 		for i := startIndex; i < len(source.Conversation.Messages); i++ {
 			msg := source.Conversation.Messages[i]
 			newMsg := msg.Clone()
@@ -382,14 +382,14 @@ func (s *Session) ExecuteMerge(source *Session, options MergeOptions) (*Session,
 			mergeSession.Conversation.AddMessage(newMsg)
 			result.MergedCount++
 		}
-		
+
 	case MergeTypeRebase:
 		// Replay source messages on top of target
 		// First, truncate target at merge point if specified
 		if options.MergePoint > 0 && options.MergePoint < len(mergeSession.Conversation.Messages) {
 			mergeSession.Conversation.Messages = mergeSession.Conversation.Messages[:options.MergePoint]
 		}
-		
+
 		// Then add all source messages
 		for _, msg := range source.Conversation.Messages {
 			newMsg := msg.Clone()
@@ -397,14 +397,14 @@ func (s *Session) ExecuteMerge(source *Session, options MergeOptions) (*Session,
 			mergeSession.Conversation.AddMessage(newMsg)
 			result.MergedCount++
 		}
-		
+
 	case MergeTypeCherryPick:
 		// Selectively include messages by ID
 		messageMap := make(map[string]Message)
 		for _, msg := range source.Conversation.Messages {
 			messageMap[msg.ID] = msg
 		}
-		
+
 		for _, msgID := range options.MessageIDs {
 			if msg, exists := messageMap[msgID]; exists {
 				newMsg := msg.Clone()
@@ -413,14 +413,14 @@ func (s *Session) ExecuteMerge(source *Session, options MergeOptions) (*Session,
 				result.MergedCount++
 			}
 		}
-		
+
 	default:
 		return nil, nil, errors.New("unsupported merge type")
 	}
-	
+
 	// Update merge metadata
 	mergeSession.UpdateTimestamp()
-	
+
 	return mergeSession, result, nil
 }
 

@@ -1,4 +1,4 @@
-// ABOUTME: Resilient provider implementation with retry and fallback mechanisms  
+// ABOUTME: Resilient provider implementation with retry and fallback mechanisms
 // ABOUTME: Wraps existing providers with error recovery and graceful degradation
 
 package llm
@@ -35,7 +35,7 @@ func NewResilientProvider(config ResilientProviderConfig) *ResilientProvider {
 	if config.Timeout == 0 {
 		config.Timeout = 30 * time.Second
 	}
-	
+
 	return &ResilientProvider{
 		config:       config,
 		errorHandler: NewErrorHandler(config.RetryConfig),
@@ -48,9 +48,9 @@ func (r *ResilientProvider) Generate(ctx context.Context, prompt string, options
 	// Create timeout context for the operation
 	ctx, cancel := context.WithTimeout(ctx, r.config.Timeout)
 	defer cancel()
-	
+
 	operation := "Generate"
-	
+
 	// Try primary provider with retry
 	var response string
 	var lastErr error
@@ -63,42 +63,42 @@ func (r *ResilientProvider) Generate(ctx context.Context, prompt string, options
 		response = resp
 		return nil
 	})
-	
+
 	if err == nil && response != "" {
 		// Primary succeeded
 		return response, nil
 	}
-	
+
 	// Log primary failure
 	r.logger.Warn("Primary provider failed, attempting fallbacks",
 		"provider", r.config.Primary.GetModelInfo().Provider,
 		"error", lastErr)
-	
+
 	// Try fallback providers if enabled
 	if r.config.EnableFallback && len(r.config.Fallbacks) > 0 {
 		for i, fallback := range r.config.Fallbacks {
 			r.logger.Info("Attempting fallback provider",
 				"fallback", i+1,
 				"provider", fallback.GetModelInfo().Provider)
-			
+
 			// Try fallback with retry
 			err := r.errorHandler.WithRetry(ctx, operation, func() error {
 				_, err := fallback.Generate(ctx, prompt, options...)
 				return err
 			})
-			
+
 			if err == nil {
 				// Fallback succeeded
 				return fallback.Generate(ctx, prompt, options...)
 			}
-			
+
 			r.logger.Warn("Fallback provider failed",
 				"fallback", i+1,
 				"provider", fallback.GetModelInfo().Provider,
 				"error", err)
 		}
 	}
-	
+
 	// All providers failed
 	return "", fmt.Errorf("all providers failed for %s: %w", operation, lastErr)
 }
@@ -107,13 +107,13 @@ func (r *ResilientProvider) Generate(ctx context.Context, prompt string, options
 func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []Message, options ...ProviderOption) (*Response, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.config.Timeout)
 	defer cancel()
-	
+
 	operation := "GenerateMessage"
-	
+
 	// Try primary provider with retry
 	var response *Response
 	var lastErr error
-	
+
 	err := r.errorHandler.WithRetry(ctx, operation, func() error {
 		resp, err := r.config.Primary.GenerateMessage(ctx, messages, options...)
 		if err != nil {
@@ -131,11 +131,11 @@ func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []Mess
 		response = resp
 		return nil
 	})
-	
+
 	if err == nil && response != nil {
 		return response, nil
 	}
-	
+
 	// Handle context too long error specially
 	if IsContextTooLongError(lastErr) {
 		// Try to reduce context by removing older messages
@@ -145,14 +145,14 @@ func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []Mess
 			return r.GenerateMessage(ctx, reducedMessages, options...)
 		}
 	}
-	
+
 	// Try fallback providers
 	if r.config.EnableFallback && len(r.config.Fallbacks) > 0 {
 		for i, fallback := range r.config.Fallbacks {
 			r.logger.Info("Attempting fallback provider",
 				"fallback", i+1,
 				"provider", fallback.GetModelInfo().Provider)
-			
+
 			err := r.errorHandler.WithRetry(ctx, operation, func() error {
 				resp, err := fallback.GenerateMessage(ctx, messages, options...)
 				if err != nil {
@@ -161,13 +161,13 @@ func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []Mess
 				response = resp
 				return nil
 			})
-			
+
 			if err == nil && response != nil {
 				return response, nil
 			}
 		}
 	}
-	
+
 	return nil, fmt.Errorf("all providers failed for %s: %w", operation, lastErr)
 }
 
@@ -175,13 +175,13 @@ func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []Mess
 func (r *ResilientProvider) GenerateWithSchema(ctx context.Context, prompt string, schema *schemadomain.Schema, options ...ProviderOption) (interface{}, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.config.Timeout)
 	defer cancel()
-	
+
 	operation := "GenerateWithSchema"
-	
+
 	// Try primary provider
 	var result interface{}
 	var lastErr error
-	
+
 	err := r.errorHandler.WithRetry(ctx, operation, func() error {
 		res, err := r.config.Primary.GenerateWithSchema(ctx, prompt, schema, options...)
 		if err != nil {
@@ -191,11 +191,11 @@ func (r *ResilientProvider) GenerateWithSchema(ctx context.Context, prompt strin
 		result = res
 		return nil
 	})
-	
+
 	if err == nil && result != nil {
 		return result, nil
 	}
-	
+
 	// Schema generation is complex - only try fallbacks that support it
 	if r.config.EnableFallback && len(r.config.Fallbacks) > 0 {
 		for i, fallback := range r.config.Fallbacks {
@@ -206,11 +206,11 @@ func (r *ResilientProvider) GenerateWithSchema(ctx context.Context, prompt strin
 					"provider", modelInfo.Provider)
 				continue
 			}
-			
+
 			r.logger.Info("Attempting schema fallback",
 				"fallback", i+1,
 				"provider", modelInfo.Provider)
-			
+
 			err := r.errorHandler.WithRetry(ctx, operation, func() error {
 				res, err := fallback.GenerateWithSchema(ctx, prompt, schema, options...)
 				if err != nil {
@@ -219,13 +219,13 @@ func (r *ResilientProvider) GenerateWithSchema(ctx context.Context, prompt strin
 				result = res
 				return nil
 			})
-			
+
 			if err == nil && result != nil {
 				return result, nil
 			}
 		}
 	}
-	
+
 	return nil, fmt.Errorf("all providers failed for %s: %w", operation, lastErr)
 }
 
@@ -233,11 +233,11 @@ func (r *ResilientProvider) GenerateWithSchema(ctx context.Context, prompt strin
 func (r *ResilientProvider) Stream(ctx context.Context, prompt string, options ...ProviderOption) (<-chan StreamChunk, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.config.Timeout)
 	defer cancel()
-	
+
 	// Streaming is more complex for fallback - just use primary with retry
 	var stream <-chan StreamChunk
 	var lastErr error
-	
+
 	err := r.errorHandler.WithRetry(ctx, "Stream", func() error {
 		str, err := r.config.Primary.Stream(ctx, prompt, options...)
 		if err != nil {
@@ -247,12 +247,12 @@ func (r *ResilientProvider) Stream(ctx context.Context, prompt string, options .
 		stream = str
 		return nil
 	})
-	
+
 	if err == nil && stream != nil {
 		// Wrap stream to handle errors during streaming
 		return r.wrapStreamWithErrorHandling(stream, ctx), nil
 	}
-	
+
 	return nil, fmt.Errorf("streaming failed: %w", lastErr)
 }
 
@@ -260,10 +260,10 @@ func (r *ResilientProvider) Stream(ctx context.Context, prompt string, options .
 func (r *ResilientProvider) StreamMessage(ctx context.Context, messages []Message, options ...ProviderOption) (<-chan StreamChunk, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.config.Timeout)
 	defer cancel()
-	
+
 	var stream <-chan StreamChunk
 	var lastErr error
-	
+
 	err := r.errorHandler.WithRetry(ctx, "StreamMessage", func() error {
 		str, err := r.config.Primary.StreamMessage(ctx, messages, options...)
 		if err != nil {
@@ -273,11 +273,11 @@ func (r *ResilientProvider) StreamMessage(ctx context.Context, messages []Messag
 		stream = str
 		return nil
 	})
-	
+
 	if err == nil && stream != nil {
 		return r.wrapStreamWithErrorHandling(stream, ctx), nil
 	}
-	
+
 	return nil, fmt.Errorf("message streaming failed: %w", lastErr)
 }
 
@@ -289,7 +289,7 @@ func (r *ResilientProvider) GetModelInfo() ModelInfo {
 // wrapStreamWithErrorHandling adds error recovery to streaming responses
 func (r *ResilientProvider) wrapStreamWithErrorHandling(input <-chan StreamChunk, ctx context.Context) <-chan StreamChunk {
 	output := make(chan StreamChunk)
-	
+
 	go func() {
 		defer close(output)
 		defer func() {
@@ -297,14 +297,14 @@ func (r *ResilientProvider) wrapStreamWithErrorHandling(input <-chan StreamChunk
 				output <- StreamChunk{Error: err}
 			}
 		}()
-		
+
 		for {
 			select {
 			case chunk, ok := <-input:
 				if !ok {
 					return
 				}
-				
+
 				// Forward chunk
 				select {
 				case output <- chunk:
@@ -312,14 +312,14 @@ func (r *ResilientProvider) wrapStreamWithErrorHandling(input <-chan StreamChunk
 					output <- StreamChunk{Error: ctx.Err()}
 					return
 				}
-				
+
 			case <-ctx.Done():
 				output <- StreamChunk{Error: ctx.Err()}
 				return
 			}
 		}
 	}()
-	
+
 	return output
 }
 
@@ -328,13 +328,13 @@ func CreateProviderChain(providers []ProviderConfig) (*ResilientProvider, error)
 	if len(providers) == 0 {
 		return nil, fmt.Errorf("no providers specified")
 	}
-	
+
 	// Create the primary provider
 	primary, err := NewProvider(providers[0].Type, providers[0].Model, providers[0].APIKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create primary provider: %w", err)
 	}
-	
+
 	// Create fallback providers
 	var fallbacks []Provider
 	for i := 1; i < len(providers); i++ {
@@ -347,7 +347,7 @@ func CreateProviderChain(providers []ProviderConfig) (*ResilientProvider, error)
 		}
 		fallbacks = append(fallbacks, fallback)
 	}
-	
+
 	config := ResilientProviderConfig{
 		Primary:        primary,
 		Fallbacks:      fallbacks,
@@ -355,7 +355,7 @@ func CreateProviderChain(providers []ProviderConfig) (*ResilientProvider, error)
 		EnableFallback: len(fallbacks) > 0,
 		Timeout:        30 * time.Second,
 	}
-	
+
 	return NewResilientProvider(config), nil
 }
 
@@ -370,19 +370,19 @@ type ProviderConfig struct {
 func TruncateContext(messages []Message, maxTokens int) []Message {
 	// This is a simplified implementation
 	// In practice, you'd want to count tokens properly
-	
+
 	if len(messages) <= 2 {
 		return messages // Keep at least system and last user message
 	}
-	
+
 	// Keep system message (if present) and most recent messages
 	var result []Message
-	
+
 	// Check for system message
 	if len(messages) > 0 && strings.ToLower(string(messages[0].Role)) == "system" {
 		result = append(result, messages[0])
 	}
-	
+
 	// Add most recent messages
 	recentCount := 3 // Keep last 3 messages
 	if len(messages) > recentCount {
@@ -390,6 +390,6 @@ func TruncateContext(messages []Message, maxTokens int) []Message {
 	} else {
 		result = append(result, messages...)
 	}
-	
+
 	return result
 }

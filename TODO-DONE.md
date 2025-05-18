@@ -518,7 +518,7 @@ Implementation details:
   - [x] Implemented branch operations in filesystem storage backend
   - [x] Created comprehensive tests for branch functionality
   - [x] Added REPL commands for branching:
-    - /branch <name> [at <message_index>] - Create a new branch
+    - /branch <n> [at <message_index>] - Create a new branch
     - /branches - List all branches of current session
     - /tree - Show session branch tree
     - /switch <branch_id> - Switch to a different branch

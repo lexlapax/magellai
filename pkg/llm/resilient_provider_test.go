@@ -116,14 +116,14 @@ func TestResilientProvider_Generate(t *testing.T) {
 			expectError: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			primary := &mockProvider{
 				generateFunc: tt.primaryFunc,
 				modelInfo:    ModelInfo{Provider: "primary", Model: "test"},
 			}
-			
+
 			var fallbacks []Provider
 			if tt.fallbackFunc != nil {
 				fallback := &mockProvider{
@@ -132,7 +132,7 @@ func TestResilientProvider_Generate(t *testing.T) {
 				}
 				fallbacks = append(fallbacks, fallback)
 			}
-			
+
 			config := ResilientProviderConfig{
 				Primary:        primary,
 				Fallbacks:      fallbacks,
@@ -142,12 +142,12 @@ func TestResilientProvider_Generate(t *testing.T) {
 			}
 			config.RetryConfig.InitialDelay = 10 * time.Millisecond // Speed up tests
 			config.RetryConfig.MaxDelay = 100 * time.Millisecond
-			
+
 			resilient := NewResilientProvider(config)
-			
+
 			ctx := context.Background()
 			result, err := resilient.Generate(ctx, "test prompt")
-			
+
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
 			}
@@ -177,16 +177,16 @@ func TestResilientProvider_ContextTooLong(t *testing.T) {
 			return nil, domain.ErrContextTooLong
 		},
 	}
-	
+
 	config := ResilientProviderConfig{
 		Primary:        primary,
 		RetryConfig:    DefaultRetryConfig(),
 		EnableFallback: false,
 		Timeout:        5 * time.Second,
 	}
-	
+
 	resilient := NewResilientProvider(config)
-	
+
 	// Create messages that will trigger context reduction
 	messages := []Message{
 		{Role: "system", Content: "System prompt"},
@@ -194,18 +194,18 @@ func TestResilientProvider_ContextTooLong(t *testing.T) {
 		{Role: "assistant", Content: "Response 1"},
 		{Role: "user", Content: "Message 2"},
 	}
-	
+
 	ctx := context.Background()
 	response, err := resilient.GenerateMessage(ctx, messages)
-	
+
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	
+
 	if response == nil || response.Content != "success with reduced context" {
 		t.Error("expected successful response with reduced context")
 	}
-	
+
 	if attemptCount != 2 {
 		t.Errorf("expected 2 attempts, got %d", attemptCount)
 	}
@@ -223,30 +223,30 @@ func TestResilientProvider_RateLimit(t *testing.T) {
 		},
 		modelInfo: ModelInfo{Provider: "test", Model: "test-model"},
 	}
-	
+
 	config := ResilientProviderConfig{
 		Primary:        primary,
 		RetryConfig:    DefaultRetryConfig(),
 		EnableFallback: false,
 		Timeout:        30 * time.Second,
 	}
-	
+
 	resilient := NewResilientProvider(config)
-	
+
 	ctx := context.Background()
-	
+
 	// Rate limit errors are not retryable by default in our implementation
 	// This should fail since we don't retry rate limits
 	result, err := resilient.Generate(ctx, "test")
-	
+
 	if err == nil {
 		t.Errorf("expected rate limit error but got none")
 	}
-	
+
 	if result != "" {
 		t.Errorf("expected empty result but got: %s", result)
 	}
-	
+
 	// Should fail fast since rate limits aren't retried
 	if attemptCount != 1 {
 		t.Errorf("expected 1 attempt but got %d", attemptCount)
@@ -258,16 +258,16 @@ func TestCreateProviderChain(t *testing.T) {
 		{Type: ProviderMock, Model: "mock-1"},
 		{Type: ProviderMock, Model: "mock-2"},
 	}
-	
+
 	resilient, err := CreateProviderChain(configs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	if resilient == nil {
 		t.Fatal("expected non-nil resilient provider")
 	}
-	
+
 	modelInfo := resilient.GetModelInfo()
 	if modelInfo.Model != "mock-1" {
 		t.Errorf("expected primary model to be mock-1, got %s", modelInfo.Model)
@@ -276,11 +276,11 @@ func TestCreateProviderChain(t *testing.T) {
 
 func TestTruncateContext(t *testing.T) {
 	tests := []struct {
-		name          string
-		messages      []Message
-		maxTokens     int
-		expectLength  int
-		checkSystem   bool
+		name         string
+		messages     []Message
+		maxTokens    int
+		expectLength int
+		checkSystem  bool
 	}{
 		{
 			name: "keep all if under limit",
@@ -318,15 +318,15 @@ func TestTruncateContext(t *testing.T) {
 			expectLength: 3, // Last 3 messages
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := TruncateContext(tt.messages, tt.maxTokens)
-			
+
 			if len(result) != tt.expectLength {
 				t.Errorf("expected %d messages, got %d", tt.expectLength, len(result))
 			}
-			
+
 			if tt.checkSystem && len(result) > 0 {
 				if strings.ToLower(string(result[0].Role)) != "system" {
 					t.Error("expected first message to be system message")

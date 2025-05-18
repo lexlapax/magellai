@@ -116,7 +116,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	manager := &SessionManager{StorageManager: backend}
 
 	var session *Session
-	
+
 	// Check for crash recovery first if no specific session is requested
 	if opts.SessionID == "" {
 		// Create auto-recovery manager to check for recoverable sessions
@@ -129,11 +129,11 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 				fmt.Fprintf(opts.Writer, "Session Name: %s\n", recoveryState.SessionName)
 				fmt.Fprintf(opts.Writer, "Last saved: %s\n", recoveryState.Timestamp.Format("2006-01-02 15:04:05"))
 				fmt.Fprint(opts.Writer, "Recover this session? (y/n): ")
-				
+
 				reader := bufio.NewReader(opts.Reader)
 				response, _ := reader.ReadString('\n')
 				response = strings.TrimSpace(strings.ToLower(response))
-				
+
 				if response == "y" || response == "yes" {
 					session, err = tempAutoRecovery.RecoverSession(recoveryState)
 					if err != nil {
@@ -155,7 +155,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 			}
 		}
 	}
-	
+
 	if opts.SessionID != "" {
 		// Resume existing session
 		logging.LogInfo("Resuming existing session", "sessionID", opts.SessionID)
@@ -286,11 +286,11 @@ func (r *REPL) Run() error {
 	// Setup signal handler for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	
+
 	go func() {
 		sig := <-sigChan
 		logging.LogInfo("Received signal, saving recovery state", "signal", sig)
-		
+
 		// Force save recovery state
 		if r.autoRecovery != nil {
 			if err := r.autoRecovery.ForceRecoverySave(); err != nil {
@@ -299,7 +299,7 @@ func (r *REPL) Run() error {
 				logging.LogInfo("Recovery state saved successfully")
 			}
 		}
-		
+
 		// Exit
 		os.Exit(0)
 	}()
@@ -424,7 +424,7 @@ func (r *REPL) processMessage(message string) error {
 	// Add user message to conversation
 	logging.LogDebug("Adding user message to conversation", "attachmentCount", len(attachments))
 	AddMessageToConversation(r.session.Conversation, "user", message, attachments)
-	
+
 	// Save recovery state after user message
 	if r.autoRecovery != nil {
 		go func() {
@@ -479,7 +479,7 @@ func (r *REPL) processMessage(message string) error {
 
 		// Add assistant message to conversation
 		AddMessageToConversation(r.session.Conversation, "assistant", fullResponse.String(), nil)
-		
+
 		// Trigger recovery save after message
 		if r.autoRecovery != nil {
 			go func() {
@@ -502,7 +502,7 @@ func (r *REPL) processMessage(message string) error {
 
 		// Add assistant message to conversation
 		AddMessageToConversation(r.session.Conversation, "assistant", resp.Content, nil)
-		
+
 		// Trigger recovery save after message
 		if r.autoRecovery != nil {
 			go func() {

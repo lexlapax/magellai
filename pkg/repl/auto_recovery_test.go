@@ -20,7 +20,7 @@ import (
 func TestAutoRecoveryManager_SaveAndRecover(t *testing.T) {
 	// Setup test directory
 	tempDir := t.TempDir()
-	
+
 	// Create test configuration
 	config := &AutoRecoveryConfig{
 		Enabled:           true,
@@ -80,7 +80,7 @@ func TestAutoRecoveryManager_SaveAndRecover(t *testing.T) {
 	assert.Equal(t, session.ID, recoveredSession.ID)
 	assert.Equal(t, session.Name, recoveredSession.Name)
 	assert.Equal(t, len(session.Conversation.Messages), len(recoveredSession.Conversation.Messages))
-	
+
 	// Cleanup
 	storageManager.Close()
 	newStorageManager.Close()
@@ -89,7 +89,7 @@ func TestAutoRecoveryManager_SaveAndRecover(t *testing.T) {
 func TestAutoRecoveryManager_AutoSave(t *testing.T) {
 	// Setup test directory
 	tempDir := t.TempDir()
-	
+
 	// Create test configuration with short interval
 	config := &AutoRecoveryConfig{
 		Enabled:           true,
@@ -131,7 +131,7 @@ func TestAutoRecoveryManager_AutoSave(t *testing.T) {
 
 	// Stop auto-recovery
 	arm.Stop()
-	
+
 	// Close the backend to release file handles
 	storageManager.Close()
 }
@@ -139,7 +139,7 @@ func TestAutoRecoveryManager_AutoSave(t *testing.T) {
 func TestAutoRecoveryManager_BackupRotation(t *testing.T) {
 	// Setup test directory
 	tempDir := t.TempDir()
-	
+
 	// Create test configuration
 	config := &AutoRecoveryConfig{
 		Enabled:           true,
@@ -177,7 +177,7 @@ func TestAutoRecoveryManager_BackupRotation(t *testing.T) {
 
 	// Check backup files exist
 	recoveryPath := filepath.Join(tempDir, config.RecoveryFile)
-	
+
 	// Current file should exist
 	_, err = os.Stat(recoveryPath)
 	assert.NoError(t, err)
@@ -193,7 +193,7 @@ func TestAutoRecoveryManager_BackupRotation(t *testing.T) {
 	// Backup 3 should not exist (we only keep 2 backups)
 	_, err = os.Stat(recoveryPath + ".3")
 	assert.True(t, os.IsNotExist(err))
-	
+
 	// Cleanup
 	storageManager.Close()
 }
@@ -201,7 +201,7 @@ func TestAutoRecoveryManager_BackupRotation(t *testing.T) {
 func TestAutoRecoveryManager_AgeCheck(t *testing.T) {
 	// Setup test directory
 	tempDir := t.TempDir()
-	
+
 	// Create test configuration with short max age
 	config := &AutoRecoveryConfig{
 		Enabled:           true,
@@ -245,7 +245,7 @@ func TestAutoRecoveryManager_AgeCheck(t *testing.T) {
 	state, err = arm.CheckRecovery()
 	assert.NoError(t, err)
 	assert.Nil(t, state)
-	
+
 	// Cleanup
 	storageManager.Close()
 }
@@ -253,7 +253,7 @@ func TestAutoRecoveryManager_AgeCheck(t *testing.T) {
 func TestAutoRecoveryManager_ClearRecovery(t *testing.T) {
 	// Setup test directory
 	tempDir := t.TempDir()
-	
+
 	// Create test configuration
 	config := &AutoRecoveryConfig{
 		Enabled:           true,
@@ -297,7 +297,7 @@ func TestAutoRecoveryManager_ClearRecovery(t *testing.T) {
 	// Verify file is gone
 	_, err = os.Stat(recoveryPath)
 	assert.True(t, os.IsNotExist(err))
-	
+
 	// Cleanup
 	storageManager.Close()
 }
@@ -305,7 +305,7 @@ func TestAutoRecoveryManager_ClearRecovery(t *testing.T) {
 func TestAutoRecoveryManager_DisabledRecovery(t *testing.T) {
 	// Setup test directory
 	tempDir := t.TempDir()
-	
+
 	// Create test configuration with recovery disabled
 	config := &AutoRecoveryConfig{
 		Enabled:           false,
@@ -333,7 +333,7 @@ func TestAutoRecoveryManager_DisabledRecovery(t *testing.T) {
 	err = arm.Start()
 	assert.NoError(t, err)
 	assert.Nil(t, arm.saveTicker)
-	
+
 	// Cleanup
 	storageManager.Close()
 }
@@ -375,6 +375,6 @@ func TestRecoveryState_Serialization(t *testing.T) {
 	assert.Equal(t, state.SessionID, recovered.SessionID)
 	assert.Equal(t, state.SessionName, recovered.SessionName)
 	assert.Equal(t, state.StorageBackend, recovered.StorageBackend)
-	assert.Equal(t, len(state.ConversationData.Conversation.Messages), 
+	assert.Equal(t, len(state.ConversationData.Conversation.Messages),
 		len(recovered.ConversationData.Conversation.Messages))
 }

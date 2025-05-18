@@ -16,11 +16,11 @@ import (
 
 // RetryConfig defines retry behavior for network operations
 type RetryConfig struct {
-	MaxRetries     int           // Maximum number of retry attempts
-	InitialDelay   time.Duration // Initial delay between retries
-	MaxDelay       time.Duration // Maximum delay between retries
-	BackoffFactor  float64       // Exponential backoff factor
-	RetryableErrors []error      // Specific errors that should trigger retries
+	MaxRetries      int           // Maximum number of retry attempts
+	InitialDelay    time.Duration // Initial delay between retries
+	MaxDelay        time.Duration // Maximum delay between retries
+	BackoffFactor   float64       // Exponential backoff factor
+	RetryableErrors []error       // Specific errors that should trigger retries
 }
 
 // DefaultRetryConfig returns sensible defaults for retry behavior
@@ -56,32 +56,32 @@ func NewErrorHandler(config RetryConfig) *ErrorHandler {
 // WithRetry executes a function with retry logic for transient errors
 func (h *ErrorHandler) WithRetry(ctx context.Context, operation string, fn func() error) error {
 	var lastErr error
-	
+
 	for attempt := 0; attempt <= h.retryConfig.MaxRetries; attempt++ {
 		// Execute the function
 		err := fn()
 		if err == nil {
 			return nil // Success
 		}
-		
+
 		lastErr = err
-		
+
 		// Check if error is retryable
 		if !h.isRetryableError(err) {
 			h.logger.Debug("Error is not retryable", "operation", operation, "error", err)
 			return err
 		}
-		
+
 		// Check if context is cancelled
 		if ctx.Err() != nil {
 			return fmt.Errorf("operation cancelled: %w", ctx.Err())
 		}
-		
+
 		// Don't retry on last attempt
 		if attempt == h.retryConfig.MaxRetries {
 			break
 		}
-		
+
 		// Calculate delay with exponential backoff
 		delay := h.calculateDelay(attempt)
 		h.logger.Info("Retrying operation after error",
@@ -89,7 +89,7 @@ func (h *ErrorHandler) WithRetry(ctx context.Context, operation string, fn func(
 			"attempt", attempt+1,
 			"delay", delay,
 			"error", err)
-		
+
 		// Wait before retry
 		select {
 		case <-time.After(delay):
@@ -98,36 +98,36 @@ func (h *ErrorHandler) WithRetry(ctx context.Context, operation string, fn func(
 			return fmt.Errorf("operation cancelled during retry: %w", ctx.Err())
 		}
 	}
-	
+
 	return fmt.Errorf("operation failed after %d retries: %w", h.retryConfig.MaxRetries, lastErr)
 }
 
 // WithRateLimitRetry handles rate limit errors with intelligent backoff
 func (h *ErrorHandler) WithRateLimitRetry(ctx context.Context, operation string, fn func() error) error {
 	const maxRateLimitRetries = 3
-	
+
 	for attempt := 0; attempt < maxRateLimitRetries; attempt++ {
 		err := fn()
 		if err == nil {
 			return nil
 		}
-		
+
 		// Check if it's a rate limit error
 		if !domain.IsRateLimitError(err) {
 			return err
 		}
-		
+
 		// Rate limits need longer waits
 		delay := time.Duration(math.Pow(2, float64(attempt))) * 10 * time.Second
 		if delay > time.Minute {
 			delay = time.Minute
 		}
-		
+
 		h.logger.Warn("Rate limit exceeded, waiting before retry",
 			"operation", operation,
 			"attempt", attempt+1,
 			"delay", delay)
-		
+
 		select {
 		case <-time.After(delay):
 			// Continue to next retry
@@ -135,7 +135,7 @@ func (h *ErrorHandler) WithRateLimitRetry(ctx context.Context, operation string,
 			return fmt.Errorf("operation cancelled during rate limit wait: %w", ctx.Err())
 		}
 	}
-	
+
 	return fmt.Errorf("rate limit persists after retries")
 }
 
@@ -147,7 +147,7 @@ func (h *ErrorHandler) isRetryableError(err error) bool {
 			return true
 		}
 	}
-	
+
 	// Check for specific provider errors that are retryable
 	var providerErr *domain.ProviderError
 	if errors.As(err, &providerErr) {
@@ -160,23 +160,23 @@ func (h *ErrorHandler) isRetryableError(err error) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
 // calculateDelay calculates the retry delay with exponential backoff
 func (h *ErrorHandler) calculateDelay(attempt int) time.Duration {
 	delay := float64(h.retryConfig.InitialDelay) * math.Pow(h.retryConfig.BackoffFactor, float64(attempt))
-	
+
 	// Add jitter to prevent thundering herd
 	jitter := time.Duration(float64(delay) * 0.1)
 	delay += float64(jitter)
-	
+
 	// Cap at max delay
 	if time.Duration(delay) > h.retryConfig.MaxDelay {
 		return h.retryConfig.MaxDelay
 	}
-	
+
 	return time.Duration(delay)
 }
 
@@ -185,44 +185,44 @@ func (h *ErrorHandler) HandleError(err error, operation string, provider string)
 	if err == nil {
 		return nil
 	}
-	
+
 	// Log error with appropriate level based on type
 	switch {
 	case domain.IsAuthenticationError(err):
-		h.logger.Error("Authentication failed", 
+		h.logger.Error("Authentication failed",
 			"operation", operation,
 			"provider", provider,
 			"error", err)
 		return fmt.Errorf("authentication failed for %s: %w", provider, err)
-		
+
 	case domain.IsRateLimitError(err):
 		h.logger.Warn("Rate limit exceeded",
 			"operation", operation,
 			"provider", provider,
 			"error", err)
 		return fmt.Errorf("rate limit exceeded for %s: %w", provider, err)
-		
+
 	case domain.IsNetworkConnectivityError(err):
 		h.logger.Warn("Network connectivity issue",
 			"operation", operation,
 			"provider", provider,
 			"error", err)
 		return fmt.Errorf("network issue with %s: %w", provider, err)
-		
+
 	case domain.IsProviderUnavailableError(err):
 		h.logger.Warn("Provider unavailable",
 			"operation", operation,
 			"provider", provider,
 			"error", err)
 		return fmt.Errorf("%s is temporarily unavailable: %w", provider, err)
-		
+
 	case errors.Is(err, domain.ErrContextTooLong):
 		h.logger.Info("Context too long",
 			"operation", operation,
 			"provider", provider,
 			"error", err)
 		return fmt.Errorf("input too long for %s: %w", provider, err)
-		
+
 	default:
 		h.logger.Error("Provider operation failed",
 			"operation", operation,
@@ -258,29 +258,29 @@ func ShouldRetry(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	// Don't retry authentication errors
 	if domain.IsAuthenticationError(err) {
 		return false
 	}
-	
+
 	// Don't retry invalid parameter errors
 	if domain.IsInvalidModelParametersError(err) {
 		return false
 	}
-	
+
 	// Don't retry content filtered errors
 	if domain.IsContentFilteredError(err) {
 		return false
 	}
-	
+
 	// Retry network and availability issues
-	if domain.IsNetworkConnectivityError(err) || 
-	   domain.IsProviderUnavailableError(err) ||
-	   domain.IsTimeoutError(err) {
+	if domain.IsNetworkConnectivityError(err) ||
+		domain.IsProviderUnavailableError(err) ||
+		domain.IsTimeoutError(err) {
 		return true
 	}
-	
+
 	// Check status codes for provider errors
 	var providerErr *domain.ProviderError
 	if errors.As(err, &providerErr) {
@@ -293,6 +293,6 @@ func ShouldRetry(err error) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }

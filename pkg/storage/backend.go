@@ -31,17 +31,17 @@ type Backend interface {
 
 	// ExportSession exports a session in the specified format
 	ExportSession(id string, format domain.ExportFormat, w io.Writer) error
-	
+
 	// Branch-specific operations
-	
+
 	// GetChildren returns all direct child branches of a session
 	GetChildren(sessionID string) ([]*domain.SessionInfo, error)
-	
+
 	// GetBranchTree returns the full branch tree starting from a session
 	GetBranchTree(sessionID string) (*domain.BranchTree, error)
-	
+
 	// Merge operations
-	
+
 	// MergeSessions merges two sessions according to the specified options
 	MergeSessions(targetID, sourceID string, options domain.MergeOptions) (*domain.MergeResult, error)
 
