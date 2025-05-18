@@ -60,14 +60,3 @@ func (sm *SessionManager) GenerateSessionID() string {
 	return sm.StorageManager.GenerateSessionID()
 }
 
-// hasUnsavedChanges checks if the current session has unsaved changes
-func (sm *SessionManager) hasUnsavedChanges() bool {
-	// This is a simplified check - in practice might track modifications
-	current := sm.GetCurrentSession()
-	if current == nil {
-		return false
-	}
-	// Check if session has been modified since last save
-	// For now, assume any session with messages might have changes
-	return current.Conversation != nil && len(current.Conversation.Messages) > 0
-}

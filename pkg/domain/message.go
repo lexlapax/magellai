@@ -85,9 +85,7 @@ func (m *Message) Clone() Message {
 	}
 	
 	// Deep copy attachments
-	for i, att := range m.Attachments {
-		clone.Attachments[i] = att // Assuming Attachment is value type or has Clone
-	}
+	copy(clone.Attachments, m.Attachments)
 	
 	// Deep copy metadata
 	for k, v := range m.Metadata {

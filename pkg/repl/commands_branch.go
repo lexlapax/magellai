@@ -172,7 +172,7 @@ func displayTree(out interface{}, tree *domain.BranchTree, prefix string, curren
 	
 	// Display children
 	for i, child := range tree.Children {
-		childPrefix := prefix + "  "
+		var childPrefix string
 		if i == len(tree.Children)-1 {
 			fmt.Fprintf(out.(interface{ Write([]byte) (int, error) }), "%s└─ ", prefix)
 			childPrefix = prefix + "   "
@@ -295,7 +295,10 @@ func (r *REPL) cmdMerge(args []string) error {
 		// Ask if user wants to switch to the new branch
 		fmt.Fprint(r.writer, "Switch to new branch? (y/n): ")
 		var response string
-		fmt.Fscanln(r.reader, &response)
+		if _, err := fmt.Fscanln(r.reader, &response); err != nil {
+			logging.LogWarn("Failed to read user response", "error", err)
+			return nil
+		}
 		
 		if response == "y" || response == "yes" {
 			return r.cmdSwitch([]string{result.NewBranchID})
