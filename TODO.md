@@ -8,8 +8,126 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ### 4.8 Configuration - defaults, sample etc. ✅ (Completed)
 
-### 4.9 Run code, abstraction, redundancy checks and fixes *(REVISIT)*
-  - [ ] analyze entire codebase for inconsistent abstractions, unneeded functions, misplaced files in packages, duplicate functions, inconsistent errors and arguments, missing tests, redundant tests, missing integration tests for live testing (create a pkg/tests for cross package or integration tests if required) etc and create a comprensive todo list.
+### 4.9 Code abstraction and redundancy checks *(REVISIT)*
+
+#### 4.9.1 Type Consolidation and Abstraction Issues
+  - [ ] Resolve duplicate Message type definitions across packages:
+    - [ ] Consolidate pkg/domain/message.go, pkg/llm/types.go, and go-llms message types
+    - [ ] Decide on single source of truth (domain types recommended)
+    - [ ] Remove redundant Message definitions and update all references
+  - [ ] Resolve MessageRole vs Role type inconsistency:
+    - [ ] Use domain.MessageRole consistently throughout codebase
+    - [ ] Add conversion for go-llms Role type (includes "tool" role)
+  - [ ] Unify Attachment type representations:
+    - [ ] Consolidate AttachmentType vs ContentType naming
+    - [ ] Standardize attachment content as []byte vs string (base64)
+    - [ ] Move all attachment logic to domain package
+  - [ ] Fix Provider/Model type duplication:
+    - [ ] Remove redundant definitions in models.go and llm/types.go
+    - [ ] Use domain.Provider and domain.Model consistently
+
+#### 4.9.2 Duplicate Conversion Functions
+  - [ ] Consolidate adapter/conversion functions:
+    - [ ] Remove duplicate conversions between pkg/llm/adapters.go and pkg/repl/llm_adapter.go
+    - [ ] Move all LLM conversions to pkg/llm/adapters.go
+    - [ ] Remove redundant conversion functions in storage/types.go
+    - [ ] Create single conversion package if needed
+  - [ ] Remove unused domain integration helpers:
+    - [ ] Audit pkg/llm/domain_integration.go for actual usage
+    - [ ] Remove unused helper functions
+    - [ ] Document required integration points
+
+#### 4.9.3 Package Organization and Structure
+  - [ ] Fix misplaced files in packages:
+    - [ ] Move color utilities from pkg/utils/ to pkg/ui/ or pkg/display/
+    - [ ] Consider splitting large repl package into sub-packages:
+      - [ ] repl/session/ for session management
+      - [ ] repl/commands/ for command implementations  
+      - [ ] repl/adapters/ for type conversions
+    - [ ] Move readline functionality to separate ui package
+  - [ ] Create proper test organization:
+    - [ ] Create pkg/test/ for cross-package integration tests
+    - [ ] Move integration tests from cmd/magellai/ to pkg/test/integration/
+    - [ ] Organize test helpers into pkg/testutil/
+
+#### 4.9.4 Error Handling Consistency
+  - [ ] Standardize error handling approach:
+    - [ ] Use errors.New for static errors (as in command/errors.go)
+    - [ ] Use fmt.Errorf for dynamic errors with context
+    - [ ] Consider error wrapping strategy (errors.Wrap vs fmt.Errorf)
+  - [ ] Create package-specific error types where needed:
+    - [ ] storage/errors.go for storage-specific errors
+    - [ ] llm/errors.go for LLM-specific errors (consolidate with existing)
+    - [ ] repl/errors.go for REPL-specific errors
+  - [ ] Remove error string duplication:
+    - [ ] Audit all fmt.Errorf calls for duplicate error messages
+    - [ ] Create constants for commonly used error messages
+
+#### 4.9.5 Missing Tests
+  - [ ] Add tests for files without test coverage:
+    - [ ] pkg/llm/adapters.go - test all conversion functions
+    - [ ] pkg/repl/attachment_helpers.go
+    - [ ] pkg/repl/auto_recovery.go (has partial tests, needs more)
+    - [ ] pkg/repl/command_adapter.go
+    - [ ] pkg/llm/context_manager.go
+    - [ ] pkg/config/defaults.go
+    - [ ] pkg/command/discovery.go
+    - [ ] pkg/command/constants.go
+    - [ ] pkg/storage/backend.go (interface tests)
+  - [ ] Add integration tests for critical paths:
+    - [ ] End-to-end session branching and merging
+    - [ ] Provider fallback scenarios
+    - [ ] Configuration loading precedence
+    - [ ] REPL command execution flow
+
+#### 4.9.6 Test Organization and Helpers
+  - [ ] Consolidate test helpers and mocks:
+    - [ ] Create shared mock implementations in pkg/testutil/mocks/
+    - [ ] Remove duplicate mock types across test files
+    - [ ] Standardize test helper naming conventions
+  - [ ] Create test fixtures package:
+    - [ ] pkg/testutil/fixtures/ for common test data
+    - [ ] Reusable session, message, and attachment fixtures
+    - [ ] Configuration test fixtures
+
+#### 4.9.7 Logging and Instrumentation
+  - [ ] Standardize logging approach:
+    - [ ] Use internal/logging consistently (no direct slog/log usage)
+    - [ ] Remove fmt.Print statements from non-test code
+    - [ ] Add structured logging fields consistently
+  - [ ] Add missing logging in critical paths:
+    - [ ] Storage operations (already partially done)
+    - [ ] LLM provider operations (already partially done)
+    - [ ] Session branching/merging operations
+    - [ ] Command execution lifecycle
+
+#### 4.9.8 Function and Method Cleanup
+  - [ ] Remove unused functions:
+    - [ ] Audit all exported functions for actual usage
+    - [ ] Remove dead code identified by static analysis
+    - [ ] Document or remove experimental/WIP functions
+  - [ ] Consolidate utility functions:
+    - [ ] Merge similar string manipulation utilities
+    - [ ] Standardize path handling functions
+    - [ ] Create common validation helpers
+
+#### 4.9.9 Interface and Contract Consistency
+  - [ ] Review and standardize interfaces:
+    - [ ] Ensure consistent method signatures across similar interfaces
+    - [ ] Add missing interface documentation
+    - [ ] Consider interface segregation for large interfaces
+  - [ ] Validate interface implementations:
+    - [ ] Add compile-time interface checks (var _ Interface = (*Type)(nil))
+    - [ ] Ensure all implementations fully satisfy interfaces
+
+#### 4.9.10 Import and Dependency Cleanup
+  - [ ] Remove circular dependencies:
+    - [ ] Audit import graphs for circular references
+    - [ ] Refactor to eliminate circular imports
+  - [ ] Minimize cross-package dependencies:
+    - [ ] Review imports between packages
+    - [ ] Consider dependency injection patterns
+    - [ ] Document intentional coupling points
 
 ### 4.10 Documentation and architecture updates *(REVISIT)*
 - [ ] Update architecture documentation
