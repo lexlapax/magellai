@@ -151,7 +151,20 @@ func (m *ContextManager) applyPrioritization(messages []domain.Message) []domain
 	importance := m.calculateImportance(conversation)
 
 	// Add messages by importance until we hit token limit
+	// Sort indices to ensure deterministic order
+	var indices []int
 	for idx := range keepIndices {
+		indices = append(indices, idx)
+	}
+	// Sort indices to maintain order
+	for i := 0; i < len(indices)-1; i++ {
+		for j := i + 1; j < len(indices); j++ {
+			if indices[i] > indices[j] {
+				indices[i], indices[j] = indices[j], indices[i]
+			}
+		}
+	}
+	for _, idx := range indices {
 		result = append(result, conversation[idx])
 	}
 
