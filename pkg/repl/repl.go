@@ -54,7 +54,7 @@ type REPL struct {
 	cmdHistory     []string               // Command history
 	readline       *ui.ReadlineInterface  // Readline interface for tab completion
 	isTerminal     bool                   // Whether we're running in a terminal
-	colorFormatter *ui.ColorFormatter  // Color formatter for output
+	colorFormatter *ui.ColorFormatter     // Color formatter for output
 	nonInteractive NonInteractiveMode     // Non-interactive mode detection
 	sharedContext  *command.SharedContext // Shared context for command state preservation
 }
