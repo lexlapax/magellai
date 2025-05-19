@@ -104,11 +104,11 @@ func TestAliasCommand_Execute(t *testing.T) {
 		},
 		{
 			name: "show REPL alias",
-			args: []string{"show", "h"},
+			args: []string{"show", "r"},
 			setupConfig: func(c *config.Config) {
-				require.NoError(t, c.SetValue("repl.aliases.h", "help"))
+				require.NoError(t, c.SetValue("repl.aliases.r", "reload"))
 			},
-			expectedOutput: "h (repl) → help",
+			expectedOutput: "r (repl) → reload",
 		},
 		{
 			name:          "show non-existent alias",
@@ -132,12 +132,12 @@ func TestAliasCommand_Execute(t *testing.T) {
 		},
 		{
 			name:  "remove REPL alias",
-			args:  []string{"remove", "h"},
+			args:  []string{"remove", "r"},
 			flags: map[string]interface{}{"scope": "repl"},
 			setupConfig: func(c *config.Config) {
-				require.NoError(t, c.SetValue("repl.aliases.h", "help"))
+				require.NoError(t, c.SetValue("repl.aliases.r", "reload"))
 			},
-			expectedOutput: "Alias 'h' removed",
+			expectedOutput: "Alias 'r' removed",
 		},
 		{
 			name:          "remove non-existent alias",
@@ -279,6 +279,10 @@ func TestAliasCommand_Execute(t *testing.T) {
 				require.NoError(t, err)
 				output, ok := exec.Data["output"].(string)
 				require.True(t, ok)
+				if tt.name == "show REPL alias" {
+					t.Logf("Actual output: %q", output)
+					t.Logf("Expected output: %q", tt.expectedOutput)
+				}
 				assert.Contains(t, output, tt.expectedOutput)
 			}
 		})

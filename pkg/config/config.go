@@ -39,12 +39,24 @@ type Config struct {
 	currentDir string
 
 	// Configuration layers in order of precedence (lowest to highest)
-	defaults map[string]interface{}
-	profile  string // current profile name
+	defaults    map[string]interface{}
+	profile     string   // current profile name
+	loadedFiles []string // list of successfully loaded config files
 }
 
 // Manager is the global configuration manager instance
 var Manager *Config
+
+// GetLoadedFiles returns the list of configuration files that were successfully loaded
+func (c *Config) GetLoadedFiles() []string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Return a copy to prevent external modification
+	files := make([]string, len(c.loadedFiles))
+	copy(files, c.loadedFiles)
+	return files
+}
 
 // Init initializes the configuration manager
 func Init() error {
@@ -52,7 +64,7 @@ func Init() error {
 
 	Manager = &Config{
 		koanf:    koanf.New("."),
-		defaults: getDefaultConfig(),
+		defaults: GetCompleteDefaultConfig(),
 	}
 
 	// Get current working directory for project config search
@@ -159,6 +171,9 @@ func (c *Config) loadFile(path string) error {
 		return fmt.Errorf("failed to load config file %s: %w", path, err)
 	}
 
+	// Track successfully loaded files
+	c.loadedFiles = append(c.loadedFiles, expandedPath)
+
 	logging.LogDebug("Loaded config file successfully", "path", expandedPath)
 	return nil
 }
@@ -226,41 +241,6 @@ func (c *Config) applyProfile(profile string) error {
 
 	logging.LogDebug("Applied profile successfully", "profile", profile)
 	return nil
-}
-
-// getDefaultConfig returns the default configuration
-func getDefaultConfig() map[string]interface{} {
-	return map[string]interface{}{
-		"log": map[string]interface{}{
-			"level":  "info",
-			"format": "text",
-		},
-		"provider": map[string]interface{}{
-			"default": "openai",
-		},
-		"output": map[string]interface{}{
-			"format": "text",
-			"color":  true,
-		},
-		"session": map[string]interface{}{
-			"directory": expandPath("~/.config/magellai/sessions"),
-			"autosave":  true,
-			"storage": map[string]interface{}{
-				"type": "filesystem",
-				"settings": map[string]interface{}{
-					"base_dir": expandPath("~/.config/magellai/sessions"),
-				},
-			},
-		},
-		"repl": map[string]interface{}{
-			"colors": map[string]interface{}{
-				"enabled": true,
-			},
-		},
-		"plugin": map[string]interface{}{
-			"directory": expandPath("~/.config/magellai/plugins"),
-		},
-	}
 }
 
 // expandPath expands ~ to user home directory

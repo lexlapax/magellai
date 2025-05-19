@@ -38,19 +38,25 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [ ] show config should show all current runtime configurations
 
 ### 4.9 Run code, abstraction, redundancy checks and fixes *(REVISIT)*
-  - [ ] analyze entire codebase for inconsistent abstractions, unneeded functions, misplaced files in packages, duplicate functions, inconsistent errors and arguments, missing tests, redundant tests, missing integration tests for live testing etc and create todo list under this task section.
+  - [ ] analyze entire codebase for inconsistent abstractions, unneeded functions, misplaced files in packages, duplicate functions, inconsistent errors and arguments, missing tests, redundant tests, missing integration tests for live testing etc and create a comprensive todo list.
 
 ### 4.10 Documentation and architecture updates *(REVISIT)*
 - [ ] Update architecture documentation
     - [ ] Create domain layer diagrams
     - [ ] Update package relationship diagrams
     - [ ] Document type ownership
+    - [ ] Create docs/technical/architecture.md if needed
 - [ ] Update package documentation
     - [ ] Add godoc comments to all domain types
     - [ ] Update existing package docs
-    - [ ] Create migration guide
-- [ ] Update README with new architecture
-- [ ] Create docs/technical/architecture.md if needed
+    - [ ] Update api documentation
+- [ ] Consolidate documentation into a streamlined set of docs with indexed readmes for  
+  - [ ] user-guide, 
+  - [ ] techncial-guide
+  - [ ] planning (do not change planning docs)
+- [ ] Ensure duplicate information is consolidated
+- [ ] Ensure documentation links between docs
+- [ ] update README.md with new architecture and links to other documentation
 
 ### 4.11 Final validation and rollout *(REVISIT)*
 - [ ] Run full test suite

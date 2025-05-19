@@ -98,8 +98,13 @@ func TestConfigCommand_Execute(t *testing.T) {
 
 		// Validate command
 		{
-			name:           "validate valid config",
-			args:           []string{"validate"},
+			name: "validate valid config",
+			args: []string{"validate"},
+			setupConfig: func(c *config.Config) {
+				require.NoError(t, c.SetValue("provider.openai.api_key", "test-key"))
+				require.NoError(t, c.SetValue("provider.anthropic.api_key", "test-key"))
+				require.NoError(t, c.SetValue("provider.gemini.api_key", "test-key"))
+			},
 			expectedOutput: "Configuration is valid",
 		},
 
@@ -235,7 +240,7 @@ func TestConfigCommand_Execute(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				output, ok := exec.Data["output"].(string)
-				require.True(t, ok)
+				require.True(t, ok, "output should be string, got %T: %v", exec.Data["output"], exec.Data["output"])
 				assert.Contains(t, output, tt.expectedOutput)
 			}
 		})
