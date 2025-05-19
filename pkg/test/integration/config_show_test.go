@@ -1,6 +1,9 @@
 // ABOUTME: Integration test for config show command
 // ABOUTME: Verifies CLI displays all runtime configurations
 
+//go:build integration
+// +build integration
+
 package integration
 
 import (

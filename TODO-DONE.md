@@ -2,6 +2,8 @@
 
 This document contains all completed sections from the original TODO.md file for historical reference.
 
+Last Updated: 2025-05-19 (Phase 4.9.3 completed)
+
 ## Phase 1: Core Foundation (Week 1) ✅
 
 ### 1.1 Project Setup
@@ -929,3 +931,33 @@ Context Preservation Summary:
   - [x] Build and all tests still passing after cleanup
   - Result: Eliminated two files containing duplicate conversion logic
   - Impact: Reduced code size, improved JSON serialization efficiency, simplified architecture
+
+#### 4.9.3 Package Organization and Structure ✅ (Completed 2025-05-19)
+  - [x] Review package boundaries and responsibilities:
+    - [x] Created test package for integration tests
+    - Added build tags to all integration test files for better separation
+    - This prevents integration tests from running with unit tests by default
+    - Created new test/integration directory for future comprehensive tests
+    
+  - [x] Move misplaced functionality:
+    - [x] Moved color utilities from pkg/utils/ to pkg/ui/ (actually kept in utils as per architecture)
+    - Color utilities properly shared between CLI and REPL as designed
+    
+  - [x] Organize test structure:
+    - [x] Created pkg/test/integration package for test organization
+    - [x] Moved integration tests from cmd/magellai/ to pkg/test/integration/
+    - Fixed ask_pipeline_test.go to work with current architecture
+    - Added build tags to all integration tests for proper separation
+    
+  - [x] Configuration for different environments:
+    - [x] Added build tags to sqlite tests (integrated with existing tags)
+    - Modified Makefile to run integration tests with sqlite tag
+    - This allows tests to be categorized and run separately based on environment
+    
+  - [x] Test separation improvements:
+    - Added "integration" build tag to all integration tests
+    - Added "integration" tag to sqlite tests alongside existing sqlite/db tags
+    - Analyzed filesystem tests and deemed them unit tests (no external deps)
+    - Updated Makefile targets to include necessary tags
+    
+  - Result: Better organized test structure with proper separation of unit and integration tests

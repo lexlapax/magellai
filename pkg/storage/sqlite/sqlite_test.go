@@ -1,7 +1,9 @@
 // ABOUTME: Tests for the SQLite storage backend implementation
 // ABOUTME: Ensures proper database operations, schema creation, and FTS search
 
-//go:build sqlite || db
+//go:build (sqlite || db) && integration
+// +build sqlite db
+// +build integration
 
 package sqlite
 

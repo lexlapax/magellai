@@ -55,12 +55,12 @@ test:
 ## test-integration: Run integration tests only
 test-integration:
 	@echo "Running integration tests..."
-	$(GO_TEST) -tags=integration ./...
+	$(GO_TEST) -tags="integration sqlite" ./...
 
 ## test-all: Run all tests (unit and integration)
 test-all:
 	@echo "Running all tests..."
-	$(GO_TEST) -tags=integration ./...
+	$(GO_TEST) -tags="integration sqlite" ./...
 
 ## test-race: Run tests with race detection
 test-race:
@@ -82,7 +82,7 @@ test-coverage-html:
 ## test-sqlite: Run tests with SQLite support
 test-sqlite:
 	@echo "Running tests with SQLite support..."
-	$(GO_TEST) -tags="sqlite" ./...
+	$(GO_TEST) -tags="sqlite integration" ./...
 
 ## lint: Run linter
 lint:
