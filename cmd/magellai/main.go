@@ -213,6 +213,7 @@ type ConfigCmd struct {
 	Get      ConfigGetCmd      `cmd:"" help:"Get a specific value"`
 	Set      ConfigSetCmd      `cmd:"" help:"Set a configuration value"`
 	Validate ConfigValidateCmd `cmd:"" help:"Validate configuration file"`
+	Generate ConfigGenerateCmd `cmd:"" help:"Generate an example configuration file"`
 }
 
 // ConfigShowCmd handles config show
@@ -269,6 +270,31 @@ func (c *ConfigValidateCmd) Run(ctx *Context) error {
 	exec := &command.ExecutionContext{
 		Args:    []string{"validate"},
 		Flags:   command.NewFlags(nil),
+		Stdout:  ctx.Stdout,
+		Stderr:  ctx.Stderr,
+		Context: ctx.Ctx,
+	}
+	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
+}
+
+// ConfigGenerateCmd handles config generate
+type ConfigGenerateCmd struct {
+	Path  string `short:"p" help:"Path for generated configuration file"`
+	Force bool   `help:"Overwrite existing configuration file"`
+}
+
+func (c *ConfigGenerateCmd) Run(ctx *Context) error {
+	flags := make(map[string]interface{})
+	if c.Path != "" {
+		flags["output"] = c.Path
+	}
+	if c.Force {
+		flags["force"] = c.Force
+	}
+
+	exec := &command.ExecutionContext{
+		Args:    []string{"generate"},
+		Flags:   command.NewFlags(flags),
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,

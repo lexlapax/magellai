@@ -59,9 +59,9 @@ The project follows a library-first design where the core intelligence (LLM prov
     ✅ Fixed session export tests creating leftover files
     ✅ All unit and integration tests passing
   🚧 Phase 4.8: Configuration - defaults, sample etc. - In Progress
-    🔲 with no configuration file, use a default configuration
-    🔲 add a flag or command to create an example configuration
-    🔲 show config should show all current runtime configurations
+    - [ ] with no configuration file, use a default configuration
+    - [ ] add a flag or command to create an example configuration
+    - [ ] show config should show all current runtime configurations
   🔲 Phase 4.9: Code abstraction and redundancy checks - Pending (REVISIT)
   🔲 Phase 4.10: Documentation and architecture updates - Pending (REVISIT)
   🔲 Phase 4.11: Final validation and rollout - Pending (REVISIT)

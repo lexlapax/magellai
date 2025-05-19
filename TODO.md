@@ -4,33 +4,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 **Current Status**: Phase 4.8 - Configuration - defaults, sample etc.
 
-## Phase 1: Core Foundation (Week 1) ✅
-
-## Phase 2: Configuration and Command Foundation (Week 2) ✅
-
-## Phase 3: CLI with Kong (Week 3) ✅
-
 ## Phase 4: Advanced REPL Features (Week 4)
-
-### 4.1 Extended REPL Commands ✅
-
-### 4.1.1 Fix logging and file attachment issues ✅
-
-### 4.2 Advanced Session Features ✅
-
-### 4.2.1 Session Storage library abstraction ✅
-
-### 4.2.2 Session Auto-save functionality ✅
-
-### 4.3 Error Handling & Recovery ✅ 
-
-### 4.4 REPL Integration with Unified Command System ✅
-
-### 4.5 REPL UI Enhancements ✅
-
-### 4.6 Fix domain layer and types ✅
-
-### 4.7 Fix tests, test-integration issue ✅
 
 ### 4.8 Configuration - defaults, sample etc.
 - [ ] with no configuration file, use a default configuration, create a place in code to generate default configuration
@@ -38,7 +12,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [ ] show config should show all current runtime configurations
 
 ### 4.9 Run code, abstraction, redundancy checks and fixes *(REVISIT)*
-  - [ ] analyze entire codebase for inconsistent abstractions, unneeded functions, misplaced files in packages, duplicate functions, inconsistent errors and arguments, missing tests, redundant tests, missing integration tests for live testing etc and create a comprensive todo list.
+  - [ ] analyze entire codebase for inconsistent abstractions, unneeded functions, misplaced files in packages, duplicate functions, inconsistent errors and arguments, missing tests, redundant tests, missing integration tests for live testing (create a pkg/tests for cross package or integration tests if required) etc and create a comprensive todo list.
 
 ### 4.10 Documentation and architecture updates *(REVISIT)*
 - [ ] Update architecture documentation

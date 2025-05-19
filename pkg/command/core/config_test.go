@@ -262,15 +262,31 @@ func TestConfigCommand_Metadata(t *testing.T) {
 	assert.Contains(t, meta.LongDescription, "validate")
 	assert.Contains(t, meta.LongDescription, "export")
 	assert.Contains(t, meta.LongDescription, "import")
+	assert.Contains(t, meta.LongDescription, "generate")
 	assert.Contains(t, meta.LongDescription, "profiles")
 
 	// Check flags
-	assert.Len(t, meta.Flags, 1)
+	assert.Len(t, meta.Flags, 3)
+
+	// Check format flag
 	formatFlag := meta.Flags[0]
 	assert.Equal(t, "format", formatFlag.Name)
 	assert.Equal(t, "f", formatFlag.Short)
 	assert.Equal(t, command.FlagTypeString, formatFlag.Type)
 	assert.Equal(t, "text", formatFlag.Default)
+
+	// Check output flag
+	outputFlag := meta.Flags[1]
+	assert.Equal(t, "output", outputFlag.Name)
+	assert.Equal(t, "o", outputFlag.Short)
+	assert.Equal(t, command.FlagTypeString, outputFlag.Type)
+	assert.Equal(t, "", outputFlag.Default)
+
+	// Check force flag
+	forceFlag := meta.Flags[2]
+	assert.Equal(t, "force", forceFlag.Name)
+	assert.Equal(t, command.FlagTypeBool, forceFlag.Type)
+	assert.Equal(t, false, forceFlag.Default)
 }
 
 func TestConfigCommand_Validate(t *testing.T) {

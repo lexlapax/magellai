@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	osExec "os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -69,6 +70,8 @@ func (c *ConfigCommand) Execute(ctx context.Context, exec *command.ExecutionCont
 			return c.listProfiles(ctx, exec)
 		}
 		return c.handleProfileCommand(ctx, exec, exec.Args[1:])
+	case "generate":
+		return c.generateConfig(ctx, exec)
 	default:
 		return fmt.Errorf("config: %w - invalid subcommand '%s'", command.ErrInvalidArguments, exec.Args[0])
 	}
@@ -90,6 +93,7 @@ Subcommands:
   export             Export configuration to stdout
   import <file>      Import configuration from file
   edit               Open configuration in editor
+  generate           Generate an example configuration file
   profiles           Manage configuration profiles
     list             List all profiles
     switch <name>    Switch to a profile
@@ -104,6 +108,8 @@ Examples:
   config validate          # Check configuration
   config export > my.yaml  # Export config
   config import my.yaml    # Import config
+  config generate          # Generate example config
+  config generate -o custom.yaml  # Generate to custom path
   config profiles list     # List profiles
   config profiles switch work  # Switch to work profile`,
 		Category: command.CategoryShared,
@@ -114,6 +120,19 @@ Examples:
 				Description: "Output format for export/list (json|yaml|text)",
 				Type:        command.FlagTypeString,
 				Default:     "text",
+			},
+			{
+				Name:        "output",
+				Short:       "o",
+				Description: "Output path for generated configuration file (generate subcommand)",
+				Type:        command.FlagTypeString,
+				Default:     "",
+			},
+			{
+				Name:        "force",
+				Description: "Overwrite existing configuration file (generate subcommand)",
+				Type:        command.FlagTypeBool,
+				Default:     false,
 			},
 		},
 	}
@@ -585,4 +604,54 @@ func formatValue(output *strings.Builder, value interface{}, indent int) {
 	default:
 		output.WriteString(fmt.Sprintf(" %v\n", v))
 	}
+}
+
+// generateConfig generates an example configuration file
+func (c *ConfigCommand) generateConfig(ctx context.Context, exec *command.ExecutionContext) error {
+	// Get the output path from flags or use default
+	outputPath := exec.Flags.GetString("output")
+	if outputPath == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			logging.LogError(err, "Failed to get home directory")
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+		outputPath = filepath.Join(homeDir, ".config", "magellai", "config.yaml")
+	}
+
+	// Create directory if it doesn't exist
+	dir := filepath.Dir(outputPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		logging.LogError(err, "Failed to create directory", "dir", dir)
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+
+	// Check if file already exists
+	if _, err := os.Stat(outputPath); err == nil && !exec.Flags.GetBool("force") {
+		return fmt.Errorf("config file already exists at %s. Use --force to overwrite", outputPath)
+	}
+
+	// Generate example config
+	configContent := config.GenerateExampleConfig()
+
+	// Write to file
+	if err := os.WriteFile(outputPath, []byte(configContent), 0644); err != nil {
+		logging.LogError(err, "Failed to write config file", "path", outputPath)
+		return fmt.Errorf("failed to write config file: %w", err)
+	}
+
+	logging.LogInfo("Generated example configuration", "path", outputPath)
+	fmt.Fprintf(exec.Stdout, "Successfully generated example configuration at: %s\n", outputPath)
+
+	// Show additional tips
+	fmt.Fprintln(exec.Stdout, "\nTips:")
+	fmt.Fprintln(exec.Stdout, "- Set API keys via environment variables (e.g., MAGELLAI_PROVIDER_OPENAI_API_KEY)")
+	fmt.Fprintln(exec.Stdout, "- Customize settings based on your preferences")
+	fmt.Fprintln(exec.Stdout, "- Use profiles for different use cases (fast, quality, creative)")
+	fmt.Fprintln(exec.Stdout, "- Check 'magellai config validate' to verify your configuration")
+
+	// Store output path for testing
+	exec.Data["generated_path"] = outputPath
+
+	return nil
 }
