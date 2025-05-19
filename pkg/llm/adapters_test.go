@@ -166,15 +166,15 @@ func TestToLLMMessage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ToLLMMessage(tt.domainMsg)
-			
+
 			if got.Role != tt.wantRole {
 				t.Errorf("expected role %s, got %s", tt.wantRole, got.Role)
 			}
-			
+
 			if len(got.Content) != tt.wantContent {
 				t.Errorf("expected %d content parts, got %d", tt.wantContent, len(got.Content))
 			}
-			
+
 			if tt.checkFunc != nil {
 				tt.checkFunc(t, got)
 			}
@@ -184,10 +184,10 @@ func TestToLLMMessage(t *testing.T) {
 
 func TestFromLLMMessage(t *testing.T) {
 	tests := []struct {
-		name        string
-		llmMsg      llmdomain.Message
-		wantRole    domain.MessageRole
-		checkFunc   func(t *testing.T, msg *domain.Message)
+		name      string
+		llmMsg    llmdomain.Message
+		wantRole  domain.MessageRole
+		checkFunc func(t *testing.T, msg *domain.Message)
 	}{
 		{
 			name: "simple text message",
@@ -297,26 +297,26 @@ func TestFromLLMMessage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := FromLLMMessage(tt.llmMsg)
-			
+
 			if got.Role != tt.wantRole {
 				t.Errorf("expected role %s, got %s", tt.wantRole, got.Role)
 			}
-			
+
 			// Check that ID is generated
 			if got.ID == "" {
 				t.Error("expected ID to be generated")
 			}
-			
+
 			// Check that timestamp is set
 			if got.Timestamp.IsZero() {
 				t.Error("expected timestamp to be set")
 			}
-			
+
 			// Check that metadata is initialized
 			if got.Metadata == nil {
 				t.Error("expected metadata to be initialized")
 			}
-			
+
 			if tt.checkFunc != nil {
 				tt.checkFunc(t, got)
 			}
@@ -397,12 +397,12 @@ func TestFromLLMMessages(t *testing.T) {
 				t.Errorf("message %d: expected assistant role, got %s", i, domainMsg.Role)
 			}
 		}
-		
+
 		// Check content
 		if domainMsg.Content != llmMessages[i].Content[0].Text {
 			t.Errorf("message %d: expected content %s, got %s", i, llmMessages[i].Content[0].Text, domainMsg.Content)
 		}
-		
+
 		// Check that ID is generated
 		if domainMsg.ID == "" {
 			t.Errorf("message %d: expected ID to be generated", i)
@@ -519,11 +519,11 @@ func TestAttachmentConversion(t *testing.T) {
 			if part == nil {
 				t.Fatal("expected non-nil content part")
 			}
-			
+
 			if part.Type != tt.wantType {
 				t.Errorf("expected type %s, got %s", tt.wantType, part.Type)
 			}
-			
+
 			if tt.checkFunc != nil {
 				tt.checkFunc(t, part)
 			}
@@ -643,22 +643,22 @@ func TestContentPartToDomainAttachment(t *testing.T) {
 			if att == nil {
 				t.Fatal("expected non-nil attachment")
 			}
-			
+
 			if att.Type != tt.wantType {
 				t.Errorf("expected type %s, got %s", tt.wantType, att.Type)
 			}
-			
+
 			// Check that ID is generated
 			expectedID := fmt.Sprintf("att_%d", tt.index)
 			if att.ID != expectedID {
 				t.Errorf("expected ID %s, got %s", expectedID, att.ID)
 			}
-			
+
 			// Check that metadata is initialized
 			if att.Metadata == nil {
 				t.Error("expected metadata to be initialized")
 			}
-			
+
 			if tt.checkFunc != nil {
 				tt.checkFunc(t, att)
 			}

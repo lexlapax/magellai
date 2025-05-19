@@ -124,7 +124,7 @@ func TestREPLCommandAdapter_Create(t *testing.T) {
 	}
 
 	adapter := NewREPLCommandAdapter(repl, meta, handler)
-	
+
 	assert.NotNil(t, adapter)
 	assert.Equal(t, repl, adapter.repl)
 	assert.Equal(t, meta, adapter.metadata)
@@ -165,25 +165,25 @@ func TestREPLCommandAdapter_Execute(t *testing.T) {
 				Description: "Test command",
 				Category:    command.CategoryREPL,
 			}
-			
+
 			adapter := NewREPLCommandAdapter(repl, meta, tt.executeFunc)
-			
+
 			ctx := context.Background()
 			exec := &command.ExecutionContext{
 				Args:   tt.args,
 				Stdout: &bytes.Buffer{},
 				Stderr: &bytes.Buffer{},
 			}
-			
+
 			err := adapter.Execute(ctx, exec)
-			
+
 			if tt.expectedError != nil {
 				assert.Error(t, err)
 				assert.Equal(t, tt.expectedError.Error(), err.Error())
 			} else {
 				assert.NoError(t, err)
 			}
-			
+
 			if tt.verify != nil {
 				tt.verify(t, repl)
 			}
@@ -193,7 +193,7 @@ func TestREPLCommandAdapter_Execute(t *testing.T) {
 
 func TestREPLCommandAdapter_Metadata(t *testing.T) {
 	repl := createTestREPL(t)
-	
+
 	tests := []struct {
 		name     string
 		metadata *command.Metadata
@@ -220,7 +220,7 @@ func TestREPLCommandAdapter_Metadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := func(r *REPL, args []string) error { return nil }
 			adapter := NewREPLCommandAdapter(repl, tt.metadata, handler)
-			
+
 			metadata := adapter.Metadata()
 			assert.Equal(t, tt.metadata, metadata)
 		})
@@ -230,7 +230,7 @@ func TestREPLCommandAdapter_Metadata(t *testing.T) {
 func TestREPLCommandAdapter_Validate(t *testing.T) {
 	repl := createTestREPL(t)
 	handler := func(r *REPL, args []string) error { return nil }
-	
+
 	tests := []struct {
 		name      string
 		metadata  *command.Metadata
@@ -265,7 +265,7 @@ func TestREPLCommandAdapter_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			adapter := NewREPLCommandAdapter(repl, tt.metadata, handler)
 			err := adapter.Validate()
-			
+
 			if tt.wantError {
 				assert.Error(t, err)
 			} else {
@@ -279,10 +279,10 @@ func TestRegisterREPLCommands(t *testing.T) {
 	// Test registering all REPL commands
 	repl := createTestREPL(t)
 	registry := command.NewRegistry()
-	
+
 	err := RegisterREPLCommands(repl, registry)
 	assert.NoError(t, err)
-	
+
 	// Verify key commands are registered
 	testCommands := []struct {
 		name    string
@@ -326,14 +326,14 @@ func TestRegisterREPLCommands(t *testing.T) {
 		{"merge", nil},
 		{"recover", nil},
 	}
-	
+
 	for _, tc := range testCommands {
 		t.Run(tc.name, func(t *testing.T) {
 			cmd, err := registry.Get(tc.name)
 			assert.NoError(t, err, "command %s should be registered", tc.name)
 			assert.NotNil(t, cmd)
 			assert.Equal(t, tc.name, cmd.Metadata().Name)
-			
+
 			// Check aliases
 			for _, alias := range tc.aliases {
 				aliasCmd, err := registry.Get(alias)
@@ -348,7 +348,7 @@ func TestRegisterREPLCommands(t *testing.T) {
 func TestRegisterREPLCommands_DuplicateError(t *testing.T) {
 	repl := createTestREPL(t)
 	registry := command.NewRegistry()
-	
+
 	// Pre-register a command that conflicts
 	existingMeta := &command.Metadata{
 		Name:        "help",
@@ -358,10 +358,10 @@ func TestRegisterREPLCommands_DuplicateError(t *testing.T) {
 	existingCmd := command.NewSimpleCommand(existingMeta, func(ctx context.Context, exec *command.ExecutionContext) error {
 		return nil
 	})
-	
+
 	err := registry.Register(existingCmd)
 	require.NoError(t, err)
-	
+
 	// Try to register REPL commands - should fail on duplicate
 	err = RegisterREPLCommands(repl, registry)
 	assert.Error(t, err)
@@ -373,9 +373,9 @@ func TestCreateCommandContext(t *testing.T) {
 	stdin := strings.NewReader("input")
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
-	
+
 	ctx := CreateCommandContext(args, stdin, stdout, stderr)
-	
+
 	assert.Equal(t, args, ctx.Args)
 	assert.Equal(t, stdin, ctx.Stdin)
 	assert.Equal(t, stdout, ctx.Stdout)
@@ -390,12 +390,12 @@ func TestCreateCommandContextWithShared(t *testing.T) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 	shared := command.NewSharedContext()
-	
+
 	// Set some shared data
 	shared.Set("testkey", "testvalue")
-	
+
 	ctx := CreateCommandContextWithShared(args, stdin, stdout, stderr, shared)
-	
+
 	assert.Equal(t, args, ctx.Args)
 	assert.Equal(t, stdin, ctx.Stdin)
 	assert.Equal(t, stdout, ctx.Stdout)
@@ -403,7 +403,7 @@ func TestCreateCommandContextWithShared(t *testing.T) {
 	assert.NotNil(t, ctx.Data)
 	assert.Empty(t, ctx.Data)
 	assert.Equal(t, shared, ctx.SharedContext)
-	
+
 	// Verify shared context
 	val, ok := ctx.SharedContext.Get("testkey")
 	assert.True(t, ok)
@@ -413,12 +413,12 @@ func TestCreateCommandContextWithShared(t *testing.T) {
 func TestSpecificCommandExecution(t *testing.T) {
 	// Test specific command implementations
 	tests := []struct {
-		name         string
-		commandName  string
-		setup        func(*REPL)
-		args         []string
-		expectedErr  error
-		verify       func(*testing.T, *REPL, io.Writer)
+		name        string
+		commandName string
+		setup       func(*REPL)
+		args        []string
+		expectedErr error
+		verify      func(*testing.T, *REPL, io.Writer)
 	}{
 		{
 			name:        "help command",
@@ -488,27 +488,27 @@ func TestSpecificCommandExecution(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create REPL with buffer output
 			outputBuffer := &bytes.Buffer{}
 			repl := createTestREPLWithOutput(t, outputBuffer)
-			
+
 			// Setup if needed
 			if tt.setup != nil {
 				tt.setup(repl)
 			}
-			
+
 			// Find the command handler
 			registry := command.NewRegistry()
 			err := RegisterREPLCommands(repl, registry)
 			require.NoError(t, err)
-			
+
 			// Get the command
 			cmd, err := registry.Get(tt.commandName)
 			require.NoError(t, err)
-			
+
 			// Create execution context
 			ctx := context.Background()
 			exec := &command.ExecutionContext{
@@ -517,10 +517,10 @@ func TestSpecificCommandExecution(t *testing.T) {
 				Stderr: outputBuffer,
 				Data:   make(map[string]interface{}),
 			}
-			
+
 			// Execute
 			err = cmd.Execute(ctx, exec)
-			
+
 			// Check error
 			if tt.expectedErr != nil {
 				assert.Error(t, err)
@@ -528,7 +528,7 @@ func TestSpecificCommandExecution(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-			
+
 			// Verify results
 			if tt.verify != nil {
 				tt.verify(t, repl, outputBuffer)
@@ -546,13 +546,13 @@ func createTestREPL(t *testing.T) *REPL {
 func createTestREPLWithOutput(t *testing.T, output io.Writer) *REPL {
 	// Create temp directory for storage
 	tempDir := t.TempDir()
-	
+
 	// Create mock config
 	cfg := newCommandAdapterMockConfig()
 	require.NoError(t, cfg.SetValue("model", "mock/test-model"))
 	require.NoError(t, cfg.SetValue("stream", false))
 	require.NoError(t, cfg.SetValue("storage.dir", tempDir))
-	
+
 	// Create REPL options
 	opts := &REPLOptions{
 		Config:     cfg,
@@ -560,13 +560,13 @@ func createTestREPLWithOutput(t *testing.T, output io.Writer) *REPL {
 		Writer:     output,
 		Reader:     strings.NewReader(""),
 	}
-	
+
 	// Create REPL
 	repl, err := NewREPL(opts)
 	require.NoError(t, err)
-	
+
 	// Set mock provider
 	repl.provider = &mockLLMProvider{}
-	
+
 	return repl
 }
