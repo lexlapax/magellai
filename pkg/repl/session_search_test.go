@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lexlapax/magellai/pkg/llm"
+	"github.com/lexlapax/magellai/pkg/domain"
 )
 
 // extractSnippet is a test helper function to extract a snippet of text around a search query
@@ -125,14 +125,14 @@ func TestSearchSessions(t *testing.T) {
 		query            string
 		expectedCount    int
 		expectedSessions []string // Session names that should be in results
-		checkContent     func(results []*SearchResult) error
+		checkContent     func(results []*domain.SearchResult) error
 	}{
 		{
 			name:             "Search for quantum in messages",
 			query:            "quantum",
 			expectedCount:    1,
 			expectedSessions: []string{"Test Session 1"},
-			checkContent: func(results []*SearchResult) error {
+			checkContent: func(results []*domain.SearchResult) error {
 				if len(results[0].Matches) < 2 {
 					return nil // We expect matches in message and tag
 				}
@@ -301,12 +301,12 @@ func TestSearchResultsFormatting(t *testing.T) {
 	}
 
 	// Add message with attachment
-	attachment := llm.Attachment{
-		Type:     llm.AttachmentTypeImage,
+	attachment := domain.Attachment{
+		Type:     domain.AttachmentTypeImage,
 		FilePath: "/path/to/image.png",
 		MimeType: "image/png",
 	}
-	session.Conversation.AddMessage(NewMessage("user", "Here's an image about quantum physics", []llm.Attachment{attachment}))
+	session.Conversation.AddMessage(NewMessage("user", "Here's an image about quantum physics", []domain.Attachment{attachment}))
 	session.Conversation.AddMessage(NewMessage("assistant", "I can see the quantum physics diagram", nil))
 
 	// Save session

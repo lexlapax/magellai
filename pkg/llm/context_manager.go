@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lexlapax/magellai/internal/logging"
+	"github.com/lexlapax/magellai/pkg/domain"
 )
 
 // ContextManager manages conversation context to fit within model limits
@@ -21,7 +22,7 @@ type ContextManager struct {
 // TokenCounter estimates token count for text
 type TokenCounter interface {
 	CountTokens(text string) int
-	CountMessageTokens(messages []Message) int
+	CountMessageTokens(messages []domain.Message) int
 }
 
 // PriorityConfig defines how to prioritize messages when truncating
@@ -63,7 +64,7 @@ func NewContextManager(modelInfo ModelInfo) *ContextManager {
 }
 
 // OptimizeContext reduces message context to fit within limits
-func (m *ContextManager) OptimizeContext(messages []Message) ([]Message, error) {
+func (m *ContextManager) OptimizeContext(messages []domain.Message) ([]domain.Message, error) {
 	if len(messages) == 0 {
 		return messages, nil
 	}
@@ -99,17 +100,17 @@ func (m *ContextManager) OptimizeContext(messages []Message) ([]Message, error) 
 }
 
 // applyPrioritization applies message prioritization rules
-func (m *ContextManager) applyPrioritization(messages []Message) []Message {
+func (m *ContextManager) applyPrioritization(messages []domain.Message) []domain.Message {
 	if len(messages) == 0 {
 		return messages
 	}
 
-	var result []Message
+	var result []domain.Message
 	systemIdx := -1
 
 	// Find system message
 	for i, msg := range messages {
-		if strings.ToLower(msg.Role) == "system" {
+		if strings.ToLower(string(msg.Role)) == "system" {
 			systemIdx = i
 			break
 		}
@@ -175,7 +176,7 @@ func (m *ContextManager) applyPrioritization(messages []Message) []Message {
 }
 
 // calculateImportance assigns importance scores to messages
-func (m *ContextManager) calculateImportance(messages []Message) []float64 {
+func (m *ContextManager) calculateImportance(messages []domain.Message) []float64 {
 	scores := make([]float64, len(messages))
 
 	for i, msg := range messages {
@@ -193,7 +194,7 @@ func (m *ContextManager) calculateImportance(messages []Message) []float64 {
 		score *= m.exponentialDecay(age, m.priorityConfig.ImportanceDecay)
 
 		// Boost for user messages (they provide context)
-		if strings.ToLower(msg.Role) == "user" {
+		if strings.ToLower(string(msg.Role)) == "user" {
 			score *= 1.2
 		}
 
@@ -233,9 +234,9 @@ func (m *ContextManager) containsQuestion(content string) bool {
 }
 
 // selectByImportance selects messages by importance score
-func (m *ContextManager) selectByImportance(messages []Message, keep map[int]bool, scores []float64) []Message {
+func (m *ContextManager) selectByImportance(messages []domain.Message, keep map[int]bool, scores []float64) []domain.Message {
 	type scoredMessage struct {
-		message Message
+		message domain.Message
 		score   float64
 		index   int
 	}
@@ -262,7 +263,7 @@ func (m *ContextManager) selectByImportance(messages []Message, keep map[int]boo
 	}
 
 	// Extract messages
-	var result []Message
+	var result []domain.Message
 	for _, sm := range candidates {
 		result = append(result, sm.message)
 	}
@@ -271,14 +272,14 @@ func (m *ContextManager) selectByImportance(messages []Message, keep map[int]boo
 }
 
 // sortChronologically ensures messages are in chronological order
-func (m *ContextManager) sortChronologically(messages []Message) []Message {
+func (m *ContextManager) sortChronologically(messages []domain.Message) []domain.Message {
 	// This is a simple implementation assuming messages were originally in order
 	// In practice, you might want to track original indices
 	return messages
 }
 
 // EstimateTokenReduction estimates how many tokens would be saved by various strategies
-func (m *ContextManager) EstimateTokenReduction(messages []Message) map[string]int {
+func (m *ContextManager) EstimateTokenReduction(messages []domain.Message) map[string]int {
 	original := m.tokenCounter.CountMessageTokens(messages)
 	estimates := make(map[string]int)
 
@@ -299,10 +300,10 @@ func (m *ContextManager) EstimateTokenReduction(messages []Message) map[string]i
 }
 
 // removeAttachments creates a copy of messages without attachments
-func (m *ContextManager) removeAttachments(messages []Message) []Message {
-	result := make([]Message, len(messages))
+func (m *ContextManager) removeAttachments(messages []domain.Message) []domain.Message {
+	result := make([]domain.Message, len(messages))
 	for i, msg := range messages {
-		result[i] = Message{
+		result[i] = domain.Message{
 			Role:    msg.Role,
 			Content: msg.Content,
 			// Omit attachments
@@ -338,7 +339,7 @@ func (t *EstimatedTokenCounter) CountTokens(text string) int {
 }
 
 // CountMessageTokens estimates tokens in messages
-func (t *EstimatedTokenCounter) CountMessageTokens(messages []Message) int {
+func (t *EstimatedTokenCounter) CountMessageTokens(messages []domain.Message) int {
 	total := 0
 
 	for _, msg := range messages {
@@ -351,11 +352,11 @@ func (t *EstimatedTokenCounter) CountMessageTokens(messages []Message) int {
 		// Attachment tokens (rough estimate)
 		for _, att := range msg.Attachments {
 			switch att.Type {
-			case AttachmentTypeText:
-				total += t.CountTokens(att.Content)
-			case AttachmentTypeImage:
+			case domain.AttachmentTypeText:
+				total += t.CountTokens(string(att.Content))
+			case domain.AttachmentTypeImage:
 				total += 500 // Rough estimate for image tokens
-			case AttachmentTypeFile:
+			case domain.AttachmentTypeFile:
 				total += 100 // File reference tokens
 			}
 		}
@@ -384,13 +385,13 @@ func NewSlidingWindowManager(windowSize, overlapSize int) *SlidingWindowManager 
 }
 
 // GetWindow returns a window of messages that fits within token limit
-func (s *SlidingWindowManager) GetWindow(messages []Message, maxTokens int) []Message {
+func (s *SlidingWindowManager) GetWindow(messages []domain.Message, maxTokens int) []domain.Message {
 	if len(messages) == 0 {
 		return messages
 	}
 
 	// Start from the end and work backwards
-	window := []Message{}
+	window := []domain.Message{}
 	currentTokens := 0
 
 	for i := len(messages) - 1; i >= 0; i-- {
@@ -401,7 +402,7 @@ func (s *SlidingWindowManager) GetWindow(messages []Message, maxTokens int) []Me
 			break
 		}
 
-		window = append([]Message{msg}, window...)
+		window = append([]domain.Message{msg}, window...)
 		currentTokens += msgTokens
 	}
 

@@ -2,29 +2,40 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-**Current Status**: Phase 4.8 - COMPLETED. Next: Phase 4.9 (REVISIT)
+**Current Status**: Phase 4.9.1 - Type Consolidation COMPLETED. Next: Phase 4.9.2
 
 ## Phase 4: Advanced REPL Features (Week 4)
 
 ### 4.8 Configuration - defaults, sample etc. ✅ (Completed)
 
-### 4.9 Code abstraction and redundancy checks *(REVISIT)*
+### 4.9 Code abstraction and redundancy checks ✅ (Completed)
 
-#### 4.9.1 Type Consolidation and Abstraction Issues
-  - [ ] Resolve duplicate Message type definitions across packages:
-    - [ ] Consolidate pkg/domain/message.go, pkg/llm/types.go, and go-llms message types
-    - [ ] Decide on single source of truth (domain types recommended)
-    - [ ] Remove redundant Message definitions and update all references
-  - [ ] Resolve MessageRole vs Role type inconsistency:
-    - [ ] Use domain.MessageRole consistently throughout codebase
-    - [ ] Add conversion for go-llms Role type (includes "tool" role)
-  - [ ] Unify Attachment type representations:
-    - [ ] Consolidate AttachmentType vs ContentType naming
-    - [ ] Standardize attachment content as []byte vs string (base64)
-    - [ ] Move all attachment logic to domain package
-  - [ ] Fix Provider/Model type duplication:
-    - [ ] Remove redundant definitions in models.go and llm/types.go
-    - [ ] Use domain.Provider and domain.Model consistently
+#### 4.9.1 Type Consolidation and Abstraction Issues ✅ (Completed)
+  - [x] Resolve duplicate Message type definitions across packages:
+    - [x] Consolidate pkg/domain/message.go, pkg/llm/types.go, and go-llms message types
+    - [x] Decide on single source of truth (domain types recommended)
+    - [x] Remove redundant Message definitions and update all references
+    - [x] Updated pkg/llm to use domain.Message throughout
+    - [x] Created comprehensive adapter functions in pkg/llm/adapters.go
+    - [x] Updated pkg/llm/provider.go to use domain types
+    - [x] Updated pkg/repl/conversation.go to use domain types directly (no more conversions)
+    - [x] Fixed all compilation errors and tests
+  - [x] Resolve MessageRole vs Role type inconsistency:
+    - [x] Use domain.MessageRole consistently throughout codebase
+    - [x] Add conversion for go-llms Role type (includes "tool" role) in adapters.go
+  - [x] Unify Attachment type representations:
+    - [x] Consolidated to use domain.Attachment throughout codebase
+    - [x] Created adapter functions to convert between domain and go-llms types
+    - [x] Fixed attachment type inconsistencies in tests
+  - [x] Remove pkg/repl/types.go:
+    - [x] Removed type aliases that were pointing to domain types
+    - [x] Updated all files in repl package to use domain types directly
+    - [x] Fixed all test files to use domain types
+    - [x] All tests passing after migration
+  - [x] Analyze pkg/llm/types.go:
+    - [x] Determined that LLM types should remain as technical adapter types
+    - [x] These serve different purpose than domain types (API integration vs business model)
+    - [x] Keeping separation maintains proper architectural boundaries
 
 #### 4.9.2 Duplicate Conversion Functions
   - [ ] Consolidate adapter/conversion functions:

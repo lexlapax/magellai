@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/lexlapax/magellai/pkg/command"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,8 +97,8 @@ func TestSetVerbosity(t *testing.T) {
 			r := &REPL{
 				config: cfg,
 				writer: &buf,
-				session: &Session{
-					Conversation: &Conversation{},
+				session: &domain.Session{
+					Conversation: &domain.Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
 				sharedContext: command.NewSharedContext(),
@@ -164,8 +165,8 @@ func TestSetOutput(t *testing.T) {
 			r := &REPL{
 				config: cfg,
 				writer: &buf,
-				session: &Session{
-					Conversation: &Conversation{},
+				session: &domain.Session{
+					Conversation: &domain.Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
 				sharedContext: command.NewSharedContext(),
@@ -236,8 +237,8 @@ func TestSwitchProfile(t *testing.T) {
 			r := &REPL{
 				config: cfg,
 				writer: &buf,
-				session: &Session{
-					Conversation: &Conversation{},
+				session: &domain.Session{
+					Conversation: &domain.Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
 				sharedContext: command.NewSharedContext(),
@@ -259,7 +260,7 @@ func TestRemoveAttachment(t *testing.T) {
 	tests := []struct {
 		name          string
 		args          []string
-		attachments   []llm.Attachment
+		attachments   []domain.Attachment
 		expectError   bool
 		expectMsg     string
 		expectRemoved bool
@@ -267,9 +268,9 @@ func TestRemoveAttachment(t *testing.T) {
 		{
 			name: "remove existing attachment",
 			args: []string{"test.pdf"},
-			attachments: []llm.Attachment{
-				{FilePath: "/path/to/test.pdf", Type: llm.AttachmentTypeFile},
-				{FilePath: "/path/to/other.doc", Type: llm.AttachmentTypeFile},
+			attachments: []domain.Attachment{
+				{FilePath: "/path/to/test.pdf", Type: domain.AttachmentTypeFile},
+				{FilePath: "/path/to/other.doc", Type: domain.AttachmentTypeFile},
 			},
 			expectError:   false,
 			expectMsg:     "Attachment removed: test.pdf\n",
@@ -278,8 +279,8 @@ func TestRemoveAttachment(t *testing.T) {
 		{
 			name: "remove non-existent attachment",
 			args: []string{"missing.pdf"},
-			attachments: []llm.Attachment{
-				{FilePath: "/path/to/test.pdf", Type: llm.AttachmentTypeFile},
+			attachments: []domain.Attachment{
+				{FilePath: "/path/to/test.pdf", Type: domain.AttachmentTypeFile},
 			},
 			expectError:   true,
 			expectMsg:     "attachment not found: missing.pdf",
@@ -288,7 +289,7 @@ func TestRemoveAttachment(t *testing.T) {
 		{
 			name:          "no pending attachments",
 			args:          []string{"test.pdf"},
-			attachments:   []llm.Attachment{},
+			attachments:   []domain.Attachment{},
 			expectError:   false,
 			expectMsg:     "No attachments to remove.\n",
 			expectRemoved: false,
@@ -296,7 +297,7 @@ func TestRemoveAttachment(t *testing.T) {
 		{
 			name:        "missing filename argument",
 			args:        []string{},
-			attachments: []llm.Attachment{},
+			attachments: []domain.Attachment{},
 			expectError: true,
 			expectMsg:   "attachment file name required",
 		},
@@ -307,8 +308,8 @@ func TestRemoveAttachment(t *testing.T) {
 			var buf bytes.Buffer
 			r := &REPL{
 				writer: &buf,
-				session: &Session{
-					Conversation: &Conversation{},
+				session: &domain.Session{
+					Conversation: &domain.Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
 			}
@@ -327,7 +328,7 @@ func TestRemoveAttachment(t *testing.T) {
 
 				// Check if attachment was actually removed
 				if tt.expectRemoved {
-					remaining := r.session.Metadata["pending_attachments"].([]llm.Attachment)
+					remaining := r.session.Metadata["pending_attachments"].([]domain.Attachment)
 					assert.Len(t, remaining, len(tt.attachments)-1)
 				}
 			}
@@ -346,8 +347,8 @@ func TestShowConfig(t *testing.T) {
 	r := &REPL{
 		config: cfg,
 		writer: &buf,
-		session: &Session{
-			Conversation: &Conversation{
+		session: &domain.Session{
+			Conversation: &domain.Conversation{
 				Model:       "test/model",
 				Temperature: 0.8,
 				MaxTokens:   1000,
@@ -458,8 +459,8 @@ func TestSetConfig(t *testing.T) {
 			r := &REPL{
 				config: cfg,
 				writer: &buf,
-				session: &Session{
-					Conversation: &Conversation{},
+				session: &domain.Session{
+					Conversation: &domain.Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
 				sharedContext: command.NewSharedContext(),
@@ -516,8 +517,8 @@ func TestExtendedCommandHandling(t *testing.T) {
 			r := &REPL{
 				config: cfg,
 				writer: &buf,
-				session: &Session{
-					Conversation: &Conversation{},
+				session: &domain.Session{
+					Conversation: &domain.Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
 				sharedContext: command.NewSharedContext(),
@@ -570,8 +571,8 @@ func TestConfigCommand(t *testing.T) {
 	r := &REPL{
 		config: cfg,
 		writer: &buf,
-		session: &Session{
-			Conversation: &Conversation{
+		session: &domain.Session{
+			Conversation: &domain.Conversation{
 				Model: "test/model",
 			},
 			Metadata: make(map[string]interface{}),

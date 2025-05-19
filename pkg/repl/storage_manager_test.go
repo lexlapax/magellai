@@ -48,12 +48,12 @@ func TestStorageManager_SaveSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create and save a session
-	session := &Session{
+	session := &domain.Session{
 		ID:   "test-123",
 		Name: "Test Session",
-		Conversation: &Conversation{
+		Conversation: &domain.Conversation{
 			ID: "test-123",
-			Messages: []Message{
+			Messages: []domain.Message{
 				{
 					ID:        "msg-1",
 					Role:      "user",

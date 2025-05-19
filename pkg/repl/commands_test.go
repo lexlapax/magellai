@@ -7,13 +7,12 @@ import (
 	"testing"
 
 	"github.com/lexlapax/magellai/pkg/domain"
-	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // Helper function to add messages to conversations in tests
-func addTestMessage(conv *domain.Conversation, role, content string, attachments []llm.Attachment) {
+func addTestMessage(conv *domain.Conversation, role, content string, attachments []domain.Attachment) {
 	msg := NewMessage(role, content, attachments)
 	conv.AddMessage(msg)
 }
@@ -72,8 +71,8 @@ func TestREPL_listSessions(t *testing.T) {
 	addTestMessage(session1.Conversation, "assistant", "Hi there", nil)
 
 	// Create attachment for session 2
-	attachment := llm.Attachment{Type: "file", FilePath: "test.txt"}
-	addTestMessage(session1.Conversation, "user", "With attachment", []llm.Attachment{attachment})
+	attachment := domain.Attachment{Type: "file", FilePath: "test.txt"}
+	addTestMessage(session1.Conversation, "user", "With attachment", []domain.Attachment{attachment})
 	addTestMessage(session1.Conversation, "assistant", "Got it", nil)
 
 	err := repl.manager.SaveSession(session1)
@@ -171,12 +170,12 @@ func TestREPL_exportSession(t *testing.T) {
 	addTestMessage(repl.session.Conversation, "assistant", "Hi there!", nil)
 
 	// Create attachment with multimodal content
-	attachment := llm.Attachment{
+	attachment := domain.Attachment{
 		Type:     "image",
 		FilePath: "test.png",
 		MimeType: "image/png",
 	}
-	addTestMessage(repl.session.Conversation, "user", "Here's an image", []llm.Attachment{attachment})
+	addTestMessage(repl.session.Conversation, "user", "Here's an image", []domain.Attachment{attachment})
 
 	err := repl.manager.SaveSession(repl.session)
 	require.NoError(t, err)
@@ -267,7 +266,7 @@ func TestREPL_attachFile(t *testing.T) {
 	assert.Contains(t, output.String(), "File attached:")
 
 	// Check pending attachments
-	pendingAttachments, ok := repl.session.Metadata["pending_attachments"].([]llm.Attachment)
+	pendingAttachments, ok := repl.session.Metadata["pending_attachments"].([]domain.Attachment)
 	require.True(t, ok)
 	require.Len(t, pendingAttachments, 1)
 	assert.Equal(t, testFile, pendingAttachments[0].FilePath)
@@ -297,7 +296,7 @@ func TestREPL_listAttachments(t *testing.T) {
 	defer cleanup()
 
 	// Add attachments
-	attachments := []llm.Attachment{
+	attachments := []domain.Attachment{
 		{FilePath: "file1.txt", Type: "file", MimeType: "text/plain"},
 		{FilePath: "image.png", Type: "image", MimeType: "image/png"},
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
 )
 
@@ -54,7 +55,7 @@ func (r *REPL) loadSession(args []string) error {
 
 // resetConversation clears the conversation history
 func (r *REPL) resetConversation() error {
-	r.session.Conversation.Messages = []Message{}
+	r.session.Conversation.Messages = []domain.Message{}
 	fmt.Fprintln(r.writer, "Conversation reset.")
 	return nil
 }
@@ -327,9 +328,9 @@ func (r *REPL) attachFile(args []string) error {
 		r.session.Metadata = make(map[string]interface{})
 	}
 
-	pendingAttachments, ok := r.session.Metadata["pending_attachments"].([]llm.Attachment)
+	pendingAttachments, ok := r.session.Metadata["pending_attachments"].([]domain.Attachment)
 	if !ok {
-		pendingAttachments = []llm.Attachment{}
+		pendingAttachments = []domain.Attachment{}
 	}
 
 	pendingAttachments = append(pendingAttachments, attachment)
@@ -354,14 +355,14 @@ func (r *REPL) removeAttachment(args []string) error {
 		return nil
 	}
 
-	pendingAttachments, ok := r.session.Metadata["pending_attachments"].([]llm.Attachment)
+	pendingAttachments, ok := r.session.Metadata["pending_attachments"].([]domain.Attachment)
 	if !ok || len(pendingAttachments) == 0 {
 		fmt.Fprintln(r.writer, "No attachments to remove.")
 		return nil
 	}
 
 	// Find and remove the attachment
-	var newAttachments []llm.Attachment
+	var newAttachments []domain.Attachment
 	found := false
 	for _, att := range pendingAttachments {
 		name := getAttachmentDisplayName(att)
@@ -388,7 +389,7 @@ func (r *REPL) listAttachments() error {
 		return nil
 	}
 
-	pendingAttachments, ok := r.session.Metadata["pending_attachments"].([]llm.Attachment)
+	pendingAttachments, ok := r.session.Metadata["pending_attachments"].([]domain.Attachment)
 	if !ok || len(pendingAttachments) == 0 {
 		fmt.Fprintln(r.writer, "No attachments.")
 		return nil

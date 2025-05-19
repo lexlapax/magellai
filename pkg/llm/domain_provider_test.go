@@ -164,7 +164,7 @@ func (m *MockProvider) Generate(ctx context.Context, prompt string, options ...P
 	return "Mock response", nil
 }
 
-func (m *MockProvider) GenerateMessage(ctx context.Context, messages []Message, options ...ProviderOption) (*Response, error) {
+func (m *MockProvider) GenerateMessage(ctx context.Context, messages []domain.Message, options ...ProviderOption) (*Response, error) {
 	if m.response != nil {
 		return m.response, nil
 	}
@@ -190,7 +190,7 @@ func (m *MockProvider) Stream(ctx context.Context, prompt string, options ...Pro
 	return ch, nil
 }
 
-func (m *MockProvider) StreamMessage(ctx context.Context, messages []Message, options ...ProviderOption) (<-chan StreamChunk, error) {
+func (m *MockProvider) StreamMessage(ctx context.Context, messages []domain.Message, options ...ProviderOption) (<-chan StreamChunk, error) {
 	return m.Stream(ctx, "", options...)
 }
 

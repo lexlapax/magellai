@@ -9,18 +9,19 @@ import (
 	"io"
 	"testing"
 
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // MockStorageManager is a mock implementation of StorageManager for testing
 type MockStorageManager struct {
-	newSessionFunc    func(name string) *Session
-	saveSessionFunc   func(session *Session) error
-	loadSessionFunc   func(id string) (*Session, error)
-	listSessionsFunc  func() ([]*SessionInfo, error)
+	newSessionFunc    func(name string) *domain.Session
+	saveSessionFunc   func(session *domain.Session) error
+	loadSessionFunc   func(id string) (*domain.Session, error)
+	listSessionsFunc  func() ([]*domain.SessionInfo, error)
 	deleteSessionFunc func(id string) error
-	searchSessionFunc func(query string) ([]*SearchResult, error)
+	searchSessionFunc func(query string) ([]*domain.SearchResult, error)
 	exportSessionFunc func(id string, format string, w io.Writer) error
 	closeFunc         func() error
 	calls             map[string]int
@@ -32,17 +33,17 @@ func NewMockStorageManager() *MockStorageManager {
 	}
 }
 
-func (m *MockStorageManager) NewSession(name string) *Session {
+func (m *MockStorageManager) NewSession(name string) *domain.Session {
 	m.calls["NewSession"]++
 	if m.newSessionFunc != nil {
 		return m.newSessionFunc(name)
 	}
-	return &Session{
+	return &domain.Session{
 		ID:   "test-session-123",
 		Name: name,
-		Conversation: &Conversation{
+		Conversation: &domain.Conversation{
 			ID:       "test-session-123",
-			Messages: []Message{},
+			Messages: []domain.Message{},
 		},
 		Config:   make(map[string]interface{}),
 		Metadata: make(map[string]interface{}),
@@ -50,7 +51,7 @@ func (m *MockStorageManager) NewSession(name string) *Session {
 	}
 }
 
-func (m *MockStorageManager) SaveSession(session *Session) error {
+func (m *MockStorageManager) SaveSession(session *domain.Session) error {
 	m.calls["SaveSession"]++
 	if m.saveSessionFunc != nil {
 		return m.saveSessionFunc(session)
@@ -58,7 +59,7 @@ func (m *MockStorageManager) SaveSession(session *Session) error {
 	return nil
 }
 
-func (m *MockStorageManager) LoadSession(id string) (*Session, error) {
+func (m *MockStorageManager) LoadSession(id string) (*domain.Session, error) {
 	m.calls["LoadSession"]++
 	if m.loadSessionFunc != nil {
 		return m.loadSessionFunc(id)
@@ -66,12 +67,12 @@ func (m *MockStorageManager) LoadSession(id string) (*Session, error) {
 	return nil, fmt.Errorf("session not found")
 }
 
-func (m *MockStorageManager) ListSessions() ([]*SessionInfo, error) {
+func (m *MockStorageManager) ListSessions() ([]*domain.SessionInfo, error) {
 	m.calls["ListSessions"]++
 	if m.listSessionsFunc != nil {
 		return m.listSessionsFunc()
 	}
-	return []*SessionInfo{}, nil
+	return []*domain.SessionInfo{}, nil
 }
 
 func (m *MockStorageManager) DeleteSession(id string) error {
@@ -82,12 +83,12 @@ func (m *MockStorageManager) DeleteSession(id string) error {
 	return nil
 }
 
-func (m *MockStorageManager) SearchSessions(query string) ([]*SearchResult, error) {
+func (m *MockStorageManager) SearchSessions(query string) ([]*domain.SearchResult, error) {
 	m.calls["SearchSessions"]++
 	if m.searchSessionFunc != nil {
 		return m.searchSessionFunc(query)
 	}
-	return []*SearchResult{}, nil
+	return []*domain.SearchResult{}, nil
 }
 
 func (m *MockStorageManager) ExportSession(id string, format string, w io.Writer) error {

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/lexlapax/magellai/pkg/domain"
-	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,16 +24,16 @@ func TestNewMessage(t *testing.T) {
 
 func TestNewMessage_WithAttachments(t *testing.T) {
 	// Test creating a message with attachments
-	llmAttachments := []llm.Attachment{
+	attachments := []domain.Attachment{
 		{
-			Type:     "image",
+			Type:     domain.AttachmentTypeImage,
 			FilePath: "test.png",
 			MimeType: "image/png",
-			Content:  "image data",
+			Content:  []byte("image data"),
 		},
 	}
 
-	msg := NewMessage("assistant", "Here's an image", llmAttachments)
+	msg := NewMessage("assistant", "Here's an image", attachments)
 
 	assert.Equal(t, domain.MessageRoleAssistant, msg.Role)
 	assert.Equal(t, "Here's an image", msg.Content)
@@ -43,7 +42,7 @@ func TestNewMessage_WithAttachments(t *testing.T) {
 	// Check attachment conversion
 	domainAtt := msg.Attachments[0]
 	assert.Equal(t, domain.AttachmentTypeImage, domainAtt.Type)
-	assert.Equal(t, "test.png", domainAtt.Name)
+	assert.Equal(t, "test.png", domainAtt.FilePath)
 	assert.Equal(t, "image/png", domainAtt.MimeType)
 	assert.Equal(t, []byte("image data"), domainAtt.Content)
 }

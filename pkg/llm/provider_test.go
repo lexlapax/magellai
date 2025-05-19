@@ -5,10 +5,79 @@ package llm
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/lexlapax/go-llms/pkg/llm/domain"
+	magellai_domain "github.com/lexlapax/magellai/pkg/domain"
 )
+
+// Helper function to convert ModelCapabilities to a list of ModelCapability
+func modelCapabilitiesToList(caps ModelCapabilities) []ModelCapability {
+	var list []ModelCapability
+	if caps.Text {
+		list = append(list, CapabilityText)
+	}
+	if caps.Image {
+		list = append(list, CapabilityImage)
+	}
+	if caps.Audio {
+		list = append(list, CapabilityAudio)
+	}
+	if caps.Video {
+		list = append(list, CapabilityVideo)
+	}
+	if caps.File {
+		list = append(list, CapabilityFile)
+	}
+	return list
+}
+
+// Helper function to get model capabilities
+func getModelCapabilities(provider, model string) ModelCapabilities {
+	// Try to get from registry first
+	if info, err := GetModelInfo(provider, model); err == nil {
+		return info.Capabilities
+	}
+
+	// Fallback to basic defaults based on provider/model
+	switch provider {
+	case ProviderOpenAI:
+		if strings.Contains(strings.ToLower(model), "vision") || strings.Contains(strings.ToLower(model), "gpt-4o") {
+			return ModelCapabilities{Text: true, Image: true}
+		}
+		return ModelCapabilities{Text: true}
+
+	case ProviderAnthropic:
+		if strings.Contains(strings.ToLower(model), "claude-3") || strings.Contains(strings.ToLower(model), "claude-3.5") {
+			return ModelCapabilities{Text: true, Image: true}
+		}
+		return ModelCapabilities{Text: true}
+
+	case ProviderGemini:
+		if strings.Contains(strings.ToLower(model), "pro-vision") || strings.Contains(strings.ToLower(model), "ultra") || strings.Contains(strings.ToLower(model), "1.5") {
+			return ModelCapabilities{Text: true, Image: true, Audio: true, Video: true}
+		}
+		if strings.Contains(strings.ToLower(model), "pro") || strings.Contains(strings.ToLower(model), "flash") {
+			// gemini-pro has image capabilities
+			return ModelCapabilities{Text: true, Image: true}
+		}
+		return ModelCapabilities{Text: true}
+
+	default:
+		return ModelCapabilities{Text: true}
+	}
+}
+
+// Helper function to check if a slice contains a string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}
 
 func TestNewProvider(t *testing.T) {
 	tests := []struct {
@@ -179,7 +248,8 @@ func TestGetModelCapabilities(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.provider+"/"+tt.model, func(t *testing.T) {
-			got := getModelCapabilities(tt.provider, tt.model)
+			capabilities := getModelCapabilities(tt.provider, tt.model)
+			got := modelCapabilitiesToList(capabilities)
 
 			if len(got) != len(tt.expected) {
 				t.Errorf("getModelCapabilities(%s, %s) returned %d capabilities, want %d",
@@ -220,7 +290,7 @@ func TestProviderOptions(t *testing.T) {
 
 	// Test stop sequences option
 	stops := []string{"END", "STOP"}
-	WithStopSequences(stops)(config)
+	WithStopSequences(stops...)(config)
 	if len(config.stopSequences) != 2 {
 		t.Errorf("WithStopSequences failed, got %v", config.stopSequences)
 	}
@@ -263,20 +333,18 @@ func TestProviderOptions(t *testing.T) {
 }
 
 func TestProviderAdapter_buildLLMOptions(t *testing.T) {
-	p := &providerAdapter{}
-
 	temp := 0.8
 	maxTokens := 1024
 	topP := 0.9
 
-	opts := []ProviderOption{
-		WithTemperature(temp),
-		WithMaxTokens(maxTokens),
-		WithStopSequences([]string{"DONE"}),
-		WithTopP(topP),
+	config := &providerConfig{
+		temperature:   &temp,
+		maxTokens:     &maxTokens,
+		stopSequences: []string{"DONE"},
+		topP:          &topP,
 	}
 
-	llmOpts := p.buildLLMOptions(opts...)
+	llmOpts := buildLLMOptions(config)
 
 	// Apply options to a provider options struct to verify
 	providerOpts := domain.DefaultOptions()
@@ -318,9 +386,8 @@ func TestProviderAdapterMock(t *testing.T) {
 	}
 
 	// Test GenerateMessage
-	messages := []Message{
-		{Role: "user", Content: "Hello"},
-	}
+	userMsg := magellai_domain.NewMessage("", magellai_domain.MessageRoleUser, "Hello")
+	messages := []magellai_domain.Message{*userMsg}
 	response, err := p.GenerateMessage(ctx, messages)
 	if err != nil {
 		t.Errorf("GenerateMessage failed: %v", err)

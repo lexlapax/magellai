@@ -1,199 +1,237 @@
-// ABOUTME: Adapter functions for converting between domain and LLM types
+// ABOUTME: Adapter functions for converting between domain types and go-llms types
 // ABOUTME: Provides bidirectional conversion for messages and attachments
 
 package llm
 
 import (
-	"encoding/base64"
 	"fmt"
-	"strings"
 	"time"
 
+	llmdomain "github.com/lexlapax/go-llms/pkg/llm/domain"
 	"github.com/lexlapax/magellai/pkg/domain"
 )
 
-// ToDomainMessage converts an LLM message to a domain message
-func ToDomainMessage(msg Message) *domain.Message {
+// ToLLMMessage converts a domain.Message to go-llms domain.Message
+func ToLLMMessage(msg *domain.Message) llmdomain.Message {
+	// Convert role - handle tool role not present in domain
+	role := llmdomain.Role(msg.Role)
+
+	llmMsg := llmdomain.Message{
+		Role: role,
+	}
+
+	// Convert simple text content
+	if msg.Content != "" && len(msg.Attachments) == 0 {
+		llmMsg.Content = []llmdomain.ContentPart{
+			{
+				Type: llmdomain.ContentTypeText,
+				Text: msg.Content,
+			},
+		}
+		return llmMsg
+	}
+
+	// Convert with attachments
+	llmMsg.Content = make([]llmdomain.ContentPart, 0)
+
+	// Add text content first if present
+	if msg.Content != "" {
+		llmMsg.Content = append(llmMsg.Content, llmdomain.ContentPart{
+			Type: llmdomain.ContentTypeText,
+			Text: msg.Content,
+		})
+	}
+
+	// Add attachments
+	for _, att := range msg.Attachments {
+		if part := attachmentToLLMContentPart(&att); part != nil {
+			llmMsg.Content = append(llmMsg.Content, *part)
+		}
+	}
+
+	return llmMsg
+}
+
+// FromLLMMessage converts a go-llms domain.Message to domain.Message
+func FromLLMMessage(msg llmdomain.Message) *domain.Message {
 	// Generate a unique ID based on content and timestamp
 	id := fmt.Sprintf("msg_%d_%s", time.Now().UnixNano(), msg.Role)
 
 	domainMsg := &domain.Message{
 		ID:          id,
 		Role:        toDomainRole(msg.Role),
-		Content:     msg.Content,
 		Timestamp:   time.Now(),
-		Attachments: make([]domain.Attachment, 0, len(msg.Attachments)),
+		Attachments: make([]domain.Attachment, 0),
 		Metadata:    make(map[string]interface{}),
 	}
 
-	// Convert attachments
-	for i, att := range msg.Attachments {
-		domainAtt := toDomainAttachment(att, i)
-		domainMsg.Attachments = append(domainMsg.Attachments, domainAtt)
+	// Convert content parts
+	for _, part := range msg.Content {
+		switch part.Type {
+		case llmdomain.ContentTypeText:
+			if domainMsg.Content == "" {
+				domainMsg.Content = part.Text
+			} else {
+				// Multiple text parts become text attachments
+				att := domain.Attachment{
+					ID:       fmt.Sprintf("att_%d", len(domainMsg.Attachments)),
+					Type:     domain.AttachmentTypeText,
+					Content:  []byte(part.Text),
+					Name:     fmt.Sprintf("text_%d", len(domainMsg.Attachments)),
+					Metadata: make(map[string]interface{}),
+				}
+				domainMsg.Attachments = append(domainMsg.Attachments, att)
+			}
+		default:
+			if att := contentPartToDomainAttachment(part, len(domainMsg.Attachments)); att != nil {
+				domainMsg.Attachments = append(domainMsg.Attachments, *att)
+			}
+		}
 	}
 
 	return domainMsg
 }
 
-// FromDomainMessage converts a domain message to an LLM message
-func FromDomainMessage(msg *domain.Message) Message {
-	llmMsg := Message{
-		Role:        fromDomainRole(msg.Role),
-		Content:     msg.Content,
-		Attachments: make([]Attachment, 0, len(msg.Attachments)),
-	}
-
-	// Convert attachments
-	for _, att := range msg.Attachments {
-		llmAtt := fromDomainAttachment(att)
-		llmMsg.Attachments = append(llmMsg.Attachments, llmAtt)
-	}
-
-	return llmMsg
-}
-
-// ToDomainMessages converts a slice of LLM messages to domain messages
-func ToDomainMessages(messages []Message) []*domain.Message {
-	domainMessages := make([]*domain.Message, 0, len(messages))
-	for _, msg := range messages {
-		domainMessages = append(domainMessages, ToDomainMessage(msg))
-	}
-	return domainMessages
-}
-
-// FromDomainMessages converts a slice of domain messages to LLM messages
-func FromDomainMessages(messages []*domain.Message) []Message {
-	llmMessages := make([]Message, 0, len(messages))
-	for _, msg := range messages {
-		llmMessages = append(llmMessages, FromDomainMessage(msg))
+// ToLLMMessages converts a slice of domain messages to go-llms messages
+func ToLLMMessages(messages []domain.Message) []llmdomain.Message {
+	llmMessages := make([]llmdomain.Message, len(messages))
+	for i, msg := range messages {
+		llmMessages[i] = ToLLMMessage(&msg)
 	}
 	return llmMessages
 }
 
-// toDomainRole converts LLM role string to domain MessageRole
-func toDomainRole(role string) domain.MessageRole {
-	switch strings.ToLower(role) {
-	case "user":
+// FromLLMMessages converts a slice of go-llms messages to domain messages
+func FromLLMMessages(messages []llmdomain.Message) []domain.Message {
+	domainMessages := make([]domain.Message, len(messages))
+	for i, msg := range messages {
+		domainMessages[i] = *FromLLMMessage(msg)
+	}
+	return domainMessages
+}
+
+// Role conversion helpers
+
+func toDomainRole(role llmdomain.Role) domain.MessageRole {
+	switch role {
+	case llmdomain.RoleUser:
 		return domain.MessageRoleUser
-	case "assistant":
+	case llmdomain.RoleAssistant:
 		return domain.MessageRoleAssistant
-	case "system":
+	case llmdomain.RoleSystem:
 		return domain.MessageRoleSystem
+	case llmdomain.RoleTool:
+		// Tool role doesn't exist in domain, map to assistant
+		return domain.MessageRoleAssistant
 	default:
-		// Default to user if unknown
-		return domain.MessageRoleUser
+		return domain.MessageRole(role)
 	}
 }
 
-// fromDomainRole converts domain MessageRole to LLM role string
-func fromDomainRole(role domain.MessageRole) string {
-	return strings.ToLower(string(role))
-}
+// Attachment conversion helpers
 
-// toDomainAttachment converts an LLM attachment to a domain attachment
-func toDomainAttachment(att Attachment, index int) domain.Attachment {
-	// Generate ID based on type and index
-	id := fmt.Sprintf("att_%s_%d_%d", att.Type, index, time.Now().UnixNano())
-
-	domainAtt := domain.Attachment{
-		ID:       id,
-		Type:     toDomainAttachmentType(att.Type),
-		FilePath: att.FilePath,
-		MimeType: att.MimeType,
-		Metadata: make(map[string]interface{}),
-	}
-
-	// Handle content - LLM uses string, domain uses []byte
-	if att.Content != "" {
-		// If it looks like base64, decode it
-		if strings.Contains(att.Content, "base64,") {
-			parts := strings.Split(att.Content, ",")
-			if len(parts) > 1 {
-				if data, err := base64.StdEncoding.DecodeString(parts[1]); err == nil {
-					domainAtt.Content = data
-				} else {
-					// Fallback to string bytes
-					domainAtt.Content = []byte(att.Content)
-				}
-			} else {
-				domainAtt.Content = []byte(att.Content)
-			}
-		} else {
-			// Regular text content
-			domainAtt.Content = []byte(att.Content)
-		}
-	}
-
-	// Set name if file path is provided
-	if att.FilePath != "" {
-		parts := strings.Split(att.FilePath, "/")
-		domainAtt.Name = parts[len(parts)-1]
-	}
-
-	return domainAtt
-}
-
-// fromDomainAttachment converts a domain attachment to an LLM attachment
-func fromDomainAttachment(att domain.Attachment) Attachment {
-	llmAtt := Attachment{
-		Type:     fromDomainAttachmentType(att.Type),
-		FilePath: att.FilePath,
-		MimeType: att.MimeType,
-	}
-
-	// Handle content - domain uses []byte, LLM uses string
-	if len(att.Content) > 0 {
-		// Check if this is binary data that needs base64 encoding
-		if att.Type == domain.AttachmentTypeImage || att.Type == domain.AttachmentTypeFile ||
-			att.Type == domain.AttachmentTypeAudio || att.Type == domain.AttachmentTypeVideo {
-			// Encode binary data as base64
-			llmAtt.Content = "data:" + att.MimeType + ";base64," + base64.StdEncoding.EncodeToString(att.Content)
-		} else {
-			// Text content can be converted directly
-			llmAtt.Content = string(att.Content)
-		}
-	}
-
-	// If we have a URL, use it instead of file path for certain types
-	if att.URL != "" && (att.Type == domain.AttachmentTypeImage || att.Type == domain.AttachmentTypeVideo || att.Type == domain.AttachmentTypeAudio) {
-		llmAtt.FilePath = att.URL
-	}
-
-	return llmAtt
-}
-
-// toDomainAttachmentType converts LLM attachment type to domain attachment type
-func toDomainAttachmentType(attType AttachmentType) domain.AttachmentType {
-	switch attType {
-	case AttachmentTypeImage:
-		return domain.AttachmentTypeImage
-	case AttachmentTypeAudio:
-		return domain.AttachmentTypeAudio
-	case AttachmentTypeVideo:
-		return domain.AttachmentTypeVideo
-	case AttachmentTypeFile:
-		return domain.AttachmentTypeFile
-	case AttachmentTypeText:
-		return domain.AttachmentTypeText
-	default:
-		return domain.AttachmentTypeFile
-	}
-}
-
-// fromDomainAttachmentType converts domain attachment type to LLM attachment type
-func fromDomainAttachmentType(attType domain.AttachmentType) AttachmentType {
-	switch attType {
+func attachmentToLLMContentPart(att *domain.Attachment) *llmdomain.ContentPart {
+	switch att.Type {
 	case domain.AttachmentTypeImage:
-		return AttachmentTypeImage
-	case domain.AttachmentTypeAudio:
-		return AttachmentTypeAudio
-	case domain.AttachmentTypeVideo:
-		return AttachmentTypeVideo
-	case domain.AttachmentTypeFile:
-		return AttachmentTypeFile
+		return &llmdomain.ContentPart{
+			Type: llmdomain.ContentTypeImage,
+			Image: &llmdomain.ImageContent{
+				Source: llmdomain.SourceInfo{
+					Type:      llmdomain.SourceTypeBase64,
+					Data:      string(att.Content), // Assume base64 encoded
+					MediaType: att.MimeType,
+				},
+			},
+		}
 	case domain.AttachmentTypeText:
-		return AttachmentTypeText
-	default:
-		return AttachmentTypeFile
+		return &llmdomain.ContentPart{
+			Type: llmdomain.ContentTypeText,
+			Text: string(att.Content),
+		}
+	case domain.AttachmentTypeFile:
+		return &llmdomain.ContentPart{
+			Type: llmdomain.ContentTypeFile,
+			File: &llmdomain.FileContent{
+				FileName: att.Name,
+				FileData: string(att.Content), // Assume base64 encoded
+				MimeType: att.MimeType,
+			},
+		}
+	case domain.AttachmentTypeVideo:
+		return &llmdomain.ContentPart{
+			Type: llmdomain.ContentTypeVideo,
+			Video: &llmdomain.VideoContent{
+				Source: llmdomain.SourceInfo{
+					Type:      llmdomain.SourceTypeURL,
+					URL:       att.URL,
+					MediaType: att.MimeType,
+				},
+			},
+		}
+	case domain.AttachmentTypeAudio:
+		return &llmdomain.ContentPart{
+			Type: llmdomain.ContentTypeAudio,
+			Audio: &llmdomain.AudioContent{
+				Source: llmdomain.SourceInfo{
+					Type:      llmdomain.SourceTypeURL,
+					URL:       att.URL,
+					MediaType: att.MimeType,
+				},
+			},
+		}
 	}
+	return nil
+}
+
+func contentPartToDomainAttachment(part llmdomain.ContentPart, index int) *domain.Attachment {
+	baseID := fmt.Sprintf("att_%d", index)
+
+	switch part.Type {
+	case llmdomain.ContentTypeImage:
+		if part.Image != nil {
+			return &domain.Attachment{
+				ID:       baseID,
+				Type:     domain.AttachmentTypeImage,
+				Content:  []byte(part.Image.Source.Data),
+				URL:      part.Image.Source.URL,
+				MimeType: part.Image.Source.MediaType,
+				Name:     fmt.Sprintf("image_%d", index),
+				Metadata: make(map[string]interface{}),
+			}
+		}
+	case llmdomain.ContentTypeFile:
+		if part.File != nil {
+			return &domain.Attachment{
+				ID:       baseID,
+				Type:     domain.AttachmentTypeFile,
+				Content:  []byte(part.File.FileData),
+				Name:     part.File.FileName,
+				MimeType: part.File.MimeType,
+				Metadata: make(map[string]interface{}),
+			}
+		}
+	case llmdomain.ContentTypeVideo:
+		if part.Video != nil {
+			return &domain.Attachment{
+				ID:       baseID,
+				Type:     domain.AttachmentTypeVideo,
+				URL:      part.Video.Source.URL,
+				MimeType: part.Video.Source.MediaType,
+				Name:     fmt.Sprintf("video_%d", index),
+				Metadata: make(map[string]interface{}),
+			}
+		}
+	case llmdomain.ContentTypeAudio:
+		if part.Audio != nil {
+			return &domain.Attachment{
+				ID:       baseID,
+				Type:     domain.AttachmentTypeAudio,
+				URL:      part.Audio.Source.URL,
+				MimeType: part.Audio.Source.MediaType,
+				Name:     fmt.Sprintf("audio_%d", index),
+				Metadata: make(map[string]interface{}),
+			}
+		}
+	}
+	return nil
 }

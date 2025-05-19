@@ -1,5 +1,5 @@
-// ABOUTME: Conversation helper functions for REPL operations
-// ABOUTME: Provides REPL-specific conversation utilities
+// ABOUTME: Conversation helper functions for REPL operations using domain types
+// ABOUTME: Provides REPL-specific conversation utilities without type conversion
 
 package repl
 
@@ -8,52 +8,45 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lexlapax/magellai/pkg/domain"
-	"github.com/lexlapax/magellai/pkg/llm"
 )
 
 // NewMessage creates a new domain message with the given parameters
-func NewMessage(role, content string, attachments []llm.Attachment) domain.Message {
+func NewMessage(role, content string, attachments []domain.Attachment) domain.Message {
 	msg := domain.Message{
-		ID:        uuid.New().String(),
-		Role:      domain.MessageRole(role),
-		Content:   content,
-		Timestamp: time.Now(),
-		Metadata:  make(map[string]interface{}),
-	}
-
-	// Convert LLM attachments to domain attachments
-	if len(attachments) > 0 {
-		msg.Attachments = make([]domain.Attachment, len(attachments))
-		for i, att := range attachments {
-			msg.Attachments[i] = llmAttachmentToDomain(att)
-		}
+		ID:          uuid.New().String(),
+		Role:        domain.MessageRole(role),
+		Content:     content,
+		Timestamp:   time.Now(),
+		Attachments: attachments,
+		Metadata:    make(map[string]interface{}),
 	}
 
 	return msg
 }
 
 // GetHistory returns messages formatted for LLM context
-func GetHistory(conv *domain.Conversation) []llm.Message {
-	history := []llm.Message{}
+func GetHistory(conv *domain.Conversation) []domain.Message {
+	history := []domain.Message{}
 
 	// Add system prompt if present
 	if conv.SystemPrompt != "" {
-		history = append(history, llm.Message{
-			Role:    "system",
-			Content: conv.SystemPrompt,
+		history = append(history, domain.Message{
+			ID:        "system_prompt",
+			Role:      domain.MessageRoleSystem,
+			Content:   conv.SystemPrompt,
+			Timestamp: time.Now(),
+			Metadata:  make(map[string]interface{}),
 		})
 	}
 
-	// Convert domain messages to LLM messages
-	for _, msg := range conv.Messages {
-		history = append(history, convertDomainMessageToLLM(msg))
-	}
+	// Domain messages can be used directly now
+	history = append(history, conv.Messages...)
 
 	return history
 }
 
 // AddMessageToConversation adds a message to a conversation
-func AddMessageToConversation(conv *domain.Conversation, role, content string, attachments []llm.Attachment) {
+func AddMessageToConversation(conv *domain.Conversation, role, content string, attachments []domain.Attachment) {
 	msg := NewMessage(role, content, attachments)
 	conv.AddMessage(msg)
 }

@@ -38,13 +38,13 @@ func TestSessionExport(t *testing.T) {
 	session.Conversation.AddMessage(NewMessage("assistant", "Test response.", nil))
 
 	// Add a message with attachment
-	attachment := llm.Attachment{
-		Type:     llm.AttachmentTypeText,
+	attachment := domain.Attachment{
+		Type:     domain.AttachmentTypeText,
 		FilePath: "test.txt",
 		MimeType: "text/plain",
-		Content:  "Test content",
+		Content:  []byte("Test content"),
 	}
-	session.Conversation.AddMessage(NewMessage("user", "Analyze this", []llm.Attachment{attachment}))
+	session.Conversation.AddMessage(NewMessage("user", "Analyze this", []domain.Attachment{attachment}))
 	session.Conversation.AddMessage(NewMessage("assistant", "Analysis complete.", nil))
 
 	// Save the session
@@ -331,7 +331,7 @@ func (m *MockProvider) Generate(ctx context.Context, prompt string, opts ...llm.
 	return "Test response", nil
 }
 
-func (m *MockProvider) GenerateMessage(ctx context.Context, messages []llm.Message, opts ...llm.ProviderOption) (*llm.Response, error) {
+func (m *MockProvider) GenerateMessage(ctx context.Context, messages []domain.Message, opts ...llm.ProviderOption) (*llm.Response, error) {
 	return &llm.Response{
 		Content: "Test response",
 	}, nil
@@ -350,7 +350,7 @@ func (m *MockProvider) Stream(ctx context.Context, prompt string, opts ...llm.Pr
 	return ch, nil
 }
 
-func (m *MockProvider) StreamMessage(ctx context.Context, messages []llm.Message, opts ...llm.ProviderOption) (<-chan llm.StreamChunk, error) {
+func (m *MockProvider) StreamMessage(ctx context.Context, messages []domain.Message, opts ...llm.ProviderOption) (<-chan llm.StreamChunk, error) {
 	ch := make(chan llm.StreamChunk, 1)
 	go func() {
 		ch <- llm.StreamChunk{Content: "Test stream"}

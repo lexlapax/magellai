@@ -52,7 +52,7 @@ func TestSanitizeAPIKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sanitizeAPIKey(tt.input)
+			result := SanitizeAPIKey(tt.input)
 			if result != tt.expected {
 				t.Errorf("sanitizeAPIKey(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
@@ -67,7 +67,7 @@ func TestProviderCreationLogs(t *testing.T) {
 
 	// Test with a real-looking API key
 	apiKey := "sk-test1234567890abcdefghijklmnopqrstuvwxyz"
-	sanitized := sanitizeAPIKey(apiKey)
+	sanitized := SanitizeAPIKey(apiKey)
 
 	// The sanitized version should not contain the full key
 	if sanitized == apiKey {

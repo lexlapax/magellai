@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lexlapax/magellai/pkg/llm"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -123,7 +123,7 @@ func TestSessionManager_ListSessions(t *testing.T) {
 	assert.Len(t, sessions, 2)
 
 	// Find sessions by ID
-	var info1, info2 *SessionInfo
+	var info1, info2 *domain.SessionInfo
 	for _, info := range sessions {
 		if info.ID == session1.ID {
 			info1 = info
@@ -321,9 +321,9 @@ func TestSessionManager_ExportSessionWithAttachments(t *testing.T) {
 	// Create session with attachments
 	session, err := sm.NewSession("Attachments Test")
 	require.NoError(t, err)
-	attachments := []llm.Attachment{
-		{Type: llm.AttachmentTypeImage, Content: "base64data", MimeType: "image/jpeg"},
-		{Type: llm.AttachmentTypeText, Content: "base64text", MimeType: "text/plain"},
+	attachments := []domain.Attachment{
+		{Type: domain.AttachmentTypeImage, Content: []byte("base64data"), MimeType: "image/jpeg"},
+		{Type: domain.AttachmentTypeText, Content: []byte("base64text"), MimeType: "text/plain"},
 	}
 	session.Conversation.AddMessage(NewMessage("user", "Check these files", attachments))
 	err = sm.SaveSession(session)

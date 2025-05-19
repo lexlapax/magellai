@@ -228,7 +228,7 @@ func TestProcessPipedInput(t *testing.T) {
 				reader:         bufio.NewReader(reader),
 				writer:         writer,
 				provider:       newMockProvider(),
-				session:        &Session{Conversation: &domain.Conversation{Messages: []domain.Message{}}},
+				session:        &domain.Session{Conversation: &domain.Conversation{Messages: []domain.Message{}}},
 				registry:       command.NewRegistry(),
 				isTerminal:     false,
 				colorFormatter: utils.NewColorFormatter(false, nil),

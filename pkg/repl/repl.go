@@ -18,6 +18,7 @@ import (
 
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/lexlapax/magellai/pkg/storage"
 	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
@@ -38,7 +39,7 @@ type ConfigInterface interface {
 type REPL struct {
 	config         ConfigInterface
 	provider       llm.Provider
-	session        *Session
+	session        *domain.Session
 	manager        *SessionManager
 	reader         *bufio.Reader
 	writer         io.Writer
@@ -125,7 +126,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	logging.LogDebug("Creating session manager")
 	manager := &SessionManager{StorageManager: backend}
 
-	var session *Session
+	var session *domain.Session
 
 	// Check for crash recovery first if no specific session is requested
 	if opts.SessionID == "" {
@@ -553,9 +554,9 @@ func (r *REPL) readInput() (string, error) {
 func (r *REPL) processMessage(message string) error {
 	logging.LogDebug("Processing message", "message", message)
 	// Get pending attachments
-	var attachments []llm.Attachment
+	var attachments []domain.Attachment
 	if r.session.Metadata != nil {
-		if pending, ok := r.session.Metadata["pending_attachments"].([]llm.Attachment); ok {
+		if pending, ok := r.session.Metadata["pending_attachments"].([]domain.Attachment); ok {
 			attachments = pending
 			logging.LogDebug("Found pending attachments", "count", len(attachments))
 			// Clear pending attachments

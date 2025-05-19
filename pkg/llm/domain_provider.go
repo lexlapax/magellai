@@ -35,8 +35,13 @@ func NewDomainProvider(provider Provider) DomainProvider {
 
 // GenerateDomainMessage produces a response from domain messages
 func (p *domainProviderAdapter) GenerateDomainMessage(ctx context.Context, messages []*domain.Message, options ...ProviderOption) (*domain.Message, error) {
-	// Convert domain messages to LLM messages
-	llmMessages := FromDomainMessages(messages)
+	// Convert domain messages - no conversion needed anymore
+	llmMessages := make([]domain.Message, len(messages))
+	for i, msg := range messages {
+		if msg != nil {
+			llmMessages[i] = *msg
+		}
+	}
 
 	// Generate response using the underlying provider
 	response, err := p.GenerateMessage(ctx, llmMessages, options...)
@@ -69,8 +74,13 @@ func (p *domainProviderAdapter) GenerateDomainMessage(ctx context.Context, messa
 
 // StreamDomainMessage streams responses from domain messages
 func (p *domainProviderAdapter) StreamDomainMessage(ctx context.Context, messages []*domain.Message, options ...ProviderOption) (<-chan *domain.Message, error) {
-	// Convert domain messages to LLM messages
-	llmMessages := FromDomainMessages(messages)
+	// Convert domain messages - no conversion needed anymore
+	llmMessages := make([]domain.Message, len(messages))
+	for i, msg := range messages {
+		if msg != nil {
+			llmMessages[i] = *msg
+		}
+	}
 
 	// Start streaming using the underlying provider
 	chunkStream, err := p.StreamMessage(ctx, llmMessages, options...)

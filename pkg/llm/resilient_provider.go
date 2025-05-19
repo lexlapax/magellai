@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lexlapax/go-llms/pkg/llm/domain"
+	llmdomain "github.com/lexlapax/go-llms/pkg/llm/domain"
 	schemadomain "github.com/lexlapax/go-llms/pkg/schema/domain"
 	"github.com/lexlapax/magellai/internal/logging"
+	"github.com/lexlapax/magellai/pkg/domain"
 )
 
 // ResilientProviderConfig configures the resilient provider behavior
@@ -104,7 +105,7 @@ func (r *ResilientProvider) Generate(ctx context.Context, prompt string, options
 }
 
 // GenerateMessage produces a response with retry and fallback
-func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []Message, options ...ProviderOption) (*Response, error) {
+func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []domain.Message, options ...ProviderOption) (*Response, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.config.Timeout)
 	defer cancel()
 
@@ -119,7 +120,7 @@ func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []Mess
 		if err != nil {
 			lastErr = err
 			// Check for rate limits - use special handling
-			if domain.IsRateLimitError(err) {
+			if llmdomain.IsRateLimitError(err) {
 				return r.errorHandler.WithRateLimitRetry(ctx, operation, func() error {
 					resp, err = r.config.Primary.GenerateMessage(ctx, messages, options...)
 					response = resp
@@ -257,7 +258,7 @@ func (r *ResilientProvider) Stream(ctx context.Context, prompt string, options .
 }
 
 // StreamMessage streams message responses with retry
-func (r *ResilientProvider) StreamMessage(ctx context.Context, messages []Message, options ...ProviderOption) (<-chan StreamChunk, error) {
+func (r *ResilientProvider) StreamMessage(ctx context.Context, messages []domain.Message, options ...ProviderOption) (<-chan StreamChunk, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.config.Timeout)
 	defer cancel()
 
@@ -324,7 +325,7 @@ func (r *ResilientProvider) wrapStreamWithErrorHandling(input <-chan StreamChunk
 }
 
 // CreateProviderChain creates a chain of providers for fallback
-func CreateProviderChain(providers []ProviderConfig) (*ResilientProvider, error) {
+func CreateProviderChain(providers []ChainProviderConfig) (*ResilientProvider, error) {
 	if len(providers) == 0 {
 		return nil, fmt.Errorf("no providers specified")
 	}
@@ -359,15 +360,15 @@ func CreateProviderChain(providers []ProviderConfig) (*ResilientProvider, error)
 	return NewResilientProvider(config), nil
 }
 
-// ProviderConfig represents configuration for a provider in the chain
-type ProviderConfig struct {
+// ChainProviderConfig represents configuration for a provider in the chain
+type ChainProviderConfig struct {
 	Type   string // Provider type (openai, anthropic, etc.)
 	Model  string // Model name
 	APIKey string // API key (optional - can use env vars)
 }
 
 // TruncateContext intelligently truncates message context to fit within limits
-func TruncateContext(messages []Message, maxTokens int) []Message {
+func TruncateContext(messages []domain.Message, maxTokens int) []domain.Message {
 	// This is a simplified implementation
 	// In practice, you'd want to count tokens properly
 
@@ -376,7 +377,7 @@ func TruncateContext(messages []Message, maxTokens int) []Message {
 	}
 
 	// Keep system message (if present) and most recent messages
-	var result []Message
+	var result []domain.Message
 
 	// Check for system message
 	if len(messages) > 0 && strings.ToLower(string(messages[0].Role)) == "system" {

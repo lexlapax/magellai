@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/lexlapax/magellai/pkg/command"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,8 +19,8 @@ func TestUnifiedCommandSystem(t *testing.T) {
 	r := &REPL{
 		config: cfg,
 		writer: &buf,
-		session: &Session{
-			Conversation: &Conversation{},
+		session: &domain.Session{
+			Conversation: &domain.Conversation{},
 			Metadata:     make(map[string]interface{}),
 		},
 		registry:      command.NewRegistry(),

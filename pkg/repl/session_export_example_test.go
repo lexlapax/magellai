@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/lexlapax/magellai/pkg/llm"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/repl"
 	"github.com/lexlapax/magellai/pkg/storage"
 	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
@@ -45,13 +45,13 @@ func ExampleSessionManager_ExportSession() {
 	session.Conversation.AddMessage(repl.NewMessage("assistant", "Of course! I'd be happy to help. What task do you need assistance with?", nil))
 
 	// Add a message with an attachment
-	attachment := llm.Attachment{
-		Type:     llm.AttachmentTypeText,
+	attachment := domain.Attachment{
+		Type:     domain.AttachmentTypeText,
 		FilePath: "example.txt",
 		MimeType: "text/plain",
-		Content:  "This is example content",
+		Content:  []byte("This is example content"),
 	}
-	session.Conversation.AddMessage(repl.NewMessage("user", "Please analyze this file", []llm.Attachment{attachment}))
+	session.Conversation.AddMessage(repl.NewMessage("user", "Please analyze this file", []domain.Attachment{attachment}))
 	session.Conversation.AddMessage(repl.NewMessage("assistant", "I've analyzed the file. It contains example content.", nil))
 
 	// Save the session

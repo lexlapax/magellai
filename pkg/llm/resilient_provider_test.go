@@ -6,14 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lexlapax/go-llms/pkg/llm/domain"
+	llmdomain "github.com/lexlapax/go-llms/pkg/llm/domain"
 	schemadomain "github.com/lexlapax/go-llms/pkg/schema/domain"
+	"github.com/lexlapax/magellai/pkg/domain"
 )
 
 // mockProvider is a test provider that can simulate various error conditions
 type mockProvider struct {
 	generateFunc        func(context.Context, string, ...ProviderOption) (string, error)
-	generateMessageFunc func(context.Context, []Message, ...ProviderOption) (*Response, error)
+	generateMessageFunc func(context.Context, []domain.Message, ...ProviderOption) (*Response, error)
 	streamFunc          func(context.Context, string, ...ProviderOption) (<-chan StreamChunk, error)
 	modelInfo           ModelInfo
 	callCount           int
@@ -27,7 +28,7 @@ func (m *mockProvider) Generate(ctx context.Context, prompt string, options ...P
 	return "mock response", nil
 }
 
-func (m *mockProvider) GenerateMessage(ctx context.Context, messages []Message, options ...ProviderOption) (*Response, error) {
+func (m *mockProvider) GenerateMessage(ctx context.Context, messages []domain.Message, options ...ProviderOption) (*Response, error) {
 	m.callCount++
 	if m.generateMessageFunc != nil {
 		return m.generateMessageFunc(ctx, messages, options...)
@@ -51,7 +52,7 @@ func (m *mockProvider) Stream(ctx context.Context, prompt string, options ...Pro
 	return ch, nil
 }
 
-func (m *mockProvider) StreamMessage(ctx context.Context, messages []Message, options ...ProviderOption) (<-chan StreamChunk, error) {
+func (m *mockProvider) StreamMessage(ctx context.Context, messages []domain.Message, options ...ProviderOption) (<-chan StreamChunk, error) {
 	m.callCount++
 	ch := make(chan StreamChunk, 1)
 	ch <- StreamChunk{Content: "mock"}
@@ -86,7 +87,7 @@ func TestResilientProvider_Generate(t *testing.T) {
 				return func(ctx context.Context, prompt string, opts ...ProviderOption) (string, error) {
 					attempts++
 					if attempts == 1 {
-						return "", domain.ErrNetworkConnectivity
+						return "", llmdomain.ErrNetworkConnectivity
 					}
 					return "primary response after retry", nil
 				}
@@ -97,7 +98,7 @@ func TestResilientProvider_Generate(t *testing.T) {
 		{
 			name: "primary fails, fallback succeeds",
 			primaryFunc: func(ctx context.Context, prompt string, opts ...ProviderOption) (string, error) {
-				return "", domain.ErrProviderUnavailable
+				return "", llmdomain.ErrProviderUnavailable
 			},
 			fallbackFunc: func(ctx context.Context, prompt string, opts ...ProviderOption) (string, error) {
 				return "fallback response", nil
@@ -108,10 +109,10 @@ func TestResilientProvider_Generate(t *testing.T) {
 		{
 			name: "all providers fail",
 			primaryFunc: func(ctx context.Context, prompt string, opts ...ProviderOption) (string, error) {
-				return "", domain.ErrProviderUnavailable
+				return "", llmdomain.ErrProviderUnavailable
 			},
 			fallbackFunc: func(ctx context.Context, prompt string, opts ...ProviderOption) (string, error) {
-				return "", domain.ErrProviderUnavailable
+				return "", llmdomain.ErrProviderUnavailable
 			},
 			expectError: true,
 		},
@@ -164,17 +165,17 @@ func TestResilientProvider_Generate(t *testing.T) {
 func TestResilientProvider_ContextTooLong(t *testing.T) {
 	attemptCount := 0
 	primary := &mockProvider{
-		generateMessageFunc: func(ctx context.Context, messages []Message, opts ...ProviderOption) (*Response, error) {
+		generateMessageFunc: func(ctx context.Context, messages []domain.Message, opts ...ProviderOption) (*Response, error) {
 			attemptCount++
 			if attemptCount == 1 {
 				// First attempt fails with context too long
-				return nil, domain.ErrContextTooLong
+				return nil, llmdomain.ErrContextTooLong
 			}
 			// Second attempt with reduced messages succeeds
 			if len(messages) < 3 {
 				return &Response{Content: "success with reduced context"}, nil
 			}
-			return nil, domain.ErrContextTooLong
+			return nil, llmdomain.ErrContextTooLong
 		},
 	}
 
@@ -188,7 +189,7 @@ func TestResilientProvider_ContextTooLong(t *testing.T) {
 	resilient := NewResilientProvider(config)
 
 	// Create messages that will trigger context reduction
-	messages := []Message{
+	messages := []domain.Message{
 		{Role: "system", Content: "System prompt"},
 		{Role: "user", Content: "Message 1"},
 		{Role: "assistant", Content: "Response 1"},
@@ -217,7 +218,7 @@ func TestResilientProvider_RateLimit(t *testing.T) {
 		generateFunc: func(ctx context.Context, prompt string, opts ...ProviderOption) (string, error) {
 			attemptCount++
 			if attemptCount < 3 {
-				return "", domain.ErrRateLimitExceeded
+				return "", llmdomain.ErrRateLimitExceeded
 			}
 			return "success after rate limit", nil
 		},
@@ -254,7 +255,7 @@ func TestResilientProvider_RateLimit(t *testing.T) {
 }
 
 func TestCreateProviderChain(t *testing.T) {
-	configs := []ProviderConfig{
+	configs := []ChainProviderConfig{
 		{Type: ProviderMock, Model: "mock-1"},
 		{Type: ProviderMock, Model: "mock-2"},
 	}
@@ -277,14 +278,14 @@ func TestCreateProviderChain(t *testing.T) {
 func TestTruncateContext(t *testing.T) {
 	tests := []struct {
 		name         string
-		messages     []Message
+		messages     []domain.Message
 		maxTokens    int
 		expectLength int
 		checkSystem  bool
 	}{
 		{
 			name: "keep all if under limit",
-			messages: []Message{
+			messages: []domain.Message{
 				{Role: "user", Content: "Hello"},
 				{Role: "assistant", Content: "Hi"},
 			},
@@ -293,7 +294,7 @@ func TestTruncateContext(t *testing.T) {
 		},
 		{
 			name: "preserve system message",
-			messages: []Message{
+			messages: []domain.Message{
 				{Role: "system", Content: "You are helpful"},
 				{Role: "user", Content: "1"},
 				{Role: "assistant", Content: "2"},
@@ -307,7 +308,7 @@ func TestTruncateContext(t *testing.T) {
 		},
 		{
 			name: "no system message",
-			messages: []Message{
+			messages: []domain.Message{
 				{Role: "user", Content: "1"},
 				{Role: "assistant", Content: "2"},
 				{Role: "user", Content: "3"},

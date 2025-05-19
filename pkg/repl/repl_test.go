@@ -14,13 +14,13 @@ import (
 
 // mockProvider is a test implementation of llm.Provider
 type mockProvider struct {
-	generateFunc func(ctx context.Context, messages []llm.Message) (*llm.Response, error)
-	streamFunc   func(ctx context.Context, messages []llm.Message) (<-chan llm.StreamChunk, error)
+	generateFunc func(ctx context.Context, messages []domain.Message) (*llm.Response, error)
+	streamFunc   func(ctx context.Context, messages []domain.Message) (<-chan llm.StreamChunk, error)
 }
 
 func newMockProvider() *mockProvider {
 	return &mockProvider{
-		generateFunc: func(ctx context.Context, messages []llm.Message) (*llm.Response, error) {
+		generateFunc: func(ctx context.Context, messages []domain.Message) (*llm.Response, error) {
 			if len(messages) == 0 {
 				return &llm.Response{Content: "Mock response"}, nil
 			}
@@ -29,7 +29,7 @@ func newMockProvider() *mockProvider {
 				Content: "Mock response to: " + lastMsg.Content,
 			}, nil
 		},
-		streamFunc: func(ctx context.Context, messages []llm.Message) (<-chan llm.StreamChunk, error) {
+		streamFunc: func(ctx context.Context, messages []domain.Message) (<-chan llm.StreamChunk, error) {
 			ch := make(chan llm.StreamChunk, 1)
 			go func() {
 				defer close(ch)
@@ -50,7 +50,7 @@ func (m *mockProvider) Generate(ctx context.Context, prompt string, options ...l
 	return "Mock response to: " + prompt, nil
 }
 
-func (m *mockProvider) GenerateMessage(ctx context.Context, messages []llm.Message, options ...llm.ProviderOption) (*llm.Response, error) {
+func (m *mockProvider) GenerateMessage(ctx context.Context, messages []domain.Message, options ...llm.ProviderOption) (*llm.Response, error) {
 	if m.generateFunc != nil {
 		return m.generateFunc(ctx, messages)
 	}
@@ -70,7 +70,7 @@ func (m *mockProvider) Stream(ctx context.Context, prompt string, options ...llm
 	return ch, nil
 }
 
-func (m *mockProvider) StreamMessage(ctx context.Context, messages []llm.Message, options ...llm.ProviderOption) (<-chan llm.StreamChunk, error) {
+func (m *mockProvider) StreamMessage(ctx context.Context, messages []domain.Message, options ...llm.ProviderOption) (<-chan llm.StreamChunk, error) {
 	if m.streamFunc != nil {
 		return m.streamFunc(ctx, messages)
 	}
@@ -221,8 +221,8 @@ func TestREPL_processMessageWithAttachments(t *testing.T) {
 	defer cleanup()
 
 	// Add pending attachments
-	attachments := []llm.Attachment{
-		{Type: llm.AttachmentTypeImage, FilePath: "test.jpg", MimeType: "image/jpeg"},
+	attachments := []domain.Attachment{
+		{Type: domain.AttachmentTypeImage, FilePath: "test.jpg", MimeType: "image/jpeg"},
 	}
 	repl.session.Metadata = map[string]interface{}{
 		"pending_attachments": attachments,

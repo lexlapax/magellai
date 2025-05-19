@@ -11,6 +11,7 @@ import (
 
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
+	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
 )
 
@@ -127,23 +128,23 @@ func (c *AskCommand) Execute(ctx context.Context, exec *command.ExecutionContext
 	}
 
 	// Build messages
-	messages := []llm.Message{}
+	messages := []domain.Message{}
 
 	// Add system prompt if provided
 	if system := exec.Flags.GetString("system"); system != "" {
-		messages = append(messages, llm.Message{
+		messages = append(messages, domain.Message{
 			Role:    "system",
 			Content: system,
 		})
 	} else if defaultSystem := c.config.GetString("defaults.system_prompt"); defaultSystem != "" {
-		messages = append(messages, llm.Message{
+		messages = append(messages, domain.Message{
 			Role:    "system",
 			Content: defaultSystem,
 		})
 	}
 
 	// Process attachments
-	attachments := []llm.Attachment{}
+	attachments := []domain.Attachment{}
 	attachFiles := exec.Flags.GetStringSlice("attach")
 
 	// Check if the model supports file attachments
@@ -153,8 +154,8 @@ func (c *AskCommand) Execute(ctx context.Context, exec *command.ExecutionContext
 	for _, file := range attachFiles {
 		if supportsFiles {
 			// Create file attachment for models that support it
-			attachment := llm.Attachment{
-				Type:     llm.AttachmentTypeFile,
+			attachment := domain.Attachment{
+				Type:     domain.AttachmentTypeFile,
 				FilePath: file,
 			}
 			attachments = append(attachments, attachment)
@@ -165,16 +166,16 @@ func (c *AskCommand) Execute(ctx context.Context, exec *command.ExecutionContext
 				return fmt.Errorf("failed to read file %s: %w", file, err)
 			}
 			// Convert file content to text attachment
-			attachment := llm.Attachment{
-				Type:    llm.AttachmentTypeText,
-				Content: fmt.Sprintf("Content of %s:\n\n%s", file, string(content)),
+			attachment := domain.Attachment{
+				Type:    domain.AttachmentTypeText,
+				Content: []byte(fmt.Sprintf("Content of %s:\n\n%s", file, string(content))),
 			}
 			attachments = append(attachments, attachment)
 		}
 	}
 
 	// Add user message with prompt and attachments
-	userMessage := llm.Message{
+	userMessage := domain.Message{
 		Role:    "user",
 		Content: prompt,
 	}
@@ -192,7 +193,7 @@ func (c *AskCommand) Execute(ctx context.Context, exec *command.ExecutionContext
 }
 
 // executeNonStreaming handles non-streaming requests
-func (c *AskCommand) executeNonStreaming(ctx context.Context, exec *command.ExecutionContext, provider llm.Provider, messages []llm.Message, opts []llm.ProviderOption) error {
+func (c *AskCommand) executeNonStreaming(ctx context.Context, exec *command.ExecutionContext, provider llm.Provider, messages []domain.Message, opts []llm.ProviderOption) error {
 	// Generate response
 	response, err := provider.GenerateMessage(ctx, messages, opts...)
 	if err != nil {
@@ -229,7 +230,7 @@ func (c *AskCommand) executeNonStreaming(ctx context.Context, exec *command.Exec
 }
 
 // executeStreaming handles streaming requests
-func (c *AskCommand) executeStreaming(ctx context.Context, exec *command.ExecutionContext, provider llm.Provider, messages []llm.Message, opts []llm.ProviderOption) error {
+func (c *AskCommand) executeStreaming(ctx context.Context, exec *command.ExecutionContext, provider llm.Provider, messages []domain.Message, opts []llm.ProviderOption) error {
 	// Start streaming
 	stream, err := provider.StreamMessage(ctx, messages, opts...)
 	if err != nil {

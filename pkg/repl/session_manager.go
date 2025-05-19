@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lexlapax/magellai/internal/logging"
+	"github.com/lexlapax/magellai/pkg/domain"
 )
 
 // SessionManager handles session persistence and lifecycle
@@ -29,7 +30,7 @@ func NewSessionManager(storageManager *StorageManager) (*SessionManager, error) 
 }
 
 // NewSession creates a new session with an optional name
-func (sm *SessionManager) NewSession(name string) (*Session, error) {
+func (sm *SessionManager) NewSession(name string) (*domain.Session, error) {
 	logging.LogInfo("Creating new session", "name", name)
 	session := sm.StorageManager.NewSession(name)
 
@@ -44,12 +45,12 @@ func (sm *SessionManager) NewSession(name string) (*Session, error) {
 }
 
 // GetCurrentSession returns the currently active session
-func (sm *SessionManager) GetCurrentSession() *Session {
+func (sm *SessionManager) GetCurrentSession() *domain.Session {
 	return sm.StorageManager.CurrentSession()
 }
 
 // LoadSession loads a session by ID
-func (sm *SessionManager) LoadSession(session *Session) error {
+func (sm *SessionManager) LoadSession(session *domain.Session) error {
 	logging.LogInfo("Loading session", "id", session.ID)
 	sm.StorageManager.SetCurrentSession(session)
 	return nil

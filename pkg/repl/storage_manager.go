@@ -31,22 +31,22 @@ func NewStorageManager(backend storage.Backend) (*StorageManager, error) {
 }
 
 // NewSession creates a new session
-func (sm *StorageManager) NewSession(name string) *Session {
+func (sm *StorageManager) NewSession(name string) *domain.Session {
 	return sm.backend.NewSession(name)
 }
 
 // SaveSession saves a session
-func (sm *StorageManager) SaveSession(session *Session) error {
+func (sm *StorageManager) SaveSession(session *domain.Session) error {
 	return sm.backend.SaveSession(session)
 }
 
 // LoadSession loads a session by ID
-func (sm *StorageManager) LoadSession(id string) (*Session, error) {
+func (sm *StorageManager) LoadSession(id string) (*domain.Session, error) {
 	return sm.backend.LoadSession(id)
 }
 
 // ListSessions lists all available sessions
-func (sm *StorageManager) ListSessions() ([]*SessionInfo, error) {
+func (sm *StorageManager) ListSessions() ([]*domain.SessionInfo, error) {
 	return sm.backend.ListSessions()
 }
 
@@ -56,7 +56,7 @@ func (sm *StorageManager) DeleteSession(id string) error {
 }
 
 // SearchSessions searches for sessions by query
-func (sm *StorageManager) SearchSessions(query string) ([]*SearchResult, error) {
+func (sm *StorageManager) SearchSessions(query string) ([]*domain.SearchResult, error) {
 	return sm.backend.SearchSessions(query)
 }
 
@@ -109,15 +109,15 @@ func GetAvailableBackends() []storage.BackendType {
 }
 
 // CurrentSession holds the current active session (temporary implementation)
-var currentSession *Session
+var currentSession *domain.Session
 
 // CurrentSession returns the current active session
-func (sm *StorageManager) CurrentSession() *Session {
+func (sm *StorageManager) CurrentSession() *domain.Session {
 	return currentSession
 }
 
 // SetCurrentSession sets the current active session
-func (sm *StorageManager) SetCurrentSession(session *Session) {
+func (sm *StorageManager) SetCurrentSession(session *domain.Session) {
 	currentSession = session
 }
 
@@ -127,7 +127,7 @@ func (sm *StorageManager) GenerateSessionID() string {
 }
 
 // GetChildren returns all direct child branches of a session
-func (sm *StorageManager) GetChildren(sessionID string) ([]*SessionInfo, error) {
+func (sm *StorageManager) GetChildren(sessionID string) ([]*domain.SessionInfo, error) {
 	return sm.backend.GetChildren(sessionID)
 }
 
