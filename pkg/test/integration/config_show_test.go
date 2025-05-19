@@ -1,7 +1,7 @@
 // ABOUTME: Integration test for config show command
 // ABOUTME: Verifies CLI displays all runtime configurations
 
-package main
+package integration
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 
 func TestConfigShowCLI(t *testing.T) {
 	// Build the binary
-	cmd := exec.Command("go", "build", "-o", "test-magellai", ".")
+	cmd := exec.Command("go", "build", "-o", "test-magellai", "../../../cmd/magellai")
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
 	}

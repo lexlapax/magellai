@@ -23,7 +23,7 @@ import (
 	"github.com/lexlapax/magellai/pkg/storage"
 	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
 	_ "github.com/lexlapax/magellai/pkg/storage/sqlite"     // Register SQLite backend
-	"github.com/lexlapax/magellai/pkg/utils"
+	"github.com/lexlapax/magellai/pkg/ui"
 )
 
 // ConfigInterface defines the minimal interface needed for configuration
@@ -52,9 +52,9 @@ type REPL struct {
 	autoRecovery   *AutoRecoveryManager
 	registry       *command.Registry
 	cmdHistory     []string               // Command history
-	readline       *ReadlineInterface     // Readline interface for tab completion
+	readline       *ui.ReadlineInterface  // Readline interface for tab completion
 	isTerminal     bool                   // Whether we're running in a terminal
-	colorFormatter *utils.ColorFormatter  // Color formatter for output
+	colorFormatter *ui.ColorFormatter  // Color formatter for output
 	nonInteractive NonInteractiveMode     // Non-interactive mode detection
 	sharedContext  *command.SharedContext // Shared context for command state preservation
 }
@@ -233,7 +233,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 		lastSaveTime:   time.Now(),
 		registry:       command.NewRegistry(),
 		cmdHistory:     make([]string, 0),
-		isTerminal:     utils.IsTerminal() && !nonInteractive.IsNonInteractive,
+		isTerminal:     ui.IsTerminal() && !nonInteractive.IsNonInteractive,
 		nonInteractive: nonInteractive,
 		sharedContext:  command.NewSharedContext(),
 	}
@@ -252,7 +252,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 
 	// Initialize color formatter if in terminal
 	enableColors := repl.isTerminal && cfg.GetBool("repl.colors.enabled")
-	repl.colorFormatter = utils.NewColorFormatter(enableColors, nil)
+	repl.colorFormatter = ui.NewColorFormatter(enableColors, nil)
 
 	// Configure for non-interactive mode if needed
 	repl.ConfigureForNonInteractiveMode(nonInteractive)
@@ -286,22 +286,22 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 			prompt = repl.colorFormatter.FormatPrompt(prompt)
 		}
 
-		readlineConfig := &ReadlineConfig{
+		readlineConfig := &ui.ReadlineConfig{
 			Prompt:           prompt,
 			HistoryFile:      historyFile,
 			EnableCompletion: true,
 			MultilineMode:    repl.multiline,
 		}
 
-		readlineInterface, err := NewReadlineInterface(readlineConfig)
+		readlineInterface, err := ui.NewReadlineInterface(readlineConfig)
 		if err != nil {
 			logging.LogWarn("Failed to initialize readline, falling back to standard input", "error", err)
 			repl.isTerminal = false
 		} else {
 			repl.readline = readlineInterface
 			// Update completer with actual command names
-			if completer, ok := repl.readline.Instance.Config.AutoComplete.(*replCompleter); ok {
-				completer.commands = commands
+			if completer, ok := repl.readline.Instance.Config.AutoComplete.(*ui.ReplCompleter); ok {
+				completer.Commands = commands
 			}
 		}
 	}

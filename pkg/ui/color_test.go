@@ -1,7 +1,7 @@
 // ABOUTME: Tests for ANSI color output functionality
 // ABOUTME: Ensures color formatting works correctly in TTY environments
 
-package utils
+package ui
 
 import (
 	"strings"

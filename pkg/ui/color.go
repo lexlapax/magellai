@@ -1,7 +1,7 @@
 // ABOUTME: ANSI color output support for TTY environments
 // ABOUTME: Provides color formatting for CLI and REPL output when terminal supports it
 
-package utils
+package ui
 
 import (
 	"fmt"

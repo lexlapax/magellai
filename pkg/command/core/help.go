@@ -12,7 +12,7 @@ import (
 
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
-	"github.com/lexlapax/magellai/pkg/utils"
+	"github.com/lexlapax/magellai/pkg/ui"
 )
 
 // HelpFormatter formats help text for commands
@@ -117,12 +117,12 @@ func (h *HelpCommand) Execute(ctx context.Context, exec *command.ExecutionContex
 // formatAliases formats the aliases for display
 func (h *HelpCommand) formatAliases(aliases map[string]interface{}) string {
 	// If formatter is ContextAwareHelpFormatter, use its color formatter
-	var colorFormatter *utils.ColorFormatter
+	var colorFormatter *ui.ColorFormatter
 	if formatter, ok := h.formatter.(*ContextAwareHelpFormatter); ok {
 		colorFormatter = formatter.colorFormatter
 	} else {
 		// Fallback to default formatter without colors
-		colorFormatter = utils.NewColorFormatter(false, nil)
+		colorFormatter = ui.NewColorFormatter(false, nil)
 	}
 
 	var b strings.Builder
@@ -201,7 +201,7 @@ type ContextAwareHelpFormatter struct {
 	IndentSpaces   int
 	Category       command.Category
 	config         *config.Config
-	colorFormatter *utils.ColorFormatter
+	colorFormatter *ui.ColorFormatter
 }
 
 // NewContextAwareHelpFormatter creates a new context-aware help formatter
@@ -210,7 +210,7 @@ func NewContextAwareHelpFormatter(config *config.Config) *ContextAwareHelpFormat
 	colorsEnabled := config.GetBool("repl.colors.enabled")
 
 	// Only enable colors if we're in a terminal
-	if colorsEnabled && !utils.IsTerminal() {
+	if colorsEnabled && !ui.IsTerminal() {
 		colorsEnabled = false
 	}
 
@@ -220,7 +220,7 @@ func NewContextAwareHelpFormatter(config *config.Config) *ContextAwareHelpFormat
 		MaxWidth:       80,
 		IndentSpaces:   2,
 		config:         config,
-		colorFormatter: utils.NewColorFormatter(colorsEnabled, nil),
+		colorFormatter: ui.NewColorFormatter(colorsEnabled, nil),
 	}
 }
 

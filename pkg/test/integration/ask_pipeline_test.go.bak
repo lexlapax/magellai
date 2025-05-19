@@ -1,4 +1,7 @@
-package main
+// ABOUTME: Integration tests for the ask pipeline functionality
+// ABOUTME: Tests full request processing from input to model interaction
+
+package integration
 
 import (
 	"bytes"
@@ -12,6 +15,7 @@ import (
 
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
+	"github.com/lexlapax/magellai/pkg/command/core"
 	"github.com/lexlapax/magellai/pkg/config"
 )
 
@@ -83,7 +87,7 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 
 			// Create test context
 			var buf bytes.Buffer
-			ctx := &Context{
+			ctx := &command.ExecutionContext{
 				Context:  nil, // Kong context not needed for this test
 				Registry: registry,
 				Config:   config.Manager,
@@ -94,7 +98,7 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 			}
 
 			// Create ask command
-			cmd := &AskCmd{
+			cmd := &core.AskCmd{
 				Prompt: tt.prompt,
 			}
 

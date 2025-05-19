@@ -11,7 +11,7 @@ import (
 
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
-	"github.com/lexlapax/magellai/pkg/utils"
+	"github.com/lexlapax/magellai/pkg/ui"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -287,7 +287,7 @@ func TestHelpColorStripping(t *testing.T) {
 	t.Run("strip colors when piped", func(t *testing.T) {
 		// This test simulates a non-TTY environment where colors should be stripped
 		text := "\033[0;32mHello\033[0m World"
-		stripped := utils.StripColors(text)
+		stripped := ui.StripColors(text)
 		assert.Equal(t, "Hello World", stripped)
 	})
 }

@@ -12,7 +12,7 @@ import (
 
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/domain"
-	"github.com/lexlapax/magellai/pkg/utils"
+	"github.com/lexlapax/magellai/pkg/ui"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -134,7 +134,7 @@ func TestConfigureForNonInteractiveMode(t *testing.T) {
 		multiline:      true,
 		exitOnEOF:      false,
 		promptStyle:    "> ",
-		colorFormatter: utils.NewColorFormatter(true, nil),
+		colorFormatter: ui.NewColorFormatter(true, nil),
 		autoSave:       false,
 	}
 
@@ -231,7 +231,7 @@ func TestProcessPipedInput(t *testing.T) {
 				session:        &domain.Session{Conversation: &domain.Conversation{Messages: []domain.Message{}}},
 				registry:       command.NewRegistry(),
 				isTerminal:     false,
-				colorFormatter: utils.NewColorFormatter(false, nil),
+				colorFormatter: ui.NewColorFormatter(false, nil),
 				nonInteractive: NonInteractiveMode{
 					IsNonInteractive: true,
 					IsPipedInput:     true,

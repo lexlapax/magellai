@@ -1,7 +1,7 @@
 // ABOUTME: Tests for readline functionality including tab completion
 // ABOUTME: Ensures tab completion works correctly for REPL commands
 
-package repl
+package ui
 
 import (
 	"testing"
@@ -56,9 +56,9 @@ func TestREPLCompleter(t *testing.T) {
 	}
 
 	// Create a completer with test commands
-	completer := &replCompleter{
-		commands: getCommandNames(),
-		registry: nil,
+	completer := &ReplCompleter{
+		Commands: getCommandNames(),
+		Registry: nil,
 	}
 
 	for _, tt := range tests {

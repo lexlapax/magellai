@@ -1,7 +1,7 @@
 // ABOUTME: Provides readline functionality for REPL including tab completion
 // ABOUTME: Handles interactive input with history and completion support
 
-package repl
+package ui
 
 import (
 	"fmt"
@@ -39,8 +39,8 @@ func NewReadlineInterface(config *ReadlineConfig) (*ReadlineInterface, error) {
 
 	// Setup auto completion if enabled
 	if config.EnableCompletion {
-		readlineConfig.AutoComplete = &replCompleter{
-			commands: getCommandNames(),
+		readlineConfig.AutoComplete = &ReplCompleter{
+			Commands: getCommandNames(),
 		}
 	}
 
@@ -71,14 +71,14 @@ func (r *ReadlineInterface) Close() error {
 	return r.Instance.Close()
 }
 
-// replCompleter implements readline.AutoCompleter
-type replCompleter struct {
-	commands []string
-	registry *command.Registry
+// ReplCompleter implements readline.AutoCompleter
+type ReplCompleter struct {
+	Commands []string
+	Registry *command.Registry
 }
 
 // Do implements the completion logic
-func (c *replCompleter) Do(line []rune, pos int) (newLine [][]rune, offset int) {
+func (c *ReplCompleter) Do(line []rune, pos int) (newLine [][]rune, offset int) {
 	logging.LogDebug("Tab completion requested", "line", string(line), "pos", pos)
 
 	lineStr := string(line[:pos])
@@ -93,7 +93,7 @@ func (c *replCompleter) Do(line []rune, pos int) (newLine [][]rune, offset int) 
 
 	// Find matching commands
 	var candidates [][]rune
-	for _, cmd := range c.commands {
+	for _, cmd := range c.Commands {
 		if strings.HasPrefix(cmd, prefix) {
 			// Add the full command with the original prefix character
 			fullCmd := lineStr[0:1] + cmd
