@@ -233,7 +233,7 @@ func (c *Config) applyProfile(profile string) error {
 	profileKey := fmt.Sprintf("profiles.%s", profile)
 	if !c.koanf.Exists(profileKey) {
 		logging.LogWarn("Profile not found", "profile", profile)
-		return fmt.Errorf("profile '%s' not found", profile)
+		return fmt.Errorf("%w: %s", ErrProfileNotFound, profile)
 	}
 
 	// Get profile config

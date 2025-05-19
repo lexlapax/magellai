@@ -148,7 +148,7 @@ func (c *Config) SetDefaultModel(model string) error {
 func (c *Config) GetProfile(name string) (*ProfileConfig, error) {
 	key := fmt.Sprintf("profiles.%s", name)
 	if !c.Exists(key) {
-		return nil, fmt.Errorf("profile '%s' not found", name)
+		return nil, fmt.Errorf("%w: %s", ErrProfileNotFound, name)
 	}
 
 	var profile ProfileConfig

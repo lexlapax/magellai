@@ -274,7 +274,7 @@ func (b *Backend) LoadSession(id string) (*domain.Session, error) {
 		&session.Updated, &metadataJSON, &conversationID, &tagsStr,
 	)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("session not found: %s", id)
+		return nil, fmt.Errorf("%w: %s", storage.ErrSessionNotFound, id)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to load session: %w", err)
@@ -442,7 +442,7 @@ func (b *Backend) DeleteSession(id string) error {
 	var conversationID string
 	err = tx.QueryRow("SELECT conversation_id FROM sessions WHERE id = ? AND user_id = ?", id, b.userID).Scan(&conversationID)
 	if err == sql.ErrNoRows {
-		return fmt.Errorf("session not found: %s", id)
+		return fmt.Errorf("%w: %s", storage.ErrSessionNotFound, id)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to get conversation ID: %w", err)
@@ -460,7 +460,7 @@ func (b *Backend) DeleteSession(id string) error {
 	}
 
 	if rows == 0 {
-		return fmt.Errorf("session not found: %s", id)
+		return fmt.Errorf("%w: %s", storage.ErrSessionNotFound, id)
 	}
 
 	// Delete conversation (cascades to messages)

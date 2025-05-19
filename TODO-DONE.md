@@ -2,7 +2,7 @@
 
 This document contains all completed sections from the original TODO.md file for historical reference.
 
-Last Updated: 2025-05-19 (Phase 4.9.3 completed)
+Last Updated: 2025-05-19 (Phase 4.9.4 completed)
 
 ## Phase 1: Core Foundation (Week 1) ✅
 
@@ -961,3 +961,29 @@ Context Preservation Summary:
     - Updated Makefile targets to include necessary tags
     
   - Result: Better organized test structure with proper separation of unit and integration tests
+
+#### 4.9.4 Error Handling Consistency ✅ (Completed 2025-05-19)
+  - [x] Standardize error handling approach:
+    - [x] Use errors.New for static errors (as in command/errors.go)
+    - [x] Use fmt.Errorf for dynamic errors with context
+    - [x] Implemented error wrapping strategy using fmt.Errorf with %w
+  - [x] Create package-specific error types where needed:
+    - [x] storage/errors.go for storage-specific errors
+    - [x] llm/errors.go for LLM-specific errors
+    - [x] repl/errors.go for REPL-specific errors
+    - [x] config/errors.go for configuration-specific errors
+  - [x] Remove error string duplication:
+    - [x] Audited all fmt.Errorf calls for duplicate error messages
+    - [x] Created constants for commonly used error messages
+    - [x] Updated code to use sentinel errors with wrapping
+  
+  - Implementation details:
+    - Created error.go files for packages lacking them (storage, repl, config, llm)
+    - Standardized on error wrapping pattern using %w for proper error chain
+    - Fixed session not found errors across storage backends
+    - Fixed profile not found errors in config package
+    - Fixed model not found errors in llm package
+    - Created comprehensive documentation in error-handling-standardization.md
+    - All tests passing after error standardization
+  
+  - Result: Consistent error handling across all packages with proper error wrapping and testing

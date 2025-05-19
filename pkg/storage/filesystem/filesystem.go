@@ -98,7 +98,7 @@ func (b *Backend) LoadSession(id string) (*domain.Session, error) {
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("session not found: %s", id)
+			return nil, fmt.Errorf("%w: %s", storage.ErrSessionNotFound, id)
 		}
 		return nil, fmt.Errorf("failed to read session file: %w", err)
 	}
@@ -160,7 +160,7 @@ func (b *Backend) DeleteSession(id string) error {
 	if err := os.Remove(filepath); err != nil {
 		if os.IsNotExist(err) {
 			logging.LogWarn("Session not found for deletion", "id", id)
-			return fmt.Errorf("session not found: %s", id)
+			return fmt.Errorf("%w: %s", storage.ErrSessionNotFound, id)
 		}
 		logging.LogError(err, "Failed to delete session", "id", id)
 		return fmt.Errorf("failed to delete session: %w", err)

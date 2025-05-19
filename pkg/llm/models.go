@@ -221,5 +221,5 @@ func GetModelInfo(provider, model string) (ModelInfo, error) {
 		}
 	}
 
-	return ModelInfo{}, fmt.Errorf("model not found: %s/%s", provider, model)
+	return ModelInfo{}, fmt.Errorf("%w: %s/%s", ErrModelNotFound, provider, model)
 }
