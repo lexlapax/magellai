@@ -4,15 +4,17 @@
 package repl
 
 import (
+	"testing"
+
 	"github.com/lexlapax/magellai/pkg/domain"
+	"github.com/lexlapax/magellai/pkg/repl/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestSimpleMerge(t *testing.T) {
 	// Create a mock backend
-	backend := NewMockStorageBackend()
+	backend := session.NewMockStorageBackend()
 
 	// Create two test sessions
 	targetSession := backend.NewSession("target")

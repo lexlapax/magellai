@@ -9,17 +9,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lexlapax/magellai/pkg/repl/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCmdMerge(t *testing.T) {
 	// Create test sessions
-	backend := NewMockStorageBackend()
-	storageManager, err := NewStorageManager(backend)
+	backend := session.NewMockStorageBackend()
+	storageManager, err := session.NewStorageManager(backend)
 	require.NoError(t, err)
 
-	manager := &SessionManager{StorageManager: storageManager}
+	manager := &session.SessionManager{StorageManager: storageManager}
 
 	// Create target session
 	targetSession, err := manager.NewSession("target")
@@ -116,11 +117,11 @@ func TestCmdMerge(t *testing.T) {
 
 func TestMergeCommandHelp(t *testing.T) {
 	// Create REPL instance
-	backend := NewMockStorageBackend()
-	storageManager, err := NewStorageManager(backend)
+	backend := session.NewMockStorageBackend()
+	storageManager, err := session.NewStorageManager(backend)
 	require.NoError(t, err)
 
-	manager := &SessionManager{StorageManager: storageManager}
+	manager := &session.SessionManager{StorageManager: storageManager}
 	targetSession, err := manager.NewSession("test")
 	require.NoError(t, err)
 
@@ -141,13 +142,4 @@ func TestMergeCommandHelp(t *testing.T) {
 	helpText := output.String()
 	assert.Contains(t, helpText, "/merge")
 	assert.Contains(t, helpText, "Merge another session")
-}
-
-// Add methods to MockStorageBackend for testing
-func (m *MockStorageBackend) GetCallCount(method string) int {
-	return m.calls[method]
-}
-
-func (m *MockStorageBackend) ClearCalls() {
-	m.calls = make(map[string]int)
 }

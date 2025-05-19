@@ -20,6 +20,7 @@ import (
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/llm"
+	"github.com/lexlapax/magellai/pkg/repl/session"
 	"github.com/lexlapax/magellai/pkg/storage"
 	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
 	_ "github.com/lexlapax/magellai/pkg/storage/sqlite"     // Register SQLite backend
@@ -40,7 +41,7 @@ type REPL struct {
 	config         ConfigInterface
 	provider       llm.Provider
 	session        *domain.Session
-	manager        *SessionManager
+	manager        *session.SessionManager
 	reader         *bufio.Reader
 	writer         io.Writer
 	promptStyle    string
@@ -49,7 +50,7 @@ type REPL struct {
 	autoSave       bool
 	autoSaveTimer  *time.Timer
 	lastSaveTime   time.Time
-	autoRecovery   *AutoRecoveryManager
+	autoRecovery   *session.AutoRecoveryManager
 	registry       *command.Registry
 	cmdHistory     []string               // Command history
 	readline       *ui.ReadlineInterface  // Readline interface for tab completion
@@ -116,7 +117,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	}
 
 	// Create storage using the new storage package
-	backend, err := CreateStorageManager(storage.BackendType(storageType), storage.Config(storageConfig))
+	backend, err := session.CreateStorageManager(storage.BackendType(storageType), storage.Config(storageConfig))
 	if err != nil {
 		logging.LogError(err, "Failed to create storage backend", "type", storageType)
 		return nil, fmt.Errorf("failed to create storage backend: %w", err)
@@ -124,14 +125,14 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 
 	// Create session manager (backend is a StorageManager, not a Backend)
 	logging.LogDebug("Creating session manager")
-	manager := &SessionManager{StorageManager: backend}
+	manager := &session.SessionManager{StorageManager: backend}
 
-	var session *domain.Session
+	var currentSession *domain.Session
 
 	// Check for crash recovery first if no specific session is requested
 	if opts.SessionID == "" {
 		// Create auto-recovery manager to check for recoverable sessions
-		tempAutoRecovery, err := NewAutoRecoveryManager(DefaultAutoRecoveryConfig(), backend)
+		tempAutoRecovery, err := session.NewAutoRecoveryManager(session.DefaultAutoRecoveryConfig(), backend)
 		if err == nil {
 			recoveryState, err := tempAutoRecovery.CheckRecovery()
 			if err == nil && recoveryState != nil {
@@ -146,11 +147,11 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 				response = strings.TrimSpace(strings.ToLower(response))
 
 				if response == "y" || response == "yes" {
-					session, err = tempAutoRecovery.RecoverSession(recoveryState)
+					currentSession, err = tempAutoRecovery.RecoverSession(recoveryState)
 					if err != nil {
 						logging.LogWarn("Failed to recover session", "error", err)
 					} else {
-						logging.LogInfo("Recovered session from crash", "id", session.ID)
+						logging.LogInfo("Recovered session from crash", "id", currentSession.ID)
 						fmt.Fprintf(opts.Writer, "Session recovered successfully.\n\n")
 						// Clear the recovery state since we've recovered
 						if err := tempAutoRecovery.ClearRecoveryState(); err != nil {
@@ -170,7 +171,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	if opts.SessionID != "" {
 		// Resume existing session
 		logging.LogInfo("Resuming existing session", "sessionID", opts.SessionID)
-		session, err = manager.StorageManager.LoadSession(opts.SessionID)
+		currentSession, err = manager.StorageManager.LoadSession(opts.SessionID)
 		if err != nil {
 			logging.LogError(err, "Failed to load session", "sessionID", opts.SessionID)
 			return nil, fmt.Errorf("failed to load session: %w", err)
@@ -178,7 +179,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	} else {
 		// Create new session
 		logging.LogInfo("Creating new session")
-		session, err = manager.NewSession("Interactive Chat")
+		currentSession, err = manager.NewSession("Interactive Chat")
 		if err != nil {
 			logging.LogError(err, "Failed to create new session")
 			return nil, fmt.Errorf("failed to create new session: %w", err)
@@ -212,8 +213,8 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	}
 
 	// Update session with model
-	session.Conversation.Model = modelStr
-	session.Conversation.Provider = providerType
+	currentSession.Conversation.Model = modelStr
+	currentSession.Conversation.Provider = providerType
 
 	autoSave := cfg.GetBool("repl.auto_save.enabled")
 
@@ -223,7 +224,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	repl := &REPL{
 		config:         cfg,
 		provider:       provider,
-		session:        session,
+		session:        currentSession,
 		manager:        manager,
 		reader:         bufio.NewReader(opts.Reader),
 		writer:         opts.Writer,
@@ -239,12 +240,12 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	}
 
 	// Initialize shared context with current session state
-	repl.sharedContext.Set(command.SharedContextSessionID, session.ID)
-	repl.sharedContext.Set(command.SharedContextSessionName, session.Name)
-	repl.sharedContext.Set(command.SharedContextModel, session.Conversation.Model)
-	repl.sharedContext.Set(command.SharedContextProvider, session.Conversation.Provider)
-	repl.sharedContext.Set(command.SharedContextTemperature, session.Conversation.Temperature)
-	repl.sharedContext.Set(command.SharedContextMaxTokens, session.Conversation.MaxTokens)
+	repl.sharedContext.Set(command.SharedContextSessionID, currentSession.ID)
+	repl.sharedContext.Set(command.SharedContextSessionName, currentSession.Name)
+	repl.sharedContext.Set(command.SharedContextModel, currentSession.Conversation.Model)
+	repl.sharedContext.Set(command.SharedContextProvider, currentSession.Conversation.Provider)
+	repl.sharedContext.Set(command.SharedContextTemperature, currentSession.Conversation.Temperature)
+	repl.sharedContext.Set(command.SharedContextMaxTokens, currentSession.Conversation.MaxTokens)
 	repl.sharedContext.Set(command.SharedContextStream, cfg.GetBool("stream"))
 	repl.sharedContext.Set(command.SharedContextVerbosity, cfg.GetString("verbosity"))
 	repl.sharedContext.Set(command.SharedContextOutput, cfg.GetString("output"))
@@ -322,7 +323,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	}
 
 	// Initialize auto-recovery
-	autoRecoveryConfig := DefaultAutoRecoveryConfig()
+	autoRecoveryConfig := session.DefaultAutoRecoveryConfig()
 	if cfg.Exists("session.auto_recovery") {
 		// Allow configuration override
 		if cfg.Exists("session.auto_recovery.enabled") {
@@ -342,7 +343,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 		}
 	}
 
-	autoRecovery, err := NewAutoRecoveryManager(autoRecoveryConfig, manager.StorageManager)
+	autoRecovery, err := session.NewAutoRecoveryManager(autoRecoveryConfig, manager.StorageManager)
 	if err != nil {
 		logging.LogWarn("Failed to create auto-recovery manager", "error", err)
 		// Continue without auto-recovery

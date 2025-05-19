@@ -1,7 +1,7 @@
 // ABOUTME: Tests for the session manager that provides high-level session management
 // ABOUTME: Ensures proper session lifecycle management with the storage backend abstraction
 
-package repl
+package session
 
 import (
 	"bytes"

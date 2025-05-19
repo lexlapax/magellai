@@ -1,7 +1,7 @@
 // ABOUTME: Tests for the auto-recovery system
 // ABOUTME: Validates recovery functionality and crash resilience
 
-package repl
+package session
 
 import (
 	"encoding/json"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/lexlapax/magellai/pkg/domain"
 	"github.com/lexlapax/magellai/pkg/storage"
+	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

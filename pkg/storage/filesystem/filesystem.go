@@ -17,6 +17,10 @@ import (
 	"github.com/lexlapax/magellai/pkg/storage"
 )
 
+func init() {
+	storage.RegisterBackend(storage.FileSystemBackend, New)
+}
+
 // Backend implements the storage.Backend interface using filesystem storage
 type Backend struct {
 	baseDir string

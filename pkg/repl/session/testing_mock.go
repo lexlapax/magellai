@@ -1,7 +1,7 @@
 // ABOUTME: Mock storage backend for testing
 // ABOUTME: Provides a mock implementation of storage.Backend for unit tests
 
-package repl
+package session
 
 import (
 	"fmt"
@@ -18,6 +18,16 @@ type MockStorageBackend struct {
 	sessions map[string]*domain.Session
 	calls    map[string]int
 	err      error
+}
+
+// GetCallCount returns the number of times a method was called
+func (m *MockStorageBackend) GetCallCount(method string) int {
+	return m.calls[method]
+}
+
+// ClearCalls resets the call tracking
+func (m *MockStorageBackend) ClearCalls() {
+	m.calls = make(map[string]int)
 }
 
 // NewMockStorageBackend creates a new mock storage backend

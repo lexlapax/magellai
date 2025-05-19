@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/domain"
-	"github.com/lexlapax/magellai/pkg/repl"
+	"github.com/lexlapax/magellai/pkg/repl/session"
 	"github.com/lexlapax/magellai/pkg/storage"
 	_ "github.com/lexlapax/magellai/pkg/storage/filesystem" // Register filesystem backend
 	"github.com/stretchr/testify/assert"
@@ -64,10 +64,10 @@ func TestHistoryCommand_Execute_List(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	storageManager, err := repl.NewStorageManager(backend)
+	storageManager, err := session.NewStorageManager(backend)
 	require.NoError(t, err)
 
-	manager, err := repl.NewSessionManager(storageManager)
+	manager, err := session.NewSessionManager(storageManager)
 	require.NoError(t, err)
 	require.NotNil(t, manager)
 
@@ -108,10 +108,10 @@ func TestHistoryCommand_Execute_Show(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	storageManager, err := repl.NewStorageManager(backend)
+	storageManager, err := session.NewStorageManager(backend)
 	require.NoError(t, err)
 
-	manager, err := repl.NewSessionManager(storageManager)
+	manager, err := session.NewSessionManager(storageManager)
 	require.NoError(t, err)
 	require.NotNil(t, manager)
 
@@ -152,10 +152,10 @@ func TestHistoryCommand_Execute_Export(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	storageManager, err := repl.NewStorageManager(backend)
+	storageManager, err := session.NewStorageManager(backend)
 	require.NoError(t, err)
 
-	manager, err := repl.NewSessionManager(storageManager)
+	manager, err := session.NewSessionManager(storageManager)
 	require.NoError(t, err)
 	require.NotNil(t, manager)
 
@@ -229,10 +229,10 @@ func TestHistoryCommand_Execute_Delete(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	storageManager, err := repl.NewStorageManager(backend)
+	storageManager, err := session.NewStorageManager(backend)
 	require.NoError(t, err)
 
-	manager, err := repl.NewSessionManager(storageManager)
+	manager, err := session.NewSessionManager(storageManager)
 	require.NoError(t, err)
 	require.NotNil(t, manager)
 
@@ -274,10 +274,10 @@ func TestHistoryCommand_Execute_Search(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	storageManager, err := repl.NewStorageManager(backend)
+	storageManager, err := session.NewStorageManager(backend)
 	require.NoError(t, err)
 
-	manager, err := repl.NewSessionManager(storageManager)
+	manager, err := session.NewSessionManager(storageManager)
 	require.NoError(t, err)
 	require.NotNil(t, manager)
 

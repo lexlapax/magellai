@@ -1,7 +1,7 @@
 // ABOUTME: Tests for the storage manager that wraps the storage backend abstraction
 // ABOUTME: Ensures proper REPL session management with type conversions and error handling
 
-package repl
+package session
 
 import (
 	"bytes"

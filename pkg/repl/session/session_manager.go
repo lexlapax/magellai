@@ -1,7 +1,7 @@
 // ABOUTME: Manages REPL sessions using the storage backend abstraction
 // ABOUTME: Provides high-level session management with pluggable storage implementations
 
-package repl
+package session
 
 import (
 	"fmt"

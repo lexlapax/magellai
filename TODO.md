@@ -14,13 +14,14 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 #### 4.9.2 Duplicate Conversion Functions ✅ (Completed)
 
-#### 4.9.3 Package Organization and Structure ✅ (Completed)
+#### 4.9.3 Package Organization and Structure 🚧 (In Progress - Redoing)
   - [x] Fix misplaced files in packages:
     - [x] Move color utilities from pkg/utils/ to pkg/ui/ 
-    - [x] Consider splitting large repl package into sub-packages:
-      - [x] ~~repl/session/ for session management~~ (Skipped - too complex, would cause circular dependencies)
-      - [x] ~~repl/commands/ for command implementations~~ (Skipped - too complex, would cause circular dependencies)
-      - [x] ~~repl/adapters/ for type conversions~~ (Skipped - too complex, would cause circular dependencies)
+    - [ ] Split large repl package into sub-packages (careful approach):
+      - [x] repl/session/ for session management (session_manager.go, storage_manager.go, auto_recovery.go)
+      - [ ] repl/commands/ for command implementations (commands.go, commands_branch.go, commands_recovery.go)
+      - [ ] repl/adapter/ for type conversions and integrations (command_adapter.go, attachment_helpers.go)
+      - [ ] Keep core REPL functionality in main repl package (repl.go, conversation.go, non_interactive.go)
     - [x] Move readline functionality to separate ui package
   - [x] Create proper test organization:
     - [x] Create pkg/test/ for cross-package integration tests

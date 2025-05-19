@@ -13,7 +13,7 @@ import (
 	"github.com/lexlapax/magellai/internal/configdir"
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
-	"github.com/lexlapax/magellai/pkg/repl"
+	"github.com/lexlapax/magellai/pkg/repl/session"
 	"github.com/lexlapax/magellai/pkg/storage"
 )
 
@@ -50,8 +50,8 @@ func (c *HistoryCommand) Execute(ctx context.Context, exec *command.ExecutionCon
 	}
 
 	// Check if session manager is provided in the execution context (for testing)
-	var sessionManager *repl.SessionManager
-	if sm, ok := exec.Data["session_manager"].(*repl.SessionManager); ok {
+	var sessionManager *session.SessionManager
+	if sm, ok := exec.Data["session_manager"].(*session.SessionManager); ok {
 		sessionManager = sm
 	} else {
 		// Get session storage directory
@@ -61,7 +61,7 @@ func (c *HistoryCommand) Execute(ctx context.Context, exec *command.ExecutionCon
 		}
 
 		// Create storage manager using filesystem backend
-		manager, err := repl.CreateStorageManager(storage.FileSystemBackend, storage.Config{
+		manager, err := session.CreateStorageManager(storage.FileSystemBackend, storage.Config{
 			"base_dir": paths.Sessions,
 		})
 		if err != nil {
@@ -69,7 +69,7 @@ func (c *HistoryCommand) Execute(ctx context.Context, exec *command.ExecutionCon
 		}
 
 		// Create session manager wrapping storage manager
-		sessionManager = &repl.SessionManager{StorageManager: manager}
+		sessionManager = &session.SessionManager{StorageManager: manager}
 	}
 
 	switch c.subcommand {
@@ -104,7 +104,7 @@ func (c *HistoryCommand) Execute(ctx context.Context, exec *command.ExecutionCon
 	}
 }
 
-func (c *HistoryCommand) executeList(ctx context.Context, exec *command.ExecutionContext, manager *repl.SessionManager) error {
+func (c *HistoryCommand) executeList(ctx context.Context, exec *command.ExecutionContext, manager *session.SessionManager) error {
 	logging.LogInfo("Listing sessions")
 
 	sessions, err := manager.ListSessions()
@@ -137,7 +137,7 @@ func (c *HistoryCommand) executeList(ctx context.Context, exec *command.Executio
 	return nil
 }
 
-func (c *HistoryCommand) executeShow(ctx context.Context, exec *command.ExecutionContext, manager *repl.SessionManager) error {
+func (c *HistoryCommand) executeShow(ctx context.Context, exec *command.ExecutionContext, manager *session.SessionManager) error {
 	logging.LogInfo("Showing session details", "id", c.sessionID)
 
 	session, err := manager.StorageManager.LoadSession(c.sessionID)
@@ -173,7 +173,7 @@ func (c *HistoryCommand) executeShow(ctx context.Context, exec *command.Executio
 	return nil
 }
 
-func (c *HistoryCommand) executeDelete(ctx context.Context, exec *command.ExecutionContext, manager *repl.SessionManager) error {
+func (c *HistoryCommand) executeDelete(ctx context.Context, exec *command.ExecutionContext, manager *session.SessionManager) error {
 	logging.LogInfo("Deleting session", "id", c.sessionID)
 
 	err := manager.DeleteSession(c.sessionID)
@@ -186,7 +186,7 @@ func (c *HistoryCommand) executeDelete(ctx context.Context, exec *command.Execut
 	return nil
 }
 
-func (c *HistoryCommand) executeExport(ctx context.Context, exec *command.ExecutionContext, manager *repl.SessionManager) error {
+func (c *HistoryCommand) executeExport(ctx context.Context, exec *command.ExecutionContext, manager *session.SessionManager) error {
 	logging.LogInfo("Exporting session", "id", c.sessionID, "format", c.format)
 
 	err := manager.ExportSession(c.sessionID, c.format, exec.Stdout)
@@ -199,7 +199,7 @@ func (c *HistoryCommand) executeExport(ctx context.Context, exec *command.Execut
 	return nil
 }
 
-func (c *HistoryCommand) executeSearch(ctx context.Context, exec *command.ExecutionContext, manager *repl.SessionManager) error {
+func (c *HistoryCommand) executeSearch(ctx context.Context, exec *command.ExecutionContext, manager *session.SessionManager) error {
 	logging.LogInfo("Searching sessions", "query", c.searchTerm)
 
 	sessions, err := manager.SearchSessions(c.searchTerm)

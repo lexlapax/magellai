@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/lexlapax/magellai/pkg/domain"
+	"github.com/lexlapax/magellai/pkg/repl/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestSessionManager(t *testing.T) (*SessionManager, func()) {
+func setupTestSessionManager(t *testing.T) (*session.SessionManager, func()) {
 	tempDir, err := os.MkdirTemp("", "magellai-session-test")
 	require.NoError(t, err)
 

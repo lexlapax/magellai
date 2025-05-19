@@ -1,7 +1,7 @@
 // ABOUTME: Auto-recovery system for REPL sessions after crashes
 // ABOUTME: Periodically saves session state and recovers on restart
 
-package repl
+package session
 
 import (
 	"encoding/json"
