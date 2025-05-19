@@ -190,13 +190,16 @@ func (c *ConfigCommand) showCurrentConfig(ctx context.Context, exec *command.Exe
 // listConfig lists all configuration settings
 func (c *ConfigCommand) listConfig(ctx context.Context, exec *command.ExecutionContext) error {
 	allSettings := c.config.All()
+	logging.LogDebug("ListConfig: Retrieved settings", "count", len(allSettings))
 
 	outputFormat := exec.Flags.GetString("format")
 	if outputFormat == "" {
 		outputFormat = "text"
 	}
 
-	exec.Data["output"] = formatSettings(allSettings, outputFormat)
+	formatted := formatSettings(allSettings, outputFormat)
+	logging.LogDebug("ListConfig: Formatted output", "length", len(formatted))
+	exec.Data["output"] = formatted
 	return nil
 }
 

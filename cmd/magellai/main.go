@@ -226,8 +226,20 @@ func (c *ConfigShowCmd) Run(ctx *Context) error {
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
+		Data:    make(map[string]interface{}),
 	}
-	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
+
+	err := ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
+	if err != nil {
+		return err
+	}
+
+	// Print the output
+	if output, ok := exec.Data["output"].(string); ok {
+		fmt.Fprintln(ctx.Stdout, output)
+	}
+
+	return nil
 }
 
 // ConfigGetCmd handles config get
@@ -242,8 +254,20 @@ func (c *ConfigGetCmd) Run(ctx *Context) error {
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
+		Data:    make(map[string]interface{}),
 	}
-	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
+
+	err := ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
+	if err != nil {
+		return err
+	}
+
+	// Print the output
+	if output, ok := exec.Data["output"].(string); ok {
+		fmt.Fprintln(ctx.Stdout, output)
+	}
+
+	return nil
 }
 
 // ConfigSetCmd handles config set
@@ -259,8 +283,20 @@ func (c *ConfigSetCmd) Run(ctx *Context) error {
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
+		Data:    make(map[string]interface{}),
 	}
-	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
+
+	err := ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
+	if err != nil {
+		return err
+	}
+
+	// Print the output
+	if output, ok := exec.Data["output"].(string); ok {
+		fmt.Fprintln(ctx.Stdout, output)
+	}
+
+	return nil
 }
 
 // ConfigValidateCmd handles config validate
@@ -273,8 +309,20 @@ func (c *ConfigValidateCmd) Run(ctx *Context) error {
 		Stdout:  ctx.Stdout,
 		Stderr:  ctx.Stderr,
 		Context: ctx.Ctx,
+		Data:    make(map[string]interface{}),
 	}
-	return ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
+
+	err := ctx.Registry.GetExecutor().Execute(ctx.Ctx, "config", exec)
+	if err != nil {
+		return err
+	}
+
+	// Print the output
+	if output, ok := exec.Data["output"].(string); ok {
+		fmt.Fprintln(ctx.Stdout, output)
+	}
+
+	return nil
 }
 
 // ConfigGenerateCmd handles config generate

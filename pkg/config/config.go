@@ -75,6 +75,12 @@ func Init() error {
 	}
 	Manager.currentDir = cwd
 
+	// Load defaults immediately after initialization
+	if err := Manager.Load(nil); err != nil {
+		logging.LogError(err, "Failed to load default configuration")
+		return fmt.Errorf("failed to load default configuration: %w", err)
+	}
+
 	logging.LogDebug("Configuration manager initialized", "currentDir", cwd)
 	return nil
 }
