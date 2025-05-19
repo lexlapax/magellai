@@ -2,7 +2,7 @@
 
 This document contains all completed sections from the original TODO.md file for historical reference.
 
-Last Updated: 2025-05-19 (Phase 4.9.4 completed)
+Last Updated: 2025-05-19 (Phase 4.9.5 completed)
 
 ## Phase 1: Core Foundation (Week 1) ✅
 
@@ -987,3 +987,30 @@ Context Preservation Summary:
     - All tests passing after error standardization
   
   - Result: Consistent error handling across all packages with proper error wrapping and testing
+
+#### 4.9.5 Missing Tests ✅
+  - [x] Add tests for files without test coverage:
+    - [x] pkg/llm/adapters.go - test all conversion functions
+    - [x] pkg/repl/attachment_helpers.go
+    - [x] pkg/repl/auto_recovery.go (has partial tests, needs more)
+    - [x] pkg/repl/command_adapter.go
+    - [x] pkg/llm/context_manager.go
+    - [x] pkg/config/defaults.go
+    - [x] pkg/command/discovery.go
+    - [x] pkg/command/constants.go
+    - [x] pkg/storage/backend.go (interface tests)
+  - [x] Add integration tests for critical paths:
+    - [x] End-to-end session branching and merging
+    - [x] Provider fallback scenarios
+    - [x] Configuration loading precedence
+    - [x] REPL command execution flow
+  
+  - Implementation details:
+    - Created comprehensive unit tests for all listed files
+    - Enhanced storage backend tests with interface compliance tests
+    - Created integration tests for critical functionality
+    - Used table-driven test patterns throughout
+    - Added benchmark tests where appropriate
+    - Mock implementations created for complex dependencies
+  
+  - Result: Complete test coverage for all identified files with both unit and integration tests

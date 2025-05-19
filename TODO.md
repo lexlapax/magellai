@@ -18,22 +18,22 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 #### 4.9.4 Error Handling Consistency ✅ (Completed)
 
-#### 4.9.5 Missing Tests 
-  - [ ] Add tests for files without test coverage:
+#### 4.9.5 Missing Tests ✅ 
+##### 4.9.5.1 Add tests for files without test coverage: ✅ (Completed)
     - [x] pkg/llm/adapters.go - test all conversion functions ✅
     - [x] pkg/repl/attachment_helpers.go ✅
     - [x] pkg/repl/auto_recovery.go (has partial tests, needs more) ✅
     - [x] pkg/repl/command_adapter.go ✅
     - [x] pkg/llm/context_manager.go ✅
-    - [ ] pkg/config/defaults.go
-    - [ ] pkg/command/discovery.go
-    - [ ] pkg/command/constants.go
-    - [ ] pkg/storage/backend.go (interface tests)
-  - [ ] Add integration tests for critical paths:
-    - [ ] End-to-end session branching and merging
-    - [ ] Provider fallback scenarios
-    - [ ] Configuration loading precedence
-    - [ ] REPL command execution flow
+    - [x] pkg/config/defaults.go ✅
+    - [x] pkg/command/discovery.go ✅
+    - [x] pkg/command/constants.go ✅
+    - [x] pkg/storage/backend.go (interface tests) ✅
+##### 4.9.5.2 Add integration tests for critical paths: ✅ (Completed)
+    - [x] End-to-end session branching and merging ✅
+    - [x] Provider fallback scenarios ✅
+    - [x] Configuration loading precedence ✅
+    - [x] REPL command execution flow ✅
 
 #### 4.9.6 Test Organization and Helpers *(REVISIT)*
   - [ ] Consolidate test helpers and mocks:
