@@ -4,7 +4,7 @@
 //go:build integration
 // +build integration
 
-package integration
+package main
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 
 func TestConfigShowCLI(t *testing.T) {
 	// Build the binary
-	cmd := exec.Command("go", "build", "-o", "test-magellai", "../../../cmd/magellai")
+	cmd := exec.Command("go", "build", "-o", "test-magellai", ".")
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
 	}

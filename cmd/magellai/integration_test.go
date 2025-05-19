@@ -4,7 +4,7 @@
 //go:build integration
 // +build integration
 
-package integration
+package main
 
 import (
 	"os/exec"
@@ -17,8 +17,7 @@ import (
 // TestIntegration_BasicE2E tests basic end-to-end functionality
 func TestIntegration_BasicE2E(t *testing.T) {
 	// Test version command directly
-	cmd := exec.Command("go", "run", "./cmd/magellai", "version")
-	cmd.Dir = "../../.."
+	cmd := exec.Command("go", "run", ".", "version")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Command failed with error: %v\nOutput: %s", err, string(output))
@@ -26,8 +25,7 @@ func TestIntegration_BasicE2E(t *testing.T) {
 	assert.Contains(t, string(output), "magellai version")
 
 	// Test help
-	cmd = exec.Command("go", "run", "./cmd/magellai", "--help")
-	cmd.Dir = "../../.."
+	cmd = exec.Command("go", "run", ".", "--help")
 	output, err = cmd.CombinedOutput()
 	require.NoError(t, err)
 	assert.Contains(t, string(output), "Usage:")
@@ -41,7 +39,7 @@ func TestMain_E2E(t *testing.T) {
 	}
 
 	// Test version command through built binary
-	cmd := exec.Command("go", "build", "-o", "test-magellai", "../../../cmd/magellai")
+	cmd := exec.Command("go", "build", "-o", "test-magellai", ".")
 	require.NoError(t, cmd.Run())
 	defer func() {
 		_ = exec.Command("rm", "test-magellai").Run()

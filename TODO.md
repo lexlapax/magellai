@@ -2,7 +2,7 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-**Current Status**: Phase 4.9.4 - Error Handling Consistency
+**Current Status**: Phase 4.9.6 - Code abstraction and redundancy checks (partially complete)
 
 ## Phase 4: Advanced REPL Features (Week 4)
 
@@ -19,30 +19,10 @@ This document provides a detailed, phased implementation plan for the Magellai p
 #### 4.9.4 Error Handling Consistency ✅ (Completed)
 
 #### 4.9.5 Missing Tests ✅ (Completed) 
-##### 4.9.5.1 Add tests for files without test coverage: ✅ (Completed)
-    - [x] pkg/llm/adapters.go - test all conversion functions ✅
-    - [x] pkg/repl/attachment_helpers.go ✅
-    - [x] pkg/repl/auto_recovery.go (has partial tests, needs more) ✅
-    - [x] pkg/repl/command_adapter.go ✅
-    - [x] pkg/llm/context_manager.go ✅
-    - [x] pkg/config/defaults.go ✅
-    - [x] pkg/command/discovery.go ✅
-    - [x] pkg/command/constants.go ✅
-    - [x] pkg/storage/backend.go (interface tests) ✅
-    - [x] pkg/command/errors.go ✅
-    - [x] pkg/command/registry.go ✅
-    - [x] pkg/config/errors.go ✅
-    - [x] pkg/config/schema.go ✅
-    - [x] pkg/config/utils.go ✅
-    - [x] pkg/repl/errors.go ✅
-    - [x] pkg/storage/errors.go ✅
-##### 4.9.5.2 Add integration tests for critical paths: ✅ (Completed)
-    - [x] End-to-end session branching and merging ✅
-    - [x] Provider fallback scenarios ✅
-    - [x] Configuration loading precedence ✅
-    - [x] REPL command execution flow ✅
 
-#### 4.9.6 Test Organization and Helpers *(REVISIT)*
+#### 4.9.6 Fix Integration Test Failures ✅ (Completed)
+
+#### 4.9.7 Test Organization and Helpers *(REVISIT)*
   - [ ] Consolidate test helpers and mocks:
     - [ ] Create shared mock implementations in pkg/testutil/mocks/
     - [ ] Remove duplicate mock types across test files
@@ -52,7 +32,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Reusable session, message, and attachment fixtures
     - [ ] Configuration test fixtures
 
-#### 4.9.7 Logging and Instrumentation *(REVISIT)*
+#### 4.9.8 Logging and Instrumentation *(REVISIT)*
   - [ ] Standardize logging approach:
     - [ ] Use internal/logging consistently (no direct slog/log usage)
     - [ ] Remove fmt.Print statements from non-test code
@@ -63,7 +43,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Session branching/merging operations
     - [ ] Command execution lifecycle
 
-#### 4.9.8 Function and Method Cleanup *(REVISIT)*
+#### 4.9.9 Function and Method Cleanup *(REVISIT)*
   - [ ] Remove unused functions:
     - [ ] Audit all exported functions for actual usage
     - [ ] Remove dead code identified by static analysis
@@ -73,7 +53,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Standardize path handling functions
     - [ ] Create common validation helpers
 
-#### 4.9.9 Interface and Contract Consistency *(REVISIT)*
+#### 4.9.10 Interface and Contract Consistency *(REVISIT)*
   - [ ] Review and standardize interfaces:
     - [ ] Ensure consistent method signatures across similar interfaces
     - [ ] Add missing interface documentation
@@ -82,7 +62,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Add compile-time interface checks (var _ Interface = (*Type)(nil))
     - [ ] Ensure all implementations fully satisfy interfaces
 
-#### 4.9.10 Import and Dependency Cleanup *(REVISIT)*
+#### 4.9.11 Import and Dependency Cleanup *(REVISIT)*
   - [ ] Remove circular dependencies:
     - [ ] Audit import graphs for circular references
     - [ ] Refactor to eliminate circular imports
