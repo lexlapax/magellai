@@ -20,10 +20,10 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 #### 4.9.5 Missing Tests 
   - [ ] Add tests for files without test coverage:
-    - [ ] pkg/llm/adapters.go - test all conversion functions
-    - [ ] pkg/repl/attachment_helpers.go
-    - [ ] pkg/repl/auto_recovery.go (has partial tests, needs more)
-    - [ ] pkg/repl/command_adapter.go
+    - [x] pkg/llm/adapters.go - test all conversion functions ✅
+    - [x] pkg/repl/attachment_helpers.go ✅
+    - [x] pkg/repl/auto_recovery.go (has partial tests, needs more) ✅
+    - [x] pkg/repl/command_adapter.go ✅
     - [ ] pkg/llm/context_manager.go
     - [ ] pkg/config/defaults.go
     - [ ] pkg/command/discovery.go
@@ -84,7 +84,14 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Consider dependency injection patterns
     - [ ] Document intentional coupling points
 
-### 4.10 Documentation and architecture updates *(REVISIT)*
+#### 4.9.11 Manual test suite for cmd line (cli and repl both)
+  - [ ] Create a set of integration tests using command line directly for cli and repl
+    - [ ] assume environment variables and configs - use a test.config.yaml file
+  - [ ] Clarify usage scenarios in case of ambiguity
+  - [ ] Identify error cases and add to todo
+  - [ ] Fix these cases - remember no need for backward compatibility
+
+### 4.12 Documentation and architecture updates *(REVISIT)*
 - [ ] Update architecture documentation
     - [ ] Create domain layer diagrams
     - [ ] Update package relationship diagrams
@@ -102,7 +109,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 - [ ] Ensure documentation links between docs
 - [ ] update README.md with new architecture and links to other documentation
 
-### 4.11 Final validation and rollout *(REVISIT)*
+### 4.13 Final validation and rollout *(REVISIT)*
 - [ ] Run full test suite
 - [ ] Manual testing of all features
 - [ ] Update CHANGELOG.md

@@ -131,6 +131,9 @@ func toDomainRole(role llmdomain.Role) domain.MessageRole {
 // Attachment conversion helpers
 
 func attachmentToLLMContentPart(att *domain.Attachment) *llmdomain.ContentPart {
+	if att == nil {
+		return nil
+	}
 	switch att.Type {
 	case domain.AttachmentTypeImage:
 		return &llmdomain.ContentPart{
