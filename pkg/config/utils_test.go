@@ -396,10 +396,10 @@ func createTestConfig(t *testing.T) *Config {
 		koanf:    koanf.New("."),
 		watchers: []func(){},
 	}
-	
+
 	// Set some default values
 	err := config.SetValue("provider.default", "openai")
 	require.NoError(t, err)
-	
+
 	return config
 }

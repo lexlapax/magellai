@@ -136,15 +136,19 @@ func TestConfigProfileOverride(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set base values
-	config.Manager.SetValue("log.level", "info")
-	config.Manager.SetValue("output.format", "text")
-	
+	err = config.Manager.SetValue("log.level", "info")
+	require.NoError(t, err)
+	err = config.Manager.SetValue("output.format", "text")
+	require.NoError(t, err)
+
 	// Create profile settings
-	config.Manager.SetValue("profiles.test.log.level", "debug")
-	config.Manager.SetValue("profiles.test.output.format", "json")
+	err = config.Manager.SetValue("profiles.test.log.level", "debug")
+	require.NoError(t, err)
+	err = config.Manager.SetValue("profiles.test.output.format", "json")
+	require.NoError(t, err)
 
 	// Apply profile
-	err = config.Manager.SetProfile("test")  
+	err = config.Manager.SetProfile("test")
 	require.NoError(t, err)
 
 	// Verify profile overrides

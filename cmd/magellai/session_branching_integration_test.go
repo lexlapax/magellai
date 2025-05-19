@@ -46,17 +46,17 @@ provider:
 	// Create storage backend
 	storageDir := filepath.Join(tempDir, "sessions")
 	require.NoError(t, os.MkdirAll(storageDir, 0755))
-	
+
 	backend, err := filesystem.New(storage.Config{
 		"base_dir": storageDir,
-		"user_id": "test-user",
+		"user_id":  "test-user",
 	})
 	require.NoError(t, err)
 	defer backend.Close()
 
 	t.Run("CompleteSessionBranchingFlow", func(t *testing.T) {
 		// Test the complete branching flow
-		
+
 		// Step 1: Create a new session
 		session := backend.NewSession("parent-session")
 		session.Conversation.AddMessage(domain.Message{
@@ -121,7 +121,7 @@ provider:
 
 	t.Run("BranchTreeOperations", func(t *testing.T) {
 		// Test branch tree operations
-		
+
 		// Create a parent session
 		parent := backend.NewSession("tree-parent")
 		parent.Conversation.AddMessage(domain.Message{
@@ -132,7 +132,6 @@ provider:
 		assert.NoError(t, err)
 
 		// Create multiple branches
-		var branches []*domain.Session
 		for i := 1; i <= 3; i++ {
 			branchID := fmt.Sprintf("tree-branch%d-id", i)
 			branchName := fmt.Sprintf("tree-branch%d", i)
@@ -140,7 +139,6 @@ provider:
 			assert.NoError(t, err)
 			err = backend.SaveSession(branch)
 			assert.NoError(t, err)
-			branches = append(branches, branch)
 		}
 		err = backend.SaveSession(parent) // Update parent with children
 		assert.NoError(t, err)
@@ -160,7 +158,7 @@ provider:
 
 	t.Run("MergeConflictHandling", func(t *testing.T) {
 		// Test merge conflict scenarios
-		
+
 		// Create parent session
 		parent := backend.NewSession("conflict-parent")
 		parent.Conversation.AddMessage(domain.Message{
@@ -195,7 +193,7 @@ provider:
 			domain.MergeTypeRebase,
 			domain.MergeTypeCherryPick,
 		}
-		
+
 		for _, mergeType := range mergeTypes {
 			options := domain.MergeOptions{
 				Type:         mergeType,
@@ -214,7 +212,7 @@ provider:
 
 	t.Run("SessionRecoveryAfterBranching", func(t *testing.T) {
 		// Test session recovery with branches
-		
+
 		// Create a session with branches
 		parent := backend.NewSession("recovery-parent")
 		parent.Conversation.AddMessage(domain.Message{

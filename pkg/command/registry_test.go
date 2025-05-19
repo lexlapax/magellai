@@ -123,11 +123,11 @@ func TestRegistry_Register(t *testing.T) {
 
 func TestRegistry_Get(t *testing.T) {
 	r := NewRegistry()
-	
+
 	// Register commands
 	cmd1 := createTestCommand("test1", CategoryShared)
 	cmd2 := createTestCommand("test2", CategoryShared, "t2", "test-two")
-	
+
 	_ = r.Register(cmd1)
 	_ = r.Register(cmd2)
 
@@ -175,13 +175,13 @@ func TestRegistry_Get(t *testing.T) {
 
 func TestRegistry_List(t *testing.T) {
 	r := NewRegistry()
-	
+
 	// Register commands in different categories
 	cmd1 := createTestCommand("cmd1", CategoryShared)
 	cmd2 := createTestCommand("cmd2", CategoryShared)
 	cmd3 := createTestCommand("cmd3", CategoryREPL)
 	cmd4 := createTestCommand("cmd4", CategoryShared)
-	
+
 	_ = r.Register(cmd1)
 	_ = r.Register(cmd2)
 	_ = r.Register(cmd3)
@@ -223,14 +223,14 @@ func TestRegistry_List(t *testing.T) {
 
 func TestRegistry_Names(t *testing.T) {
 	r := NewRegistry()
-	
+
 	// Register commands with aliases
 	cmd1 := createTestCommand("test1", CategoryShared, "t1")
 	cmd2 := createTestCommand("test2", CategoryShared, "t2", "test-two")
-	
+
 	_ = r.Register(cmd1)
 	_ = r.Register(cmd2)
-	
+
 	names := r.Names()
 	expected := []string{"t1", "t2", "test-two", "test1", "test2"}
 	assert.ElementsMatch(t, expected, names)
@@ -238,12 +238,12 @@ func TestRegistry_Names(t *testing.T) {
 
 func TestRegistry_Search(t *testing.T) {
 	r := NewRegistry()
-	
+
 	// Register commands
 	cmd1 := createTestCommand("help", CategoryShared, "h")
 	cmd2 := createTestCommand("history", CategoryREPL, "hist")
 	cmd3 := createTestCommand("set", CategoryShared)
-	
+
 	_ = r.Register(cmd1)
 	_ = r.Register(cmd2)
 	_ = r.Register(cmd3)
@@ -287,7 +287,7 @@ func TestRegistry_Search(t *testing.T) {
 			for i, cmd := range got {
 				gotNames[i] = cmd.Metadata().Name
 			}
-			
+
 			if len(tt.want) == 0 {
 				assert.Empty(t, gotNames)
 			} else {
@@ -299,18 +299,18 @@ func TestRegistry_Search(t *testing.T) {
 
 func TestRegistry_Clear(t *testing.T) {
 	r := NewRegistry()
-	
+
 	// Register some commands
 	_ = r.Register(createTestCommand("test1", CategoryShared, "t1"))
 	_ = r.Register(createTestCommand("test2", CategoryShared))
-	
+
 	// Verify they exist
 	assert.Len(t, r.commands, 2)
 	assert.Len(t, r.aliases, 1)
-	
+
 	// Clear the registry
 	r.Clear()
-	
+
 	// Verify everything is cleared
 	assert.Empty(t, r.commands)
 	assert.Empty(t, r.aliases)
@@ -318,12 +318,12 @@ func TestRegistry_Clear(t *testing.T) {
 
 func TestRegistry_MustRegister(t *testing.T) {
 	r := NewRegistry()
-	
+
 	// Should not panic for valid command
 	assert.NotPanics(t, func() {
 		r.MustRegister(createTestCommand("test", CategoryShared))
 	})
-	
+
 	// Should panic for duplicate
 	assert.Panics(t, func() {
 		r.MustRegister(createTestCommand("test", CategoryShared))
@@ -340,7 +340,7 @@ func TestRegistry_GetExecutor(t *testing.T) {
 func TestRegistry_ConcurrentAccess(t *testing.T) {
 	r := NewRegistry()
 	var wg sync.WaitGroup
-	
+
 	// Concurrent registrations
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
@@ -352,7 +352,7 @@ func TestRegistry_ConcurrentAccess(t *testing.T) {
 			assert.NoError(t, err)
 		}(i)
 	}
-	
+
 	// Concurrent reads
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
@@ -363,9 +363,9 @@ func TestRegistry_ConcurrentAccess(t *testing.T) {
 			_ = r.Search("a")
 		}()
 	}
-	
+
 	wg.Wait()
-	
+
 	// Verify all commands were registered
 	assert.Len(t, r.commands, 10)
 }
@@ -376,29 +376,29 @@ func TestGlobalRegistry(t *testing.T) {
 	defer func() {
 		GlobalRegistry = originalGlobal
 	}()
-	
+
 	// Create new global registry for testing
 	GlobalRegistry = NewRegistry()
-	
+
 	// Test global functions
 	cmd := createTestCommand("global", CategoryShared)
-	
+
 	err := Register(cmd)
 	assert.NoError(t, err)
-	
+
 	got, err := Get("global")
 	assert.NoError(t, err)
 	assert.Equal(t, cmd, got)
-	
+
 	commands := List(CategoryShared)
 	assert.Len(t, commands, 1)
-	
+
 	names := Names()
 	assert.Contains(t, names, "global")
-	
+
 	results := Search("glob")
 	assert.Len(t, results, 1)
-	
+
 	// Test MustRegister
 	MustRegister(createTestCommand("must", CategoryShared))
 	got, err = Get("must")

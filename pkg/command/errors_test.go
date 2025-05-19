@@ -103,7 +103,7 @@ func TestErrorWrapping(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Wrap the error
 			wrapped := errors.Join(errors.New(tt.wrapMsg), tt.baseErr)
-			
+
 			// Should be able to unwrap to original error
 			assert.True(t, errors.Is(wrapped, tt.baseErr))
 			assert.Contains(t, wrapped.Error(), tt.wrapMsg)
@@ -115,34 +115,34 @@ func TestErrorWrapping(t *testing.T) {
 func TestErrorTypeAssertions(t *testing.T) {
 	// Test that our errors are actual error types
 	var err error
-	
+
 	err = ErrInvalidCommand
 	assert.NotNil(t, err)
-	
+
 	err = ErrCommandNotFound
 	assert.NotNil(t, err)
-	
+
 	err = ErrInvalidArguments
 	assert.NotNil(t, err)
-	
+
 	err = ErrMissingArgument
 	assert.NotNil(t, err)
-	
+
 	err = ErrMissingRequiredFlag
 	assert.NotNil(t, err)
-	
+
 	err = ErrInvalidFlagValue
 	assert.NotNil(t, err)
-	
+
 	err = ErrCommandAlreadyRegistered
 	assert.NotNil(t, err)
-	
+
 	err = ErrCommandCanceled
 	assert.NotNil(t, err)
-	
+
 	err = ErrInvalidCategory
 	assert.NotNil(t, err)
-	
+
 	err = ErrNotAvailableInContext
 	assert.NotNil(t, err)
 }

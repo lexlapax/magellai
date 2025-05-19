@@ -12,11 +12,11 @@ import (
 
 func TestParseProviderModelExtended(t *testing.T) {
 	tests := []struct {
-		name           string
-		input          string
-		wantProvider   string
-		wantModel      string
-		description    string
+		name         string
+		input        string
+		wantProvider string
+		wantModel    string
+		description  string
 	}{
 		{
 			name:         "Full provider/model format",
@@ -280,7 +280,7 @@ func TestProfileConfig(t *testing.T) {
 	}
 
 	assert.Len(t, profiles, 2)
-	
+
 	dev := profiles["development"]
 	assert.Equal(t, "Development environment settings", dev.Description)
 	assert.Equal(t, "openai", dev.Provider)

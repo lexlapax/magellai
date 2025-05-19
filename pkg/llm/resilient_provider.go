@@ -83,14 +83,18 @@ func (r *ResilientProvider) Generate(ctx context.Context, prompt string, options
 				"provider", fallback.GetModelInfo().Provider)
 
 			// Try fallback with retry
+			var fallbackResult string
 			err := r.errorHandler.WithRetry(ctx, operation, func() error {
-				_, err := fallback.Generate(ctx, prompt, options...)
+				result, err := fallback.Generate(ctx, prompt, options...)
+				if err == nil {
+					fallbackResult = result
+				}
 				return err
 			})
 
 			if err == nil {
 				// Fallback succeeded
-				return fallback.Generate(ctx, prompt, options...)
+				return fallbackResult, nil
 			}
 
 			r.logger.Warn("Fallback provider failed",

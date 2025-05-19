@@ -16,7 +16,7 @@ import (
 func TestGetCompleteDefaultConfig(t *testing.T) {
 	// Get the default config
 	config := GetCompleteDefaultConfig()
-	
+
 	// Test top-level sections exist
 	assert.Contains(t, config, "log")
 	assert.Contains(t, config, "provider")
@@ -32,22 +32,22 @@ func TestGetCompleteDefaultConfig(t *testing.T) {
 
 func TestLogConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
-	
+
 	logConfig, ok := config["log"].(map[string]interface{})
 	require.True(t, ok, "log config should be a map")
-	
+
 	assert.Equal(t, "info", logConfig["level"])
 	assert.Equal(t, "text", logConfig["format"])
 }
 
 func TestProviderConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
-	
+
 	providerConfig, ok := config["provider"].(map[string]interface{})
 	require.True(t, ok, "provider config should be a map")
-	
+
 	assert.Equal(t, "openai", providerConfig["default"])
-	
+
 	// Test OpenAI defaults
 	openaiConfig, ok := providerConfig["openai"].(map[string]interface{})
 	require.True(t, ok, "openai config should be a map")
@@ -56,14 +56,14 @@ func TestProviderConfigDefaults(t *testing.T) {
 	assert.Equal(t, "gpt-3.5-turbo", openaiConfig["default_model"])
 	assert.Equal(t, "30s", openaiConfig["timeout"])
 	assert.Equal(t, 3, openaiConfig["max_retries"])
-	
+
 	// Test Anthropic defaults
 	anthropicConfig, ok := providerConfig["anthropic"].(map[string]interface{})
 	require.True(t, ok, "anthropic config should be a map")
 	assert.Equal(t, "", anthropicConfig["api_key"])
 	assert.Equal(t, "https://api.anthropic.com", anthropicConfig["base_url"])
 	assert.Equal(t, "claude-3-haiku-20240307", anthropicConfig["default_model"])
-	
+
 	// Test Gemini defaults
 	geminiConfig, ok := providerConfig["gemini"].(map[string]interface{})
 	require.True(t, ok, "gemini config should be a map")
@@ -74,22 +74,22 @@ func TestProviderConfigDefaults(t *testing.T) {
 
 func TestModelConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
-	
+
 	modelConfig, ok := config["model"].(map[string]interface{})
 	require.True(t, ok, "model config should be a map")
-	
+
 	assert.Equal(t, "openai/gpt-3.5-turbo", modelConfig["default"])
-	
+
 	settings, ok := modelConfig["settings"].(map[string]interface{})
 	require.True(t, ok, "settings should be a map")
-	
+
 	// Test global settings
 	globalSettings, ok := settings["*"].(map[string]interface{})
 	require.True(t, ok, "global settings should be a map")
 	assert.Equal(t, 0.7, globalSettings["temperature"])
 	assert.Equal(t, 2048, globalSettings["max_tokens"])
 	assert.Equal(t, 1.0, globalSettings["top_p"])
-	
+
 	// Test model-specific settings
 	gpt4oSettings, ok := settings["openai/gpt-4o"].(map[string]interface{})
 	require.True(t, ok, "gpt-4o settings should be a map")
@@ -98,10 +98,10 @@ func TestModelConfigDefaults(t *testing.T) {
 
 func TestOutputConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
-	
+
 	outputConfig, ok := config["output"].(map[string]interface{})
 	require.True(t, ok, "output config should be a map")
-	
+
 	assert.Equal(t, "text", outputConfig["format"])
 	assert.Equal(t, true, outputConfig["color"])
 	assert.Equal(t, true, outputConfig["pretty"])
@@ -111,24 +111,24 @@ func TestSessionConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
 	homeDir, _ := os.UserHomeDir()
 	expectedSessionDir := filepath.Join(homeDir, ".config", "magellai", "sessions")
-	
+
 	sessionConfig, ok := config["session"].(map[string]interface{})
 	require.True(t, ok, "session config should be a map")
-	
+
 	assert.Equal(t, expectedSessionDir, sessionConfig["directory"])
 	assert.Equal(t, true, sessionConfig["autosave"])
 	assert.Equal(t, "0s", sessionConfig["max_age"])
 	assert.Equal(t, false, sessionConfig["compression"])
-	
+
 	// Test storage config
 	storageConfig, ok := sessionConfig["storage"].(map[string]interface{})
 	require.True(t, ok, "storage config should be a map")
 	assert.Equal(t, "filesystem", storageConfig["type"])
-	
+
 	storageSettings, ok := storageConfig["settings"].(map[string]interface{})
 	require.True(t, ok, "storage settings should be a map")
 	assert.Equal(t, expectedSessionDir, storageSettings["base_dir"])
-	
+
 	// Test auto recovery config
 	autoRecoveryConfig, ok := sessionConfig["auto_recovery"].(map[string]interface{})
 	require.True(t, ok, "auto_recovery config should be a map")
@@ -141,18 +141,18 @@ func TestReplConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
 	homeDir, _ := os.UserHomeDir()
 	expectedHistoryFile := filepath.Join(homeDir, ".config", "magellai", ".repl_history")
-	
+
 	replConfig, ok := config["repl"].(map[string]interface{})
 	require.True(t, ok, "repl config should be a map")
-	
+
 	colors, ok := replConfig["colors"].(map[string]interface{})
 	require.True(t, ok, "colors config should be a map")
 	assert.Equal(t, true, colors["enabled"])
-	
+
 	assert.Equal(t, "> ", replConfig["prompt_style"])
 	assert.Equal(t, false, replConfig["multiline"])
 	assert.Equal(t, expectedHistoryFile, replConfig["history_file"])
-	
+
 	autoSave, ok := replConfig["auto_save"].(map[string]interface{})
 	require.True(t, ok, "auto_save config should be a map")
 	assert.Equal(t, true, autoSave["enabled"])
@@ -163,20 +163,20 @@ func TestPluginConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
 	homeDir, _ := os.UserHomeDir()
 	expectedPluginDir := filepath.Join(homeDir, ".config", "magellai", "plugins")
-	
+
 	pluginConfig, ok := config["plugin"].(map[string]interface{})
 	require.True(t, ok, "plugin config should be a map")
-	
+
 	assert.Equal(t, expectedPluginDir, pluginConfig["directory"])
-	
+
 	path, ok := pluginConfig["path"].([]string)
 	require.True(t, ok, "path should be a string slice")
 	assert.Empty(t, path)
-	
+
 	enabled, ok := pluginConfig["enabled"].([]string)
 	require.True(t, ok, "enabled should be a string slice")
 	assert.Empty(t, enabled)
-	
+
 	disabled, ok := pluginConfig["disabled"].([]string)
 	require.True(t, ok, "disabled should be a string slice")
 	assert.Empty(t, disabled)
@@ -184,28 +184,28 @@ func TestPluginConfigDefaults(t *testing.T) {
 
 func TestProfilesConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
-	
+
 	profiles, ok := config["profiles"].(map[string]interface{})
 	require.True(t, ok, "profiles should be a map")
-	
+
 	// Test fast profile
 	fastProfile, ok := profiles["fast"].(map[string]interface{})
 	require.True(t, ok, "fast profile should be a map")
 	assert.Equal(t, "Fast responses with lower quality", fastProfile["description"])
 	assert.Equal(t, "openai", fastProfile["provider"])
 	assert.Equal(t, "gpt-3.5-turbo", fastProfile["model"])
-	
+
 	fastSettings, ok := fastProfile["settings"].(map[string]interface{})
 	require.True(t, ok, "fast settings should be a map")
 	assert.Equal(t, 0.3, fastSettings["temperature"])
 	assert.Equal(t, 1024, fastSettings["max_tokens"])
-	
+
 	// Test quality profile
 	qualityProfile, ok := profiles["quality"].(map[string]interface{})
 	require.True(t, ok, "quality profile should be a map")
 	assert.Equal(t, "High-quality responses, slower", qualityProfile["description"])
 	assert.Equal(t, "gpt-4o", qualityProfile["model"])
-	
+
 	// Test creative profile
 	creativeProfile, ok := profiles["creative"].(map[string]interface{})
 	require.True(t, ok, "creative profile should be a map")
@@ -216,10 +216,10 @@ func TestProfilesConfigDefaults(t *testing.T) {
 
 func TestAliasesConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
-	
+
 	aliases, ok := config["aliases"].(map[string]interface{})
 	require.True(t, ok, "aliases should be a map")
-	
+
 	assert.Equal(t, "exit", aliases["q"])
 	assert.Equal(t, "exit", aliases["quit"])
 	assert.Equal(t, "clear", aliases["cls"])
@@ -229,10 +229,10 @@ func TestAliasesConfigDefaults(t *testing.T) {
 
 func TestCliConfigDefaults(t *testing.T) {
 	config := GetCompleteDefaultConfig()
-	
+
 	cliConfig, ok := config["cli"].(map[string]interface{})
 	require.True(t, ok, "cli config should be a map")
-	
+
 	assert.Equal(t, true, cliConfig["stream"])
 	assert.Equal(t, false, cliConfig["verbose"])
 	assert.Equal(t, true, cliConfig["confirm"])
@@ -240,44 +240,44 @@ func TestCliConfigDefaults(t *testing.T) {
 
 func TestGenerateExampleConfig(t *testing.T) {
 	example := GenerateExampleConfig()
-	
+
 	// Test that it's valid YAML-like content
 	assert.Contains(t, example, "# Magellai Configuration File")
 	assert.Contains(t, example, "# This is an example configuration with all available options")
-	
+
 	// Test major sections are present
 	assert.Contains(t, example, "# Logging configuration")
 	assert.Contains(t, example, "log:")
 	assert.Contains(t, example, "  level: info")
-	
+
 	assert.Contains(t, example, "# Provider configuration")
 	assert.Contains(t, example, "provider:")
 	assert.Contains(t, example, "  default: openai")
-	
+
 	assert.Contains(t, example, "# Model configuration")
 	assert.Contains(t, example, "model:")
-	
+
 	assert.Contains(t, example, "# Output configuration")
 	assert.Contains(t, example, "output:")
-	
+
 	assert.Contains(t, example, "# Session configuration")
 	assert.Contains(t, example, "session:")
-	
+
 	assert.Contains(t, example, "# REPL configuration")
 	assert.Contains(t, example, "repl:")
-	
+
 	assert.Contains(t, example, "# Plugin configuration")
 	assert.Contains(t, example, "plugin:")
-	
+
 	assert.Contains(t, example, "# Profiles")
 	assert.Contains(t, example, "profiles:")
-	
+
 	assert.Contains(t, example, "# Command aliases")
 	assert.Contains(t, example, "aliases:")
-	
+
 	assert.Contains(t, example, "# CLI settings")
 	assert.Contains(t, example, "cli:")
-	
+
 	// Test that comments are helpful
 	assert.Contains(t, example, "# Options:")
 	assert.Contains(t, example, "# Set via environment variable:")
@@ -286,7 +286,7 @@ func TestGenerateExampleConfig(t *testing.T) {
 func TestGetConfigTemplate(t *testing.T) {
 	template := GetConfigTemplate()
 	example := GenerateExampleConfig()
-	
+
 	// Currently they should be the same
 	assert.Equal(t, example, template)
 }
@@ -294,11 +294,11 @@ func TestGetConfigTemplate(t *testing.T) {
 func TestExampleConfigStructure(t *testing.T) {
 	example := GenerateExampleConfig()
 	lines := strings.Split(example, "\n")
-	
+
 	// Test that the file is properly structured with comments
 	commentCount := 0
 	configCount := 0
-	
+
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "#") {
@@ -307,7 +307,7 @@ func TestExampleConfigStructure(t *testing.T) {
 			configCount++
 		}
 	}
-	
+
 	// Should have a good balance of comments and config
 	assert.Greater(t, commentCount, 15, "Should have many helpful comments")
 	assert.Greater(t, configCount, 50, "Should have many configuration lines")
@@ -315,7 +315,7 @@ func TestExampleConfigStructure(t *testing.T) {
 
 func TestEnvironmentVariableReferences(t *testing.T) {
 	example := GenerateExampleConfig()
-	
+
 	// Test that environment variable references are documented
 	assert.Contains(t, example, "MAGELLAI_PROVIDER_OPENAI_API_KEY")
 	assert.Contains(t, example, "MAGELLAI_PROVIDER_ANTHROPIC_API_KEY")
@@ -325,18 +325,18 @@ func TestEnvironmentVariableReferences(t *testing.T) {
 func TestDefaultPaths(t *testing.T) {
 	config := GetCompleteDefaultConfig()
 	homeDir, _ := os.UserHomeDir()
-	
+
 	// Test that paths use the home directory properly
 	sessionConfig := config["session"].(map[string]interface{})
 	sessionDir := sessionConfig["directory"].(string)
 	assert.Contains(t, sessionDir, homeDir)
 	assert.Contains(t, sessionDir, ".config/magellai/sessions")
-	
+
 	pluginConfig := config["plugin"].(map[string]interface{})
 	pluginDir := pluginConfig["directory"].(string)
 	assert.Contains(t, pluginDir, homeDir)
 	assert.Contains(t, pluginDir, ".config/magellai/plugins")
-	
+
 	replConfig := config["repl"].(map[string]interface{})
 	historyFile := replConfig["history_file"].(string)
 	assert.Contains(t, historyFile, homeDir)
@@ -345,17 +345,17 @@ func TestDefaultPaths(t *testing.T) {
 
 func TestDefaultValues(t *testing.T) {
 	config := GetCompleteDefaultConfig()
-	
+
 	// Test some specific default values are sensible
 	logConfig := config["log"].(map[string]interface{})
 	assert.Equal(t, "info", logConfig["level"], "Default log level should be info")
-	
+
 	outputConfig := config["output"].(map[string]interface{})
 	assert.Equal(t, true, outputConfig["color"], "Color should be enabled by default")
-	
+
 	sessionConfig := config["session"].(map[string]interface{})
 	assert.Equal(t, true, sessionConfig["autosave"], "Autosave should be enabled by default")
-	
+
 	cliConfig := config["cli"].(map[string]interface{})
 	assert.Equal(t, true, cliConfig["stream"], "Streaming should be enabled by default")
 }
