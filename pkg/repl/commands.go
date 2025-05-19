@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/lexlapax/magellai/internal/logging"
+	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/llm"
 )
 
@@ -112,6 +113,10 @@ func (r *REPL) switchModel(args []string) error {
 	r.session.Conversation.Model = modelName
 	r.session.Conversation.Provider = parts[0]
 
+	// Update the shared context to preserve model state between commands
+	r.sharedContext.Set(command.SharedContextModel, modelName)
+	r.sharedContext.Set(command.SharedContextProvider, parts[0])
+
 	fmt.Fprintf(r.writer, "Switched to model: %s\n", modelName)
 	return nil
 }
@@ -121,10 +126,13 @@ func (r *REPL) toggleStreaming(args []string) error {
 	if len(args) == 0 {
 		// Toggle current state
 		current := r.config.GetBool("stream")
-		if err := r.config.SetValue("stream", !current); err != nil {
+		newValue := !current
+		if err := r.config.SetValue("stream", newValue); err != nil {
 			logging.LogWarn("Failed to set stream config", "error", err)
 		}
-		fmt.Fprintf(r.writer, "Streaming mode: %v\n", !current)
+		// Update shared context
+		r.sharedContext.Set(command.SharedContextStream, newValue)
+		fmt.Fprintf(r.writer, "Streaming mode: %v\n", newValue)
 		return nil
 	}
 
@@ -133,11 +141,15 @@ func (r *REPL) toggleStreaming(args []string) error {
 		if err := r.config.SetValue("stream", true); err != nil {
 			logging.LogWarn("Failed to set stream config", "error", err)
 		}
+		// Update shared context
+		r.sharedContext.Set(command.SharedContextStream, true)
 		fmt.Fprintln(r.writer, "Streaming mode: on")
 	case "off", "false", "no":
 		if err := r.config.SetValue("stream", false); err != nil {
 			logging.LogWarn("Failed to set stream config", "error", err)
 		}
+		// Update shared context
+		r.sharedContext.Set(command.SharedContextStream, false)
 		fmt.Fprintln(r.writer, "Streaming mode: off")
 	default:
 		return fmt.Errorf("invalid value: %s (use on/off)", args[0])
@@ -186,6 +198,10 @@ func (r *REPL) setVerbosity(args []string) error {
 	}
 
 	fmt.Fprintf(r.writer, "Verbosity level set to: %s\n", level)
+
+	// Update shared context
+	r.sharedContext.Set(command.SharedContextVerbosity, level)
+
 	return nil
 }
 
@@ -201,6 +217,8 @@ func (r *REPL) setOutputFormat(args []string) error {
 		if err := r.config.SetValue("output", format); err != nil {
 			logging.LogWarn("Failed to set output config", "error", err)
 		}
+		// Update shared context
+		r.sharedContext.Set(command.SharedContextOutput, format)
 		fmt.Fprintf(r.writer, "Output format set to: %s\n", format)
 	default:
 		return fmt.Errorf("invalid output format: %s", format)
@@ -224,6 +242,10 @@ func (r *REPL) setTemperature(args []string) error {
 	}
 
 	r.session.Conversation.Temperature = temp
+
+	// Update the shared context to preserve temperature state between commands
+	r.sharedContext.Set(command.SharedContextTemperature, temp)
+
 	fmt.Fprintf(r.writer, "Temperature set to: %.1f\n", temp)
 	return nil
 }
@@ -244,6 +266,10 @@ func (r *REPL) setMaxTokens(args []string) error {
 	}
 
 	r.session.Conversation.MaxTokens = tokens
+
+	// Update the shared context to preserve max tokens state between commands
+	r.sharedContext.Set(command.SharedContextMaxTokens, tokens)
+
 	fmt.Fprintf(r.writer, "Max tokens set to: %d\n", tokens)
 	return nil
 }

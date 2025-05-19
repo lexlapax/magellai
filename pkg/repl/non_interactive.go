@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 	"strings"
-	
+
 	"github.com/lexlapax/magellai/internal/logging"
 )
 
@@ -27,16 +27,16 @@ type NonInteractiveMode struct {
 // DetectNonInteractiveMode checks for various non-interactive conditions
 func DetectNonInteractiveMode(reader io.Reader, writer io.Writer) NonInteractiveMode {
 	mode := NonInteractiveMode{}
-	
+
 	// Check if running in a terminal - check both stdin and stdout
 	stdinStat, stdinErr := os.Stdin.Stat()
-	stdinIsTerminal := stdinErr == nil && (stdinStat.Mode() & os.ModeCharDevice) != 0
-	
+	stdinIsTerminal := stdinErr == nil && (stdinStat.Mode()&os.ModeCharDevice) != 0
+
 	stdoutStat, stdoutErr := os.Stdout.Stat()
-	stdoutIsTerminal := stdoutErr == nil && (stdoutStat.Mode() & os.ModeCharDevice) != 0
-	
+	stdoutIsTerminal := stdoutErr == nil && (stdoutStat.Mode()&os.ModeCharDevice) != 0
+
 	mode.IsNotTTY = !stdinIsTerminal || !stdoutIsTerminal
-	
+
 	// Check for piped input
 	if file, ok := reader.(*os.File); ok {
 		stat, err := file.Stat()
@@ -47,7 +47,7 @@ func DetectNonInteractiveMode(reader io.Reader, writer io.Writer) NonInteractive
 		// Custom reader indicates non-interactive
 		mode.IsPipedInput = true
 	}
-	
+
 	// Check for piped output
 	if file, ok := writer.(*os.File); ok {
 		stat, err := file.Stat()
@@ -58,23 +58,23 @@ func DetectNonInteractiveMode(reader io.Reader, writer io.Writer) NonInteractive
 		// Custom writer indicates non-interactive
 		mode.IsPipedOutput = true
 	}
-	
+
 	// Check stderr
 	stat, err := os.Stderr.Stat()
 	if err == nil {
 		mode.IsPipedError = (stat.Mode() & os.ModeCharDevice) == 0
 	}
-	
+
 	// Check for CI environment variables
 	mode.IsCIEnvironment = checkCIEnvironment()
-	
+
 	// Check if running as background process
 	mode.IsBackground = isBackgroundProcess()
-	
+
 	// Overall non-interactive flag
-	mode.IsNonInteractive = mode.IsNotTTY || mode.IsPipedInput || 
+	mode.IsNonInteractive = mode.IsNotTTY || mode.IsPipedInput ||
 		mode.IsPipedOutput || mode.IsBackground || mode.IsCIEnvironment
-	
+
 	logging.LogDebug("Non-interactive mode detection",
 		"isNonInteractive", mode.IsNonInteractive,
 		"isNotTTY", mode.IsNotTTY,
@@ -83,7 +83,7 @@ func DetectNonInteractiveMode(reader io.Reader, writer io.Writer) NonInteractive
 		"isPipedError", mode.IsPipedError,
 		"isBackground", mode.IsBackground,
 		"isCIEnvironment", mode.IsCIEnvironment)
-	
+
 	return mode
 }
 
@@ -101,13 +101,13 @@ func checkCIEnvironment() bool {
 		"DRONE",
 		"TEAMCITY_VERSION",
 	}
-	
+
 	for _, v := range ciVars {
 		if os.Getenv(v) != "" {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -124,37 +124,37 @@ func (r *REPL) ConfigureForNonInteractiveMode(mode NonInteractiveMode) {
 	if !mode.IsNonInteractive {
 		return
 	}
-	
+
 	logging.LogInfo("Configuring REPL for non-interactive mode")
-	
+
 	// Disable interactive features
 	r.isTerminal = false
 	r.multiline = false
 	r.exitOnEOF = true
-	
+
 	// Disable colors
 	if r.colorFormatter != nil {
 		r.colorFormatter.SetEnabled(false)
 	}
-	
+
 	// Disable readline/tab completion
 	if r.readline != nil {
 		r.readline = nil
 	}
-	
+
 	// Set simple prompt for non-interactive mode
 	if mode.IsPipedInput || mode.IsPipedOutput {
 		r.promptStyle = "" // No prompt when piped
 	} else {
 		r.promptStyle = "$ " // Simple prompt for other non-interactive cases
 	}
-	
+
 	// Adjust auto-save behavior
 	if mode.IsCIEnvironment || mode.IsBackground {
 		// More aggressive saving in CI/background
 		r.autoSave = true
 	}
-	
+
 	logging.LogDebug("Non-interactive configuration applied",
 		"isTerminal", r.isTerminal,
 		"multiline", r.multiline,
@@ -174,33 +174,33 @@ func (r *REPL) ProcessPipedInput(mode NonInteractiveMode) error {
 	if !mode.IsPipedInput {
 		return nil
 	}
-	
+
 	logging.LogInfo("Processing piped input")
-	
+
 	// Read all input at once for piped mode
 	scanner := bufio.NewScanner(r.reader)
 	var lines []string
-	
+
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
-	
+
 	if err := scanner.Err(); err != nil {
 		logging.LogError(err, "Error reading piped input")
 		return fmt.Errorf("failed to read piped input: %w", err)
 	}
-	
+
 	// Process all lines as a single input
 	input := strings.Join(lines, "\n")
 	if input == "" {
 		return nil
 	}
-	
+
 	// Process as a command or message
 	if strings.HasPrefix(input, "/") || strings.HasPrefix(input, ":") {
 		return r.handleCommand(input)
 	}
-	
+
 	// Process as regular message
 	return r.processMessage(input)
 }

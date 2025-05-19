@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 4.5 - REPL UI Enhancements)
+## Current Status (Phase 4.8 - Configuration - defaults, sample etc.)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2: Configuration and Command Foundation - Complete  
@@ -41,11 +41,11 @@ The project follows a library-first design where the core intelligence (LLM prov
     ✅ Maintain command history across modes
     ✅ Support command aliases in REPL
     ✅ Context preservation between commands
-  🚧 Phase 4.5: REPL UI Enhancements - In Progress
+  ✅ Phase 4.5: REPL UI Enhancements - Complete
     ✅ Tab completion for commands - Complete
     ✅ ANSI color output when TTY - Complete (including library refactoring)
     ✅ Non-interactive mode detection - Complete
-    🔲 scan and fix Context preservation between commands - Pending
+    ✅ scan and fix Context preservation between commands - Complete
   ✅ Phase 4.6: Fix domain layer and types - Complete
     ✅ Domain package structure created
     ✅ All core domain types implemented
@@ -58,9 +58,13 @@ The project follows a library-first design where the core intelligence (LLM prov
     ✅ Fixed logging tests that were failing in bulk runs
     ✅ Fixed session export tests creating leftover files
     ✅ All unit and integration tests passing
-  🔲 Phase 4.8: Code abstraction and redundancy checks - Pending (REVISIT)
-  🔲 Phase 4.9: Documentation and architecture updates - Pending (REVISIT)
-  🔲 Phase 4.10: Final validation and rollout - Pending (REVISIT)
+  🚧 Phase 4.8: Configuration - defaults, sample etc. - In Progress
+    🔲 with no configuration file, use a default configuration
+    🔲 add a flag or command to create an example configuration
+    🔲 show config should show all current runtime configurations
+  🔲 Phase 4.9: Code abstraction and redundancy checks - Pending (REVISIT)
+  🔲 Phase 4.10: Documentation and architecture updates - Pending (REVISIT)
+  🔲 Phase 4.11: Final validation and rollout - Pending (REVISIT)
 
 ## Development Conventions
 

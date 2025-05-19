@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -99,6 +100,7 @@ func TestSetVerbosity(t *testing.T) {
 					Conversation: &Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
+				sharedContext: command.NewSharedContext(),
 			}
 
 			err := r.setVerbosity(tt.args)
@@ -166,6 +168,7 @@ func TestSetOutput(t *testing.T) {
 					Conversation: &Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
+				sharedContext: command.NewSharedContext(),
 			}
 
 			err := r.setOutputFormat(tt.args)
@@ -237,6 +240,7 @@ func TestSwitchProfile(t *testing.T) {
 					Conversation: &Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
+				sharedContext: command.NewSharedContext(),
 			}
 
 			err := r.switchProfile(tt.args)
@@ -458,6 +462,7 @@ func TestSetConfig(t *testing.T) {
 					Conversation: &Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
+				sharedContext: command.NewSharedContext(),
 			}
 
 			err := r.setConfig(tt.args)
@@ -515,6 +520,7 @@ func TestExtendedCommandHandling(t *testing.T) {
 					Conversation: &Conversation{},
 					Metadata:     make(map[string]interface{}),
 				},
+				sharedContext: command.NewSharedContext(),
 			}
 
 			// Mock provider for :model command

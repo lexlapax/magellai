@@ -54,6 +54,7 @@ type CommandExecutor struct {
 	defaultStderr io.Writer
 	preExecute    []ExecutorHook
 	postExecute   []ExecutorHook
+	sharedContext *SharedContext
 }
 
 // ExecutorHook is a function that runs before or after command execution
@@ -73,6 +74,7 @@ func NewExecutor(registry *Registry, opts ...ExecutorOption) *CommandExecutor {
 		defaultStderr: os.Stderr,
 		preExecute:    make([]ExecutorHook, 0),
 		postExecute:   make([]ExecutorHook, 0),
+		sharedContext: NewSharedContext(),
 	}
 
 	for _, opt := range opts {
@@ -102,6 +104,13 @@ func WithPreExecuteHook(hook ExecutorHook) ExecutorOption {
 func WithPostExecuteHook(hook ExecutorHook) ExecutorOption {
 	return func(e *CommandExecutor) {
 		e.postExecute = append(e.postExecute, hook)
+	}
+}
+
+// WithSharedContext sets a custom shared context
+func WithSharedContext(shared *SharedContext) ExecutorOption {
+	return func(e *CommandExecutor) {
+		e.sharedContext = shared
 	}
 }
 
@@ -148,6 +157,9 @@ func (e *CommandExecutor) ExecuteCommand(ctx context.Context, cmd Interface, exe
 	}
 	if exec.Data == nil {
 		exec.Data = make(map[string]interface{})
+	}
+	if exec.SharedContext == nil {
+		exec.SharedContext = e.sharedContext
 	}
 
 	// Validate the command
@@ -304,9 +316,10 @@ func validateFlagType(flag Flag, value interface{}) error {
 // ExecuteWithArgs is a convenience method for executing with args and flags
 func (e *CommandExecutor) ExecuteWithArgs(ctx context.Context, name string, args []string, flags map[string]interface{}) error {
 	exec := &ExecutionContext{
-		Args:  args,
-		Flags: NewFlags(flags),
-		Data:  make(map[string]interface{}),
+		Args:          args,
+		Flags:         NewFlags(flags),
+		Data:          make(map[string]interface{}),
+		SharedContext: e.sharedContext,
 	}
 	return e.Execute(ctx, name, exec)
 }

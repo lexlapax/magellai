@@ -36,25 +36,26 @@ type ConfigInterface interface {
 
 // REPL represents the Read-Eval-Print Loop for interactive chat
 type REPL struct {
-	config           ConfigInterface
-	provider         llm.Provider
-	session          *Session
-	manager          *SessionManager
-	reader           *bufio.Reader
-	writer           io.Writer
-	promptStyle      string
-	multiline        bool
-	exitOnEOF        bool
-	autoSave         bool
-	autoSaveTimer    *time.Timer
-	lastSaveTime     time.Time
-	autoRecovery     *AutoRecoveryManager
-	registry         *command.Registry
-	cmdHistory       []string              // Command history
-	readline         *ReadlineInterface    // Readline interface for tab completion
-	isTerminal       bool                  // Whether we're running in a terminal
-	colorFormatter   *utils.ColorFormatter // Color formatter for output
-	nonInteractive   NonInteractiveMode    // Non-interactive mode detection
+	config         ConfigInterface
+	provider       llm.Provider
+	session        *Session
+	manager        *SessionManager
+	reader         *bufio.Reader
+	writer         io.Writer
+	promptStyle    string
+	multiline      bool
+	exitOnEOF      bool
+	autoSave       bool
+	autoSaveTimer  *time.Timer
+	lastSaveTime   time.Time
+	autoRecovery   *AutoRecoveryManager
+	registry       *command.Registry
+	cmdHistory     []string               // Command history
+	readline       *ReadlineInterface     // Readline interface for tab completion
+	isTerminal     bool                   // Whether we're running in a terminal
+	colorFormatter *utils.ColorFormatter  // Color formatter for output
+	nonInteractive NonInteractiveMode     // Non-interactive mode detection
+	sharedContext  *command.SharedContext // Shared context for command state preservation
 }
 
 // REPLOptions contains options for creating a new REPL
@@ -217,7 +218,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 
 	// Detect non-interactive mode
 	nonInteractive := DetectNonInteractiveMode(opts.Reader, opts.Writer)
-	
+
 	repl := &REPL{
 		config:         cfg,
 		provider:       provider,
@@ -233,7 +234,20 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 		cmdHistory:     make([]string, 0),
 		isTerminal:     utils.IsTerminal() && !nonInteractive.IsNonInteractive,
 		nonInteractive: nonInteractive,
+		sharedContext:  command.NewSharedContext(),
 	}
+
+	// Initialize shared context with current session state
+	repl.sharedContext.Set(command.SharedContextSessionID, session.ID)
+	repl.sharedContext.Set(command.SharedContextSessionName, session.Name)
+	repl.sharedContext.Set(command.SharedContextModel, session.Conversation.Model)
+	repl.sharedContext.Set(command.SharedContextProvider, session.Conversation.Provider)
+	repl.sharedContext.Set(command.SharedContextTemperature, session.Conversation.Temperature)
+	repl.sharedContext.Set(command.SharedContextMaxTokens, session.Conversation.MaxTokens)
+	repl.sharedContext.Set(command.SharedContextStream, cfg.GetBool("stream"))
+	repl.sharedContext.Set(command.SharedContextVerbosity, cfg.GetString("verbosity"))
+	repl.sharedContext.Set(command.SharedContextOutput, cfg.GetString("output"))
+	repl.sharedContext.Set(command.SharedContextMultiline, repl.multiline)
 
 	// Initialize color formatter if in terminal
 	enableColors := repl.isTerminal && cfg.GetBool("repl.colors.enabled")
@@ -361,7 +375,7 @@ func (r *REPL) Run() error {
 			fmt.Fprintf(r.writer, "Session: %s\n\n", r.session.ID)
 		}
 	}
-	
+
 	// Process piped input if in non-interactive mode
 	if r.nonInteractive.IsPipedInput {
 		logging.LogInfo("Processing piped input in non-interactive mode")
@@ -676,8 +690,8 @@ func (r *REPL) handleCommand(cmd string) error {
 		return r.handleLegacyCommand(commandName, args)
 	}
 
-	// Create execution context
-	execCtx := CreateCommandContext(args, r.reader, r.writer, r.writer)
+	// Create execution context with shared context
+	execCtx := CreateCommandContextWithShared(args, r.reader, r.writer, r.writer, r.sharedContext)
 	execCtx.Config = r.config
 
 	// Execute the command
@@ -725,8 +739,8 @@ func (r *REPL) handleSpecialCommand(cmd string) error {
 		return fmt.Errorf("unknown special command: %s", commandName)
 	}
 
-	// Create execution context
-	execCtx := CreateCommandContext(args, r.reader, r.writer, r.writer)
+	// Create execution context with shared context
+	execCtx := CreateCommandContextWithShared(args, r.reader, r.writer, r.writer, r.sharedContext)
 	execCtx.Config = r.config
 
 	// Execute the command

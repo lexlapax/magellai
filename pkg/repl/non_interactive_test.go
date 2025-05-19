@@ -18,14 +18,14 @@ import (
 
 func TestDetectNonInteractiveMode(t *testing.T) {
 	tests := []struct {
-		name        string
-		setupFunc   func() (reader *os.File, writer *os.File, cleanup func())
-		envVars     map[string]string
-		wantPiped   bool
-		wantCI      bool
-		wantNonInt  bool
+		name       string
+		setupFunc  func() (reader *os.File, writer *os.File, cleanup func())
+		envVars    map[string]string
+		wantPiped  bool
+		wantCI     bool
+		wantNonInt bool
 	}{
-	// Skip this test in non-terminal environments
+		// Skip this test in non-terminal environments
 		// {
 		// 	name: "standard terminal input/output",
 		// 	setupFunc: func() (*os.File, *os.File, func()) {
@@ -263,10 +263,10 @@ func TestProcessPipedInput(t *testing.T) {
 
 func TestShouldAutoExit(t *testing.T) {
 	tests := []struct {
-		name         string
-		mode         NonInteractiveMode
-		exitOnEOF    bool
-		shouldExit   bool
+		name       string
+		mode       NonInteractiveMode
+		exitOnEOF  bool
+		shouldExit bool
 	}{
 		{
 			name: "piped input with exit on EOF",

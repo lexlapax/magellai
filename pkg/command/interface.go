@@ -41,6 +41,9 @@ type ExecutionContext struct {
 
 	// Parent context for cancellation
 	Context context.Context
+
+	// Shared context for preserving state between commands
+	SharedContext *SharedContext
 }
 
 // Metadata describes a command's properties

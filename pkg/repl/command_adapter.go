@@ -499,3 +499,15 @@ func CreateCommandContext(args []string, stdin io.Reader, stdout, stderr io.Writ
 		Data:   make(map[string]interface{}),
 	}
 }
+
+// CreateCommandContextWithShared creates an ExecutionContext with shared context
+func CreateCommandContextWithShared(args []string, stdin io.Reader, stdout, stderr io.Writer, shared *command.SharedContext) *command.ExecutionContext {
+	return &command.ExecutionContext{
+		Args:          args,
+		Stdin:         stdin,
+		Stdout:        stdout,
+		Stderr:        stderr,
+		Data:          make(map[string]interface{}),
+		SharedContext: shared,
+	}
+}

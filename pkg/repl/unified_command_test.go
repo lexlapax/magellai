@@ -22,8 +22,9 @@ func TestUnifiedCommandSystem(t *testing.T) {
 			Conversation: &Conversation{},
 			Metadata:     make(map[string]interface{}),
 		},
-		registry:   command.NewRegistry(),
-		cmdHistory: make([]string, 0),
+		registry:      command.NewRegistry(),
+		cmdHistory:    make([]string, 0),
+		sharedContext: command.NewSharedContext(),
 	}
 
 	// Register commands
