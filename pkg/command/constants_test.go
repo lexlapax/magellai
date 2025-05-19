@@ -85,7 +85,8 @@ func TestOutputFormatSwitch(t *testing.T) {
 
 func TestOutputFormatComparison(t *testing.T) {
 	// Test that constants can be compared
-	assert.True(t, OutputFormatText == OutputFormatText)
+	format := OutputFormatText
+	assert.True(t, format == OutputFormatText)
 	assert.False(t, OutputFormatText == OutputFormatJSON)
 	assert.False(t, OutputFormatJSON == OutputFormatYAML)
 	

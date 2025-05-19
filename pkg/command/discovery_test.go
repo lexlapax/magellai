@@ -158,7 +158,7 @@ func TestDiscoverAndRegister_RegistrationError(t *testing.T) {
 	registry := NewRegistry()
 	
 	// Register a command first
-	registry.Register(&mockCommand{name: "existing"})
+	_ = registry.Register(&mockCommand{name: "existing"})
 	
 	// Try to register duplicate command through discoverer
 	discoverer := &mockDiscoverer{
