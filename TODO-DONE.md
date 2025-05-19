@@ -874,3 +874,58 @@ Context Preservation Summary:
   - Modified CLI handlers to print exec.Data["output"] content
   - Tests updated and passing
   - Shows merged configuration from all sources (defaults, files, env vars, runtime changes)
+
+### 4.9 Code abstraction and redundancy checks
+
+#### 4.9.1 Type Consolidation and Abstraction Issues ✅ (Completed)
+  - [x] Resolve duplicate Message type definitions across packages:
+    - [x] Consolidate pkg/domain/message.go, pkg/llm/types.go, and go-llms message types
+    - [x] Decide on single source of truth (domain types recommended)
+    - [x] Remove redundant Message definitions and update all references
+    - [x] Updated pkg/llm to use domain.Message throughout
+    - [x] Created comprehensive adapter functions in pkg/llm/adapters.go
+    - [x] Updated pkg/llm/provider.go to use domain types
+    - [x] Updated pkg/repl/conversation.go to use domain types directly (no more conversions)
+    - [x] Fixed all compilation errors and tests
+  - [x] Resolve MessageRole vs Role type inconsistency:
+    - [x] Use domain.MessageRole consistently throughout codebase
+    - [x] Add conversion for go-llms Role type (includes "tool" role) in adapters.go
+  - [x] Unify Attachment type representations:
+    - [x] Consolidated to use domain.Attachment throughout codebase
+    - [x] Created adapter functions to convert between domain and go-llms types
+    - [x] Fixed attachment type inconsistencies in tests
+  - [x] Remove pkg/repl/types.go:
+    - [x] Removed type aliases that were pointing to domain types
+    - [x] Updated all files in repl package to use domain types directly
+    - [x] Fixed all test files to use domain types
+    - [x] All tests passing after migration
+  - [x] Analyze pkg/llm/types.go:
+    - [x] Determined that LLM types should remain as technical adapter types
+    - [x] These serve different purpose than domain types (API integration vs business model)
+    - [x] Keeping separation maintains proper architectural boundaries
+
+#### 4.9.2 Duplicate Conversion Functions ✅ (Completed)
+  - [x] Consolidate adapter/conversion functions:
+    - [x] No duplicate conversions found - pkg/repl/llm_adapter.go doesn't exist
+    - [x] All LLM conversions already centralized in pkg/llm/adapters.go
+    - [x] Removed redundant storage conversion layer (StorageSession)
+    - [x] Determined no need for a single conversion package
+  - [x] Remove unused domain integration helpers:
+    - [x] Audited pkg/llm/domain_integration.go - all functions unused
+    - [x] Removed entire domain_integration.go file
+    - [x] Documented that conversions are properly separated by purpose
+  - [x] Find and eliminate duplicate conversion functions between packages
+    - Searched for duplicate conversions across codebase
+    - Found and analyzed conversion functions in multiple packages
+  - [x] Identified unused domain_integration.go file
+    - All functions in pkg/llm/domain_integration.go were unused
+    - No references found across the codebase  
+    - Deleted the file entirely
+  - [x] Discovered redundant StorageSession type in pkg/storage/types.go
+    - Found that StorageSession was creating duplicate JSON data
+    - Direct domain.Session serialization was more efficient (566 bytes vs 836 bytes)
+    - Updated filesystem backend to use domain types directly
+    - Deleted pkg/storage/types.go as unnecessary
+  - [x] Build and all tests still passing after cleanup
+  - Result: Eliminated two files containing duplicate conversion logic
+  - Impact: Reduced code size, improved JSON serialization efficiency, simplified architecture

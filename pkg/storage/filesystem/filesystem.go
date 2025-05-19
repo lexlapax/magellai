@@ -67,10 +67,8 @@ func (b *Backend) SaveSession(session *domain.Session) error {
 	filename := fmt.Sprintf("%s.json", session.ID)
 	filepath := filepath.Join(b.baseDir, filename)
 
-	// Convert to storage format for better JSON structure
-	storageSession := storage.ToStorageSession(session)
-
-	data, err := json.MarshalIndent(storageSession, "", "  ")
+	// Use domain type directly - no conversion needed
+	data, err := json.MarshalIndent(session, "", "  ")
 	if err != nil {
 		logging.LogError(err, "Failed to marshal session", "id", session.ID)
 		return fmt.Errorf("failed to marshal session: %w", err)
@@ -101,17 +99,15 @@ func (b *Backend) LoadSession(id string) (*domain.Session, error) {
 		return nil, fmt.Errorf("failed to read session file: %w", err)
 	}
 
-	var storageSession storage.StorageSession
-	if err := json.Unmarshal(data, &storageSession); err != nil {
+	// Use domain type directly - no conversion needed
+	var session domain.Session
+	if err := json.Unmarshal(data, &session); err != nil {
 		logging.LogError(err, "Failed to unmarshal session", "id", id)
 		return nil, fmt.Errorf("failed to unmarshal session: %w", err)
 	}
 
-	// Convert back to domain session
-	session := storage.ToDomainSession(&storageSession)
-
 	logging.LogInfo("Session loaded successfully", "id", id, "duration", time.Since(start))
-	return session, nil
+	return &session, nil
 }
 
 // ListSessions returns a list of all available sessions
@@ -137,14 +133,12 @@ func (b *Backend) ListSessions() ([]*domain.SessionInfo, error) {
 			continue
 		}
 
-		var storageSession storage.StorageSession
-		if err := json.Unmarshal(data, &storageSession); err != nil {
+		// Use domain type directly
+		var session domain.Session
+		if err := json.Unmarshal(data, &session); err != nil {
 			logging.LogDebug("Failed to unmarshal session", "path", filepath, "error", err)
 			continue
 		}
-
-		// Convert to domain session and get session info
-		session := storage.ToDomainSession(&storageSession)
 		sessions = append(sessions, session.ToSessionInfo())
 	}
 
@@ -195,13 +189,12 @@ func (b *Backend) SearchSessions(query string) ([]*domain.SearchResult, error) {
 			continue
 		}
 
-		var storageSession storage.StorageSession
-		if err := json.Unmarshal(data, &storageSession); err != nil {
+		var session domain.Session
+		if err := json.Unmarshal(data, &session); err != nil {
 			continue
 		}
 
-		// Convert to domain session for searching
-		session := storage.ToDomainSession(&storageSession)
+		// Create session info for searching
 		sessionInfo := session.ToSessionInfo()
 		result := domain.NewSearchResult(sessionInfo)
 

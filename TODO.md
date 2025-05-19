@@ -2,7 +2,7 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-**Current Status**: Phase 4.9.1 - Type Consolidation COMPLETED. Next: Phase 4.9.2
+**Current Status**: Phase 4.9.2 - Duplicate Conversion Functions COMPLETED. Next: Phase 4.9.3
 
 ## Phase 4: Advanced REPL Features (Week 4)
 
@@ -11,46 +11,12 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ### 4.9 Code abstraction and redundancy checks ✅ (Completed)
 
 #### 4.9.1 Type Consolidation and Abstraction Issues ✅ (Completed)
-  - [x] Resolve duplicate Message type definitions across packages:
-    - [x] Consolidate pkg/domain/message.go, pkg/llm/types.go, and go-llms message types
-    - [x] Decide on single source of truth (domain types recommended)
-    - [x] Remove redundant Message definitions and update all references
-    - [x] Updated pkg/llm to use domain.Message throughout
-    - [x] Created comprehensive adapter functions in pkg/llm/adapters.go
-    - [x] Updated pkg/llm/provider.go to use domain types
-    - [x] Updated pkg/repl/conversation.go to use domain types directly (no more conversions)
-    - [x] Fixed all compilation errors and tests
-  - [x] Resolve MessageRole vs Role type inconsistency:
-    - [x] Use domain.MessageRole consistently throughout codebase
-    - [x] Add conversion for go-llms Role type (includes "tool" role) in adapters.go
-  - [x] Unify Attachment type representations:
-    - [x] Consolidated to use domain.Attachment throughout codebase
-    - [x] Created adapter functions to convert between domain and go-llms types
-    - [x] Fixed attachment type inconsistencies in tests
-  - [x] Remove pkg/repl/types.go:
-    - [x] Removed type aliases that were pointing to domain types
-    - [x] Updated all files in repl package to use domain types directly
-    - [x] Fixed all test files to use domain types
-    - [x] All tests passing after migration
-  - [x] Analyze pkg/llm/types.go:
-    - [x] Determined that LLM types should remain as technical adapter types
-    - [x] These serve different purpose than domain types (API integration vs business model)
-    - [x] Keeping separation maintains proper architectural boundaries
 
-#### 4.9.2 Duplicate Conversion Functions
-  - [ ] Consolidate adapter/conversion functions:
-    - [ ] Remove duplicate conversions between pkg/llm/adapters.go and pkg/repl/llm_adapter.go
-    - [ ] Move all LLM conversions to pkg/llm/adapters.go
-    - [ ] Remove redundant conversion functions in storage/types.go
-    - [ ] Create single conversion package if needed
-  - [ ] Remove unused domain integration helpers:
-    - [ ] Audit pkg/llm/domain_integration.go for actual usage
-    - [ ] Remove unused helper functions
-    - [ ] Document required integration points
+#### 4.9.2 Duplicate Conversion Functions ✅ (Completed)
 
-#### 4.9.3 Package Organization and Structure
+#### 4.9.3 Package Organization and Structure *(REVISIT)*
   - [ ] Fix misplaced files in packages:
-    - [ ] Move color utilities from pkg/utils/ to pkg/ui/ or pkg/display/
+    - [ ] Move color utilities from pkg/utils/ to pkg/ui/ 
     - [ ] Consider splitting large repl package into sub-packages:
       - [ ] repl/session/ for session management
       - [ ] repl/commands/ for command implementations  
@@ -61,7 +27,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Move integration tests from cmd/magellai/ to pkg/test/integration/
     - [ ] Organize test helpers into pkg/testutil/
 
-#### 4.9.4 Error Handling Consistency
+#### 4.9.4 Error Handling Consistency *(REVISIT)*
   - [ ] Standardize error handling approach:
     - [ ] Use errors.New for static errors (as in command/errors.go)
     - [ ] Use fmt.Errorf for dynamic errors with context
@@ -74,7 +40,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Audit all fmt.Errorf calls for duplicate error messages
     - [ ] Create constants for commonly used error messages
 
-#### 4.9.5 Missing Tests
+#### 4.9.5 Missing Tests *(REVISIT)*
   - [ ] Add tests for files without test coverage:
     - [ ] pkg/llm/adapters.go - test all conversion functions
     - [ ] pkg/repl/attachment_helpers.go
@@ -91,7 +57,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Configuration loading precedence
     - [ ] REPL command execution flow
 
-#### 4.9.6 Test Organization and Helpers
+#### 4.9.6 Test Organization and Helpers *(REVISIT)*
   - [ ] Consolidate test helpers and mocks:
     - [ ] Create shared mock implementations in pkg/testutil/mocks/
     - [ ] Remove duplicate mock types across test files
@@ -101,7 +67,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Reusable session, message, and attachment fixtures
     - [ ] Configuration test fixtures
 
-#### 4.9.7 Logging and Instrumentation
+#### 4.9.7 Logging and Instrumentation *(REVISIT)*
   - [ ] Standardize logging approach:
     - [ ] Use internal/logging consistently (no direct slog/log usage)
     - [ ] Remove fmt.Print statements from non-test code
@@ -112,7 +78,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Session branching/merging operations
     - [ ] Command execution lifecycle
 
-#### 4.9.8 Function and Method Cleanup
+#### 4.9.8 Function and Method Cleanup *(REVISIT)*
   - [ ] Remove unused functions:
     - [ ] Audit all exported functions for actual usage
     - [ ] Remove dead code identified by static analysis
@@ -122,7 +88,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Standardize path handling functions
     - [ ] Create common validation helpers
 
-#### 4.9.9 Interface and Contract Consistency
+#### 4.9.9 Interface and Contract Consistency *(REVISIT)*
   - [ ] Review and standardize interfaces:
     - [ ] Ensure consistent method signatures across similar interfaces
     - [ ] Add missing interface documentation
@@ -131,7 +97,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Add compile-time interface checks (var _ Interface = (*Type)(nil))
     - [ ] Ensure all implementations fully satisfy interfaces
 
-#### 4.9.10 Import and Dependency Cleanup
+#### 4.9.10 Import and Dependency Cleanup *(REVISIT)*
   - [ ] Remove circular dependencies:
     - [ ] Audit import graphs for circular references
     - [ ] Refactor to eliminate circular imports
