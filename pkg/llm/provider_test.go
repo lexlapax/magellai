@@ -92,7 +92,7 @@ func TestNewProvider(t *testing.T) {
 		{
 			name:         "OpenAI with API key",
 			providerType: ProviderOpenAI,
-			model:        "gpt-3.5-turbo",
+			model:        "gpt-4o",
 			apiKey:       "test-key",
 			wantErr:      false, // Provider should be created successfully
 		},

@@ -260,7 +260,7 @@ func TestProfileConfig(t *testing.T) {
 		"development": {
 			Description: "Development environment settings",
 			Provider:    "openai",
-			Model:       "gpt-3.5-turbo",
+			Model:       "gpt-4o",
 			Settings: map[string]interface{}{
 				"temperature": 0.9,
 				"max_tokens":  1000,
@@ -284,7 +284,7 @@ func TestProfileConfig(t *testing.T) {
 	dev := profiles["development"]
 	assert.Equal(t, "Development environment settings", dev.Description)
 	assert.Equal(t, "openai", dev.Provider)
-	assert.Equal(t, "gpt-3.5-turbo", dev.Model)
+	assert.Equal(t, "gpt-4o", dev.Model)
 	assert.Equal(t, 0.9, dev.Settings["temperature"])
 	assert.Equal(t, 1000, dev.Settings["max_tokens"])
 	assert.Equal(t, true, dev.Settings["stream"])

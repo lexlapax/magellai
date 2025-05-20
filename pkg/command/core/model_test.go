@@ -157,7 +157,7 @@ func TestModelCommand_Execute(t *testing.T) {
 		{
 			name: "select model",
 			setupConfig: func(cfg *config.Config) {
-				_ = cfg.SetDefaultModel("openai/gpt-3.5-turbo")
+				_ = cfg.SetDefaultModel("openai/gpt-4o")
 			},
 			exec: &command.ExecutionContext{
 				Args: []string{"anthropic/claude-3-opus"},

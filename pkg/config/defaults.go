@@ -25,28 +25,28 @@ func GetCompleteDefaultConfig() map[string]interface{} {
 		"provider": map[string]interface{}{
 			"default": "openai",
 			"openai": map[string]interface{}{
-				"api_key":       "", // User should set via env var MAGELLAI_PROVIDER_OPENAI_API_KEY
+				"api_key":       "", // User should set via env var OPENAI_API_KEY
 				"base_url":      "https://api.openai.com/v1",
 				"organization":  "",
 				"api_version":   "",
-				"default_model": "gpt-3.5-turbo",
+				"default_model": "gpt-4o",
 				"timeout":       "30s",
 				"max_retries":   3,
 			},
 			"anthropic": map[string]interface{}{
-				"api_key":       "", // User should set via env var MAGELLAI_PROVIDER_ANTHROPIC_API_KEY
+				"api_key":       "", // User should set via env var ANTHROPIC_API_KEY
 				"base_url":      "https://api.anthropic.com",
 				"api_version":   "2023-06-01",
-				"default_model": "claude-3-haiku-20240307",
+				"default_model": "claude-3-5-haiku-latest",
 				"timeout":       "30s",
 				"max_retries":   3,
 			},
 			"gemini": map[string]interface{}{
-				"api_key":       "", // User should set via env var MAGELLAI_PROVIDER_GEMINI_API_KEY
+				"api_key":       "", // User should set via env var GEMINI_API_KEY
 				"base_url":      "https://generativelanguage.googleapis.com/v1beta",
 				"project_id":    "",
 				"location":      "us-central1",
-				"default_model": "gemini-1.5-flash",
+				"default_model": "gemini-2.0-flash-lite",
 				"timeout":       "30s",
 				"max_retries":   3,
 			},
@@ -54,7 +54,7 @@ func GetCompleteDefaultConfig() map[string]interface{} {
 
 		// Model configuration
 		"model": map[string]interface{}{
-			"default": "openai/gpt-3.5-turbo",
+			"default": "openai/gpt-4o",
 			"settings": map[string]interface{}{
 				// Global model settings (can be overridden per model)
 				"*": map[string]interface{}{
@@ -133,8 +133,8 @@ func GetCompleteDefaultConfig() map[string]interface{} {
 		"profiles": map[string]interface{}{
 			"fast": map[string]interface{}{
 				"description": "Fast responses with lower quality",
-				"provider":    "openai",
-				"model":       "gpt-3.5-turbo",
+				"provider":    "gemini",
+				"model":       "gemini-2.0-flash-lite",
 				"settings": map[string]interface{}{
 					"temperature": 0.3,
 					"max_tokens":  1024,
@@ -143,7 +143,7 @@ func GetCompleteDefaultConfig() map[string]interface{} {
 			"quality": map[string]interface{}{
 				"description": "High-quality responses, slower",
 				"provider":    "openai",
-				"model":       "gpt-4o",
+				"model":       "o3",
 				"settings": map[string]interface{}{
 					"temperature": 0.7,
 					"max_tokens":  4096,
@@ -152,7 +152,7 @@ func GetCompleteDefaultConfig() map[string]interface{} {
 			"creative": map[string]interface{}{
 				"description": "Creative and diverse responses",
 				"provider":    "anthropic",
-				"model":       "claude-3-5-sonnet-latest",
+				"model":       "claude-3-7-sonnet-latest",
 				"settings": map[string]interface{}{
 					"temperature": 0.9,
 					"max_tokens":  4096,
@@ -194,36 +194,36 @@ provider:
   
   # OpenAI configuration
   openai:
-    api_key: ""    # Set via environment variable: MAGELLAI_PROVIDER_OPENAI_API_KEY
+    api_key: ""    # Set via environment variable: OPENAI_API_KEY
     base_url: "https://api.openai.com/v1"
     organization: ""
     api_version: ""
-    default_model: "gpt-3.5-turbo"
+    default_model: "gpt-4o"
     timeout: "30s"
     max_retries: 3
   
   # Anthropic (Claude) configuration
   anthropic:
-    api_key: ""    # Set via environment variable: MAGELLAI_PROVIDER_ANTHROPIC_API_KEY
+    api_key: ""    # Set via environment variable: ANTHROPIC_API_KEY
     base_url: "https://api.anthropic.com"
     api_version: "2023-06-01"
-    default_model: "claude-3-haiku-20240307"
+    default_model: "claude-3-5-haiku-latest"
     timeout: "30s"
     max_retries: 3
   
   # Google Gemini configuration
   gemini:
-    api_key: ""    # Set via environment variable: MAGELLAI_PROVIDER_GEMINI_API_KEY
+    api_key: ""    # Set via environment variable: GEMINI_API_KEY
     base_url: "https://generativelanguage.googleapis.com/v1beta"
     project_id: ""
     location: "us-central1"
-    default_model: "gemini-1.5-flash"
+    default_model: "gemini-2.0-flash-lite"
     timeout: "30s"
     max_retries: 3
 
 # Model configuration
 model:
-  default: "openai/gpt-3.5-turbo"  # Default model in provider/model format
+  default: "openai/gpt-4o"  # Default model in provider/model format
   settings:
     # Global settings (applied to all models unless overridden)
     "*":
@@ -287,8 +287,8 @@ plugin:
 profiles:
   fast:
     description: "Fast responses with lower quality"
-    provider: openai
-    model: gpt-3.5-turbo
+    provider: gemini
+    model: gemini-2.0-flash-lite
     settings:
       temperature: 0.3
       max_tokens: 1024
@@ -296,7 +296,7 @@ profiles:
   quality:
     description: "High-quality responses, slower"
     provider: openai
-    model: gpt-4o
+    model: o3
     settings:
       temperature: 0.7
       max_tokens: 4096
@@ -304,7 +304,7 @@ profiles:
   creative:
     description: "Creative and diverse responses"
     provider: anthropic
-    model: claude-3-5-sonnet-latest
+    model: claude-3-7-sonnet-latest
     settings:
       temperature: 0.9
       max_tokens: 4096

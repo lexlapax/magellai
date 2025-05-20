@@ -1,5 +1,9 @@
 *** this is a continuation of TODO-DONE-ARCHIVE.md**
 
+### 4.9 Code abstraction and redundancy checks ✅ (Completed)
+
+### 4.10 Manual test suite for cmd line (cli and repl both) ✅ (Completed)
+
 ### 4.11 Documentation and architecture updates ✅ (Completed)
   - [x] Created comprehensive architecture documentation
     - [x] Created architecture.md with detailed system description

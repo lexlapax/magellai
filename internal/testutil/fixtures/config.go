@@ -45,15 +45,15 @@ provider:
   default: openai
   openai:
     api_key: ${OPENAI_API_KEY}
-    default_model: gpt-3.5-turbo
+    default_model: gpt-4o
   anthropic:
     api_key: ${ANTHROPIC_API_KEY}
     default_model: claude-2
 
 model:
-  default: openai/gpt-3.5-turbo
+  default: openai/gpt-4o
   settings:
-    openai/gpt-3.5-turbo:
+    openai/gpt-4o:
       temperature: 0.7
       max_tokens: 2048
     anthropic/claude-2:

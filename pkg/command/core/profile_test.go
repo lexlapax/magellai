@@ -125,7 +125,7 @@ func TestProfileCommand_Execute(t *testing.T) {
 			args: []string{"create", "quick"},
 			flags: map[string]interface{}{
 				"provider":    "openai",
-				"model":       "gpt-3.5-turbo",
+				"model":       "gpt-4o",
 				"description": "Fast responses",
 			},
 			expectedOutput: "Created profile: quick",

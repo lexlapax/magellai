@@ -40,7 +40,7 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	// Set up mock configuration - use openai provider as it's commonly available
-	if err := cfg.SetValue("model", "openai/gpt-3.5-turbo"); err != nil {
+	if err := cfg.SetValue("model", "openai/gpt-4o"); err != nil {
 		t.Fatalf("Failed to set model: %v", err)
 	}
 	if err := cfg.SetValue("provider", "openai"); err != nil {
@@ -241,14 +241,14 @@ func TestAskCmd_EdgeCases(t *testing.T) {
 		assert.Contains(t, err.Error(), "provider", "Error should mention provider")
 
 		// Reset model for other tests
-		if err := cfg.SetValue("model", "openai/gpt-3.5-turbo"); err != nil {
+		if err := cfg.SetValue("model", "openai/gpt-4o"); err != nil {
 			t.Fatalf("Failed to reset model: %v", err)
 		}
 	})
 
 	t.Run("invalid attachment path", func(t *testing.T) {
 		// Set up a valid model
-		if err := cfg.SetValue("model", "openai/gpt-3.5-turbo"); err != nil {
+		if err := cfg.SetValue("model", "openai/gpt-4o"); err != nil {
 			t.Fatalf("Failed to set model: %v", err)
 		}
 
@@ -289,7 +289,7 @@ func TestAskCmd_OutputFormats(t *testing.T) {
 	cfg := config.Manager
 
 	// Set up a valid model
-	if err := cfg.SetValue("model", "openai/gpt-3.5-turbo"); err != nil {
+	if err := cfg.SetValue("model", "openai/gpt-4o"); err != nil {
 		t.Fatalf("Failed to set model: %v", err)
 	}
 	if err := cfg.SetValue("api_key", "sk-dummy-key-for-testing"); err != nil {

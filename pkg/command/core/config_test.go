@@ -502,7 +502,7 @@ func createTestConfig(t *testing.T) *config.Config {
 
 	// Set some defaults
 	require.NoError(t, config.Manager.SetDefaultProvider("openai"))
-	require.NoError(t, config.Manager.SetDefaultModel("gpt-3.5-turbo"))
+	require.NoError(t, config.Manager.SetDefaultModel("gpt-4o"))
 
 	return config.Manager
 }

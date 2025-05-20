@@ -140,7 +140,7 @@ providers:
     models:
       - id: "gpt-4"
         name: "GPT-4"
-      - id: "gpt-3.5-turbo"
+      - id: "gpt-4o"
         name: "GPT-3.5 Turbo"
     options:
       api_key: "env:OPENAI_API_KEY"
@@ -166,7 +166,7 @@ profiles:
   - id: "default"
     name: "Default Profile"
     provider: "openai-1"
-    model: "gpt-3.5-turbo"
+    model: "gpt-4o"
     options:
       temperature: 0.7
       max_tokens: 1000

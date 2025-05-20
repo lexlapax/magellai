@@ -639,7 +639,7 @@ func (c *ConfigCommand) generateConfig(ctx context.Context, exec *command.Execut
 
 	// Show additional tips
 	fmt.Fprintln(exec.Stdout, "\nTips:")
-	fmt.Fprintln(exec.Stdout, "- Set API keys via environment variables (e.g., MAGELLAI_PROVIDER_OPENAI_API_KEY)")
+	fmt.Fprintln(exec.Stdout, "- Set API keys via environment variables (e.g., OPENAI_API_KEY)")
 	fmt.Fprintln(exec.Stdout, "- Customize settings based on your preferences")
 	fmt.Fprintln(exec.Stdout, "- Use profiles for different use cases (fast, quality, creative)")
 	fmt.Fprintln(exec.Stdout, "- Check 'magellai config validate' to verify your configuration")

@@ -53,7 +53,7 @@ func TestProviderConfigDefaults(t *testing.T) {
 	require.True(t, ok, "openai config should be a map")
 	assert.Equal(t, "", openaiConfig["api_key"])
 	assert.Equal(t, "https://api.openai.com/v1", openaiConfig["base_url"])
-	assert.Equal(t, "gpt-3.5-turbo", openaiConfig["default_model"])
+	assert.Equal(t, "gpt-4o", openaiConfig["default_model"])
 	assert.Equal(t, "30s", openaiConfig["timeout"])
 	assert.Equal(t, 3, openaiConfig["max_retries"])
 
@@ -62,14 +62,14 @@ func TestProviderConfigDefaults(t *testing.T) {
 	require.True(t, ok, "anthropic config should be a map")
 	assert.Equal(t, "", anthropicConfig["api_key"])
 	assert.Equal(t, "https://api.anthropic.com", anthropicConfig["base_url"])
-	assert.Equal(t, "claude-3-haiku-20240307", anthropicConfig["default_model"])
+	assert.Equal(t, "claude-3-5-haiku-latest", anthropicConfig["default_model"])
 
 	// Test Gemini defaults
 	geminiConfig, ok := providerConfig["gemini"].(map[string]interface{})
 	require.True(t, ok, "gemini config should be a map")
 	assert.Equal(t, "", geminiConfig["api_key"])
 	assert.Equal(t, "https://generativelanguage.googleapis.com/v1beta", geminiConfig["base_url"])
-	assert.Equal(t, "gemini-1.5-flash", geminiConfig["default_model"])
+	assert.Equal(t, "gemini-2.0-flash-lite", geminiConfig["default_model"])
 }
 
 func TestModelConfigDefaults(t *testing.T) {
@@ -78,7 +78,7 @@ func TestModelConfigDefaults(t *testing.T) {
 	modelConfig, ok := config["model"].(map[string]interface{})
 	require.True(t, ok, "model config should be a map")
 
-	assert.Equal(t, "openai/gpt-3.5-turbo", modelConfig["default"])
+	assert.Equal(t, "openai/gpt-4o", modelConfig["default"])
 
 	settings, ok := modelConfig["settings"].(map[string]interface{})
 	require.True(t, ok, "settings should be a map")
@@ -192,8 +192,8 @@ func TestProfilesConfigDefaults(t *testing.T) {
 	fastProfile, ok := profiles["fast"].(map[string]interface{})
 	require.True(t, ok, "fast profile should be a map")
 	assert.Equal(t, "Fast responses with lower quality", fastProfile["description"])
-	assert.Equal(t, "openai", fastProfile["provider"])
-	assert.Equal(t, "gpt-3.5-turbo", fastProfile["model"])
+	assert.Equal(t, "gemini", fastProfile["provider"])
+	assert.Equal(t, "gemini-2.0-flash-lite", fastProfile["model"])
 
 	fastSettings, ok := fastProfile["settings"].(map[string]interface{})
 	require.True(t, ok, "fast settings should be a map")
@@ -204,14 +204,15 @@ func TestProfilesConfigDefaults(t *testing.T) {
 	qualityProfile, ok := profiles["quality"].(map[string]interface{})
 	require.True(t, ok, "quality profile should be a map")
 	assert.Equal(t, "High-quality responses, slower", qualityProfile["description"])
-	assert.Equal(t, "gpt-4o", qualityProfile["model"])
+	assert.Equal(t, "openai", qualityProfile["provider"])
+	assert.Equal(t, "o3", qualityProfile["model"])
 
 	// Test creative profile
 	creativeProfile, ok := profiles["creative"].(map[string]interface{})
 	require.True(t, ok, "creative profile should be a map")
 	assert.Equal(t, "Creative and diverse responses", creativeProfile["description"])
 	assert.Equal(t, "anthropic", creativeProfile["provider"])
-	assert.Equal(t, "claude-3-5-sonnet-latest", creativeProfile["model"])
+	assert.Equal(t, "claude-3-7-sonnet-latest", creativeProfile["model"])
 }
 
 func TestAliasesConfigDefaults(t *testing.T) {
@@ -317,9 +318,9 @@ func TestEnvironmentVariableReferences(t *testing.T) {
 	example := GenerateExampleConfig()
 
 	// Test that environment variable references are documented
-	assert.Contains(t, example, "MAGELLAI_PROVIDER_OPENAI_API_KEY")
-	assert.Contains(t, example, "MAGELLAI_PROVIDER_ANTHROPIC_API_KEY")
-	assert.Contains(t, example, "MAGELLAI_PROVIDER_GEMINI_API_KEY")
+	assert.Contains(t, example, "OPENAI_API_KEY")
+	assert.Contains(t, example, "ANTHROPIC_API_KEY")
+	assert.Contains(t, example, "GEMINI_API_KEY")
 }
 
 func TestDefaultPaths(t *testing.T) {

@@ -40,7 +40,7 @@ log:
 provider:
   default: openai
   
-model: openai/gpt-3.5-turbo
+model: openai/gpt-4o
 
 output:
   format: text
@@ -73,7 +73,7 @@ profiles:
   development:
     description: Development profile
     provider: openai
-    model: openai/gpt-3.5-turbo
+    model: openai/gpt-4o
     settings:
       output:
         format: json

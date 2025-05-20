@@ -99,7 +99,7 @@ func (c *AskCommand) Execute(ctx context.Context, exec *command.ExecutionContext
 	if model == "" {
 		model = c.config.GetString("model")
 		if model == "" {
-			model = "openai/gpt-3.5-turbo" // fallback default
+			model = "openai/gpt-4o" // fallback default
 		}
 	}
 

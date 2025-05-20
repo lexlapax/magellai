@@ -13,30 +13,11 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ### 4.10 Manual test suite for cmd line (cli and repl both) ✅ (Completed)
 
 ### 4.11 Documentation and architecture updates ✅ (Completed)
-- [x] Update architecture documentation
-    - [x] Create domain layer diagrams
-    - [x] Update package relationship diagrams
-    - [x] Document type ownership
-    - [x] Create docs/technical/architecture.md if needed
-- [x] Update package documentation
-    - [x] Add godoc doc.go files to all major packages
-    - [x] Add standardized package-level documentation with:
-        - [x] ABOUTME comments (2 lines)
-        - [x] Package overview
-        - [x] Key components list
-        - [x] Usage examples
-        - [x] Package relationships
-    - [x] Add godoc comments to all domain types
-    - [x] Update api documentation
-- [x] Consolidate documentation into a streamlined set of docs with indexed readmes for  
-  - [x] user-guide, 
-  - [x] techncial-guide
-  - [x] planning (do not change planning docs)
-- [x] Ensure duplicate information is consolidated
-- [x] Ensure documentation links between docs
-- [x] update README.md with new architecture and links to other documentation
 
-### 4.12 Final validation and rollout 
+### 4.12 Cmd line and repl improvements (UI and others)
+- [ ]
+
+### 4.13 Final validation and rollout 🚧 (In Progress)
 - [ ] Run full test suite
 - [ ] Manual testing of all features
 - [ ] Update CHANGELOG.md

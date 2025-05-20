@@ -74,7 +74,7 @@ func GetAvailableModels() []ModelInfo {
 		},
 		ModelInfo{
 			Provider:      ProviderOpenAI,
-			Model:         "gpt-3.5-turbo",
+			Model:         "gpt-4o",
 			DisplayName:   "GPT-3.5 Turbo",
 			Description:   "Fast and cost-effective model",
 			Capabilities:  ModelCapabilities{Text: true},

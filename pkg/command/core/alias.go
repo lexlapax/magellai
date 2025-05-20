@@ -91,7 +91,7 @@ Examples:
   alias list                  # List all aliases
   alias add gpt4 "model gpt-4"                 # Create alias for model switch
   alias add claude "model anthropic/claude-3"  # Create provider/model alias
-  alias add fast "model gpt-3.5-turbo --temperature 0.1"  # With options
+  alias add fast "model gpt-4o --temperature 0.1"  # With options
   alias show gpt4             # Show specific alias
   alias remove gpt4           # Remove an alias
   alias clear                 # Remove all aliases

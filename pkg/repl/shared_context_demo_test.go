@@ -69,7 +69,7 @@ func TestSharedContextPreservation(t *testing.T) {
 func TestREPLSharedContextIntegration(t *testing.T) {
 	// Create test REPL with proper config
 	config := NewMockConfig()
-	if err := config.SetValue("model", "openai/gpt-3.5-turbo"); err != nil {
+	if err := config.SetValue("model", "openai/gpt-4o"); err != nil {
 		t.Fatalf("Failed to set model config: %v", err)
 	}
 	repl, err := NewREPL(&REPLOptions{

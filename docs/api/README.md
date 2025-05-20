@@ -200,7 +200,7 @@ func main() {
     
     // Provider options
     options := domain.ProviderOptions{
-        Model:       "gpt-3.5-turbo",
+        Model:       "gpt-4o",
         Temperature: 0.7,
         MaxTokens:   100,
     }

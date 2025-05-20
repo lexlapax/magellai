@@ -68,8 +68,8 @@ func TestAliasCommand_Execute(t *testing.T) {
 		},
 		{
 			name:           "add alias with multiple words",
-			args:           []string{"add", "fast", "model", "gpt-3.5-turbo", "--temperature", "0.1"},
-			expectedOutput: "Alias 'fast' created: model gpt-3.5-turbo --temperature 0.1",
+			args:           []string{"add", "fast", "model", "gpt-4o", "--temperature", "0.1"},
+			expectedOutput: "Alias 'fast' created: model gpt-4o --temperature 0.1",
 		},
 		{
 			name:          "add alias - missing command",
