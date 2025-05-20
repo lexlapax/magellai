@@ -1,0 +1,74 @@
+# Test configuration file with mock providers for Magellai CLI testing
+# This configuration supports both filesystem and SQLite storage backends
+
+log:
+  level: warn  # Set to warn to reduce test output noise
+
+# Mock provider configuration for tests
+provider:
+  - name: mock-primary
+    type: mock
+    options:
+      delay_ms: 50
+      response: "This is a test response from the primary mock provider."
+      error_rate: 0
+  - name: mock-fallback
+    type: mock
+    options:
+      delay_ms: 100
+      response: "This is a response from the fallback mock provider."
+      error_rate: 0
+  - name: mock-error
+    type: mock
+    options:
+      delay_ms: 50
+      response: "This should never be seen due to error."
+      error_rate: 1.0  # Always fails
+
+# Profile-specific settings
+profiles:
+  # Default profile
+  default:
+    provider: mock-primary
+    model: mock/default
+  
+  # Test profile with fallback provider chain
+  fallback:
+    provider: mock-primary,mock-fallback
+    model: mock/default
+  
+  # Profile for testing error conditions
+  error:
+    provider: mock-error
+    model: mock/error
+
+# Storage-specific configuration
+# Testing will use this through environment variables
+storage:
+  # Filesystem storage configuration
+  filesystem:
+    type: filesystem
+    dir: "STORAGE_DIR_PLACEHOLDER"
+    
+  # SQLite storage configuration 
+  sqlite:
+    type: sqlite
+    connection_string: "SQLITE_DB_PLACEHOLDER"
+
+# Chat mode settings
+chat:
+  prompt_style: "> "
+  max_context_messages: 10
+  streaming: true
+
+# Session management settings
+session:
+  default_model: mock/default
+  auto_save: true
+  auto_recover: true
+  
+# Command aliases
+aliases:
+  h: help
+  q: quit
+  v: version

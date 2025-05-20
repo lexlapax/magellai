@@ -127,3 +127,28 @@
     - [x] Added factory pattern for REPL creation
     - [x] Created documentation for dependency management strategies in docs/technical/dependency-management.md
     - [x] Document intentional coupling points in the codebase
+
+### 4.10 Manual test suite for cmd line (cli and repl both) ✅ (Completed)
+  - [x] Create a set of integration tests using command line directly for cli and repl
+    - [x] Created test.config.yaml and test.mock.config.yaml template files
+    - [x] Implemented TestEnv structure for consistent test setup and environment
+    - [x] Developed helpers for running commands and interactive sessions
+    - [x] Added support for conditional testing based on storage backend
+  - [x] Implement tests for core CLI functionality
+    - [x] Created test files for basic commands (version, help, config)
+    - [x] Added tests for ask command with various options
+    - [x] Implemented tests for chat mode and REPL commands
+    - [x] Added tests for session management and history
+  - [x] Implement tests for more complex features
+    - [x] Session branching and merging tests
+    - [x] Provider fallback and error handling tests
+    - [x] File attachment tests
+    - [x] Command alias tests
+  - [x] Support both storage backends in tests
+    - [x] Added ForEachStorageType test helper to run tests on multiple backends
+    - [x] Implemented conditional testing based on storage type
+    - [x] Created proper cleanup routines to prevent test pollution
+  - [x] Document potential issues and improvements
+    - [x] Created test_issues.md with detailed findings
+    - [x] Documented edge cases and areas for future improvement
+    - [x] Identified missing test coverage to address in future work

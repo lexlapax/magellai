@@ -2,7 +2,7 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-**Current Status**: Phase 4.10 - Manual test suite for cmd line (cli and repl both)
+**Current Status**: Phase 4.11 - Documentation and architecture updates
 
 ## Phase 4: Advanced REPL Features (Week 4)
 
@@ -10,15 +10,9 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 ### 4.9 Code abstraction and redundancy checks ✅ (Completed)
 
-### 4.10 Manual test suite for cmd line (cli and repl both)🚧 (In Progress)
-  - [ ] Create a set of integration tests using command line directly for cli and repl 
-    - [ ] assume environment variables and configs - use a test.config.yaml file
-  - [ ] Clarify usage scenarios in case of ambiguity
-  - [ ] run those tests (both filesystem based and sqlite based)
-  - [ ] Identify error cases and add to todo
-  - [ ] Fix these cases - remember no need for backward compatibility
+### 4.10 Manual test suite for cmd line (cli and repl both) ✅ (Completed)
 
-### 4.11 Documentation and architecture updates *(REVISIT)*
+### 4.11 Documentation and architecture updates *(REVISIT)* 🚧 (In Progress)
 - [ ] Update architecture documentation
     - [ ] Create domain layer diagrams
     - [ ] Update package relationship diagrams
