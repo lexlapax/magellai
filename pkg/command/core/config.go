@@ -515,24 +515,15 @@ func (c *ConfigCommand) deleteProfile(ctx context.Context, exec *command.Executi
 
 // exportProfile exports a specific profile
 func (c *ConfigCommand) exportProfile(ctx context.Context, exec *command.ExecutionContext, name string) error {
-	outputFormat := exec.Flags.GetString("format")
-	if outputFormat == "" {
-		outputFormat = "yaml"
-	}
-
 	profile, err := c.config.GetProfile(name)
 	if err != nil {
 		return fmt.Errorf("failed to export profile: %w", err)
 	}
 
 	var config []byte
-	if outputFormat == "json" {
-		config, err = json.MarshalIndent(profile, "", "  ")
-	} else {
-		// TODO: Add yaml marshaling when yaml package is available
-		// For now, convert to JSON
-		config, err = json.MarshalIndent(profile, "", "  ")
-	}
+	// All profile exports currently use JSON marshaling.
+	// YAML marshaling will be added in a future release.
+	config, err = json.MarshalIndent(profile, "", "  ")
 
 	if err != nil {
 		return fmt.Errorf("failed to marshal profile: %w", err)

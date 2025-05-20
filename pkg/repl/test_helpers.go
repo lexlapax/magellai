@@ -1,3 +1,5 @@
+// ABOUTME: Test helper functions for REPL package
+// ABOUTME: Contains utilities for setting up test sessions and mocking REPL components
 package repl
 
 import (

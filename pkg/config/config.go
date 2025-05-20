@@ -260,7 +260,9 @@ func expandPath(path string) string {
 	return path
 }
 
-// Watch enables configuration file watching
+// Watch registers a callback function to be called when configuration changes
+// Note: Currently registers the watcher but file watching is not implemented.
+// Future implementation will use fsnotify to monitor config file changes.
 func (c *Config) Watch(callback func()) {
 	logging.LogDebug("Adding configuration watcher")
 
@@ -269,7 +271,9 @@ func (c *Config) Watch(callback func()) {
 
 	c.watchers = append(c.watchers, callback)
 	logging.LogDebug("Configuration watcher added", "totalWatchers", len(c.watchers))
-	// TODO: Implement file watching using fsnotify
+
+	// File watching will be implemented in a future release.
+	// Current watchers are only notified on explicit reload operations.
 }
 
 // notifyWatchers notifies all registered watchers of config changes

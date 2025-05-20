@@ -240,8 +240,8 @@ func (a *AliasCommand) removeAlias(ctx context.Context, exec *command.ExecutionC
 	if scope == "all" || scope == "cli" {
 		key := fmt.Sprintf("aliases.%s", name)
 		if a.config.Exists(key) {
-			// TODO: Config package needs a way to delete keys
-			// For now, we'll set it to empty string
+			// Setting empty string as a workaround for key deletion
+			// Full key deletion will be implemented in a future release
 			if err := a.config.SetValue(key, ""); err != nil {
 				return fmt.Errorf("failed to remove alias: %w", err)
 			}
@@ -253,8 +253,8 @@ func (a *AliasCommand) removeAlias(ctx context.Context, exec *command.ExecutionC
 	if scope == "all" || scope == "repl" {
 		key := fmt.Sprintf("repl.aliases.%s", name)
 		if a.config.Exists(key) {
-			// TODO: Config package needs a way to delete keys
-			// For now, we'll set it to empty string
+			// Setting empty string as a workaround for key deletion
+			// Full key deletion will be implemented in a future release
 			if err := a.config.SetValue(key, ""); err != nil {
 				return fmt.Errorf("failed to remove alias: %w", err)
 			}
@@ -351,8 +351,8 @@ func (a *AliasCommand) exportAliases(ctx context.Context, exec *command.Executio
 
 // importAliases imports aliases from a file
 func (a *AliasCommand) importAliases(ctx context.Context, exec *command.ExecutionContext, filename string) error {
-	// TODO: Implement file reading and alias import
-	return fmt.Errorf("alias import not implemented")
+	// File import functionality is planned for a future release
+	return fmt.Errorf("alias import functionality is planned for a future release")
 }
 
 // getAllAliases gets all aliases from a specific config path

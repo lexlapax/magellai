@@ -1,5 +1,5 @@
 // ABOUTME: Provider adapter interface that wraps go-llms providers using domain types
-// ABOUTME: Provides factory methods and configuration helpers for LLM providers
+// ABOUTME: Provides factory methods, streaming capabilities, and provider configuration options
 package llm
 
 import (

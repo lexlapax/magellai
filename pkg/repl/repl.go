@@ -1,5 +1,5 @@
 // ABOUTME: Provides the interactive REPL interface for the chat functionality
-// ABOUTME: Handles user input, command parsing, and message processing
+// ABOUTME: Handles user input, command parsing, message processing, and session state management
 
 package repl
 

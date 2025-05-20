@@ -196,7 +196,7 @@ func TestAliasCommand_Execute(t *testing.T) {
 		{
 			name:          "import aliases",
 			args:          []string{"import", "aliases.json"},
-			expectedError: "alias import not implemented",
+			expectedError: "alias import functionality is planned for a future release",
 		},
 		{
 			name:          "import without filename",

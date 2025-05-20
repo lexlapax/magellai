@@ -38,7 +38,7 @@ type mockDiscoverer struct {
 	err      error
 }
 
-func (m *mockDiscoverer) Discover() ([]Interface, error) {
+func (m *mockDiscoverer) discover() ([]Interface, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -46,7 +46,7 @@ func (m *mockDiscoverer) Discover() ([]Interface, error) {
 }
 
 func TestPackageDiscoverer_New(t *testing.T) {
-	discoverer := NewPackageDiscoverer("/path/to/package", "cmd")
+	discoverer := newPackageDiscoverer("/path/to/package", "cmd")
 
 	assert.NotNil(t, discoverer)
 	assert.Equal(t, "/path/to/package", discoverer.packagePath)
@@ -54,12 +54,12 @@ func TestPackageDiscoverer_New(t *testing.T) {
 }
 
 func TestPackageDiscoverer_Discover(t *testing.T) {
-	discoverer := NewPackageDiscoverer("/path/to/package", "cmd")
+	discoverer := newPackageDiscoverer("/path/to/package", "cmd")
 
-	commands, err := discoverer.Discover()
+	commands, err := discoverer.discover()
 
 	assert.NoError(t, err)
-	assert.Empty(t, commands, "PackageDiscoverer is a placeholder and should return empty slice")
+	assert.Empty(t, commands, "packageDiscoverer is a placeholder and should return empty slice")
 }
 
 func TestAutoRegister(t *testing.T) {
@@ -74,7 +74,7 @@ func TestAutoRegister(t *testing.T) {
 		return r.Register(&mockCommand{name: "cmd2"})
 	}
 
-	err := AutoRegister(registry, registerFunc1, registerFunc2)
+	err := autoRegister(registry, registerFunc1, registerFunc2)
 	require.NoError(t, err)
 
 	// Verify commands were registered
@@ -99,7 +99,7 @@ func TestAutoRegister_Error(t *testing.T) {
 		return errors.New("registration failed")
 	}
 
-	err := AutoRegister(registry, registerFunc1, registerFunc2)
+	err := autoRegister(registry, registerFunc1, registerFunc2)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "auto-registration failed")
@@ -123,7 +123,7 @@ func TestDiscoverAndRegister(t *testing.T) {
 		},
 	}
 
-	err := DiscoverAndRegister(registry, discoverer1, discoverer2)
+	err := discoverAndRegister(registry, discoverer1, discoverer2)
 	require.NoError(t, err)
 
 	// Verify all commands were registered
@@ -148,7 +148,7 @@ func TestDiscoverAndRegister_DiscoveryError(t *testing.T) {
 		err: errors.New("discovery failed"),
 	}
 
-	err := DiscoverAndRegister(registry, discoverer)
+	err := discoverAndRegister(registry, discoverer)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "discovery failed")
@@ -167,7 +167,7 @@ func TestDiscoverAndRegister_RegistrationError(t *testing.T) {
 		},
 	}
 
-	err := DiscoverAndRegister(registry, discoverer)
+	err := discoverAndRegister(registry, discoverer)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "registration failed")
@@ -184,13 +184,13 @@ func TestBuilderDiscoverer(t *testing.T) {
 		return &mockCommand{name: "cmd2"}, nil
 	}
 
-	discoverer := NewBuilderDiscoverer(builder1, builder2)
+	discoverer := newBuilderDiscoverer(builder1, builder2)
 
 	assert.NotNil(t, discoverer)
 	assert.Len(t, discoverer.builders, 2)
 
 	// Test discovery
-	commands, err := discoverer.Discover()
+	commands, err := discoverer.discover()
 	require.NoError(t, err)
 
 	assert.Len(t, commands, 2)
@@ -204,9 +204,9 @@ func TestBuilderDiscoverer_Error(t *testing.T) {
 		return nil, errors.New("builder error")
 	}
 
-	discoverer := NewBuilderDiscoverer(builderWithError)
+	discoverer := newBuilderDiscoverer(builderWithError)
 
-	commands, err := discoverer.Discover()
+	commands, err := discoverer.discover()
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "builder failed")
@@ -241,10 +241,10 @@ func (m *mockCommandProvider) CmdWrongReturn() Interface {
 func TestReflectionDiscoverer_WithError(t *testing.T) {
 	// Test with the mock provider that has CmdError
 	provider := &mockCommandProvider{}
-	discoverer := NewReflectionDiscoverer(provider, "Cmd")
+	discoverer := newReflectionDiscoverer(provider, "Cmd")
 
 	// CmdError should cause discovery to fail
-	commands, err := discoverer.Discover()
+	commands, err := discoverer.discover()
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "method CmdError failed")
@@ -259,10 +259,10 @@ func TestReflectionDiscoverer_NoMethods(t *testing.T) {
 
 	var es emptyStruct
 
-	discoverer := NewReflectionDiscoverer(&es, "Cmd")
+	discoverer := newReflectionDiscoverer(&es, "Cmd")
 
 	// Should return empty slice with no error
-	commands, err := discoverer.Discover()
+	commands, err := discoverer.discover()
 
 	assert.NoError(t, err)
 	assert.Empty(t, commands)
@@ -283,11 +283,11 @@ func TestReflectionDiscoverer_WorkingMethods(t *testing.T) {
 	}
 
 	// Create a discoverer for this provider
-	discoverer := NewReflectionDiscoverer(&provider, "Cmd")
+	discoverer := newReflectionDiscoverer(&provider, "Cmd")
 
 	// Since we don't have proper methods matching the pattern,
 	// it should return empty but no error
-	commands, err := discoverer.Discover()
+	commands, err := discoverer.discover()
 
 	assert.NoError(t, err)
 	assert.Empty(t, commands)
@@ -295,13 +295,13 @@ func TestReflectionDiscoverer_WorkingMethods(t *testing.T) {
 
 func TestRegistryInitializer(t *testing.T) {
 	registry := NewRegistry()
-	initializer := NewRegistryInitializer(registry)
+	initializer := newRegistryInitializer(registry)
 
 	assert.NotNil(t, initializer)
 	assert.Equal(t, registry, initializer.registry)
 
 	// Test initialization (currently a no-op)
-	err := initializer.Initialize()
+	err := initializer.initialize()
 	assert.NoError(t, err)
 }
 
@@ -317,7 +317,7 @@ func TestMustDiscoverAndRegister(t *testing.T) {
 
 	// Should not panic
 	assert.NotPanics(t, func() {
-		MustDiscoverAndRegister(registry, discoverer)
+		mustDiscoverAndRegister(registry, discoverer)
 	})
 
 	// Verify command was registered
@@ -336,7 +336,7 @@ func TestMustDiscoverAndRegister_Panic(t *testing.T) {
 
 	// Should panic on error
 	assert.Panics(t, func() {
-		MustDiscoverAndRegister(registry, discoverer)
+		mustDiscoverAndRegister(registry, discoverer)
 	})
 }
 
@@ -345,21 +345,21 @@ func TestInterfaceCompliance(t *testing.T) {
 	// Ensure our mock implements the interface
 	var _ Interface = (*mockCommand)(nil)
 
-	// Ensure discoverers implement Discoverer interface
-	var _ Discoverer = (*PackageDiscoverer)(nil)
-	var _ Discoverer = (*BuilderDiscoverer)(nil)
-	var _ Discoverer = (*ReflectionDiscoverer)(nil)
-	var _ Discoverer = (*mockDiscoverer)(nil)
+	// Ensure discoverers implement discoverer interface
+	var _ discoverer = (*packageDiscoverer)(nil)
+	var _ discoverer = (*builderDiscoverer)(nil)
+	var _ discoverer = (*reflectionDiscoverer)(nil)
+	var _ discoverer = (*mockDiscoverer)(nil)
 }
 
 // Benchmark tests
 func BenchmarkReflectionDiscoverer(b *testing.B) {
 	provider := &mockCommandProvider{}
-	discoverer := NewReflectionDiscoverer(provider, "Cmd")
+	discoverer := newReflectionDiscoverer(provider, "Cmd")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = discoverer.Discover()
+		_, _ = discoverer.discover()
 	}
 }
 
@@ -368,10 +368,10 @@ func BenchmarkBuilderDiscoverer(b *testing.B) {
 		return &mockCommand{name: "test"}, nil
 	}
 
-	discoverer := NewBuilderDiscoverer(builder)
+	discoverer := newBuilderDiscoverer(builder)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = discoverer.Discover()
+		_, _ = discoverer.discover()
 	}
 }

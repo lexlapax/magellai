@@ -9,39 +9,39 @@ import (
 	"strings"
 )
 
-// Discoverer defines the interface for command discovery
-type Discoverer interface {
-	// Discover finds and returns commands
-	Discover() ([]Interface, error)
+// discoverer defines the interface for command discovery
+type discoverer interface {
+	// discover finds and returns commands
+	discover() ([]Interface, error)
 }
 
-// PackageDiscoverer discovers commands from a package
-type PackageDiscoverer struct {
+// packageDiscoverer discovers commands from a package
+type packageDiscoverer struct {
 	packagePath string
 	prefix      string
 }
 
-// NewPackageDiscoverer creates a new package discoverer
-func NewPackageDiscoverer(packagePath, prefix string) *PackageDiscoverer {
-	return &PackageDiscoverer{
+// newPackageDiscoverer creates a new package discoverer
+func newPackageDiscoverer(packagePath, prefix string) *packageDiscoverer {
+	return &packageDiscoverer{
 		packagePath: packagePath,
 		prefix:      prefix,
 	}
 }
 
-// Discover finds commands in the package
-func (d *PackageDiscoverer) Discover() ([]Interface, error) {
+// discover finds commands in the package
+func (d *packageDiscoverer) discover() ([]Interface, error) {
 	// This is a placeholder - in a real implementation, this would use
 	// reflection or code generation to find commands in a package
 	// For now, return empty slice
 	return []Interface{}, nil
 }
 
-// RegisterFunction is a function that registers commands
-type RegisterFunction func(*Registry) error
+// registerFunction is a function that registers commands
+type registerFunction func(*Registry) error
 
-// AutoRegister automatically registers commands using register functions
-func AutoRegister(registry *Registry, registerFuncs ...RegisterFunction) error {
+// autoRegister automatically registers commands using register functions
+func autoRegister(registry *Registry, registerFuncs ...registerFunction) error {
 	for _, fn := range registerFuncs {
 		if err := fn(registry); err != nil {
 			return fmt.Errorf("auto-registration failed: %w", err)
@@ -50,10 +50,10 @@ func AutoRegister(registry *Registry, registerFuncs ...RegisterFunction) error {
 	return nil
 }
 
-// DiscoverAndRegister discovers and registers commands
-func DiscoverAndRegister(registry *Registry, discoverers ...Discoverer) error {
+// discoverAndRegister discovers and registers commands
+func discoverAndRegister(registry *Registry, discoverers ...discoverer) error {
 	for _, discoverer := range discoverers {
-		commands, err := discoverer.Discover()
+		commands, err := discoverer.discover()
 		if err != nil {
 			return fmt.Errorf("discovery failed: %w", err)
 		}
@@ -68,23 +68,23 @@ func DiscoverAndRegister(registry *Registry, discoverers ...Discoverer) error {
 	return nil
 }
 
-// BuilderDiscoverer discovers commands from a builder pattern
-type BuilderDiscoverer struct {
-	builders []CommandBuilder
+// builderDiscoverer discovers commands from a builder pattern
+type builderDiscoverer struct {
+	builders []commandBuilder
 }
 
-// CommandBuilder is a function that builds a command
-type CommandBuilder func() (Interface, error)
+// commandBuilder is a function that builds a command
+type commandBuilder func() (Interface, error)
 
-// NewBuilderDiscoverer creates a new builder discoverer
-func NewBuilderDiscoverer(builders ...CommandBuilder) *BuilderDiscoverer {
-	return &BuilderDiscoverer{
+// newBuilderDiscoverer creates a new builder discoverer
+func newBuilderDiscoverer(builders ...commandBuilder) *builderDiscoverer {
+	return &builderDiscoverer{
 		builders: builders,
 	}
 }
 
-// Discover builds and returns commands
-func (d *BuilderDiscoverer) Discover() ([]Interface, error) {
+// discover builds and returns commands
+func (d *builderDiscoverer) discover() ([]Interface, error) {
 	var commands []Interface
 
 	for _, builder := range d.builders {
@@ -98,22 +98,22 @@ func (d *BuilderDiscoverer) Discover() ([]Interface, error) {
 	return commands, nil
 }
 
-// ReflectionDiscoverer discovers commands using reflection
-type ReflectionDiscoverer struct {
+// reflectionDiscoverer discovers commands using reflection
+type reflectionDiscoverer struct {
 	target interface{}
 	prefix string
 }
 
-// NewReflectionDiscoverer creates a new reflection-based discoverer
-func NewReflectionDiscoverer(target interface{}, prefix string) *ReflectionDiscoverer {
-	return &ReflectionDiscoverer{
+// newReflectionDiscoverer creates a new reflection-based discoverer
+func newReflectionDiscoverer(target interface{}, prefix string) *reflectionDiscoverer {
+	return &reflectionDiscoverer{
 		target: target,
 		prefix: prefix,
 	}
 }
 
-// Discover finds commands using reflection
-func (d *ReflectionDiscoverer) Discover() ([]Interface, error) {
+// discover finds commands using reflection
+func (d *reflectionDiscoverer) discover() ([]Interface, error) {
 	var commands []Interface
 
 	targetType := reflect.TypeOf(d.target)
@@ -156,20 +156,20 @@ func (d *ReflectionDiscoverer) Discover() ([]Interface, error) {
 	return commands, nil
 }
 
-// RegistryInitializer provides a way to initialize registries
-type RegistryInitializer struct {
+// registryInitializer provides a way to initialize registries
+type registryInitializer struct {
 	registry *Registry
 }
 
-// NewRegistryInitializer creates a new registry initializer
-func NewRegistryInitializer(registry *Registry) *RegistryInitializer {
-	return &RegistryInitializer{
+// newRegistryInitializer creates a new registry initializer
+func newRegistryInitializer(registry *Registry) *registryInitializer {
+	return &registryInitializer{
 		registry: registry,
 	}
 }
 
-// Initialize sets up the registry with default commands
-func (i *RegistryInitializer) Initialize() error {
+// initialize sets up the registry with default commands
+func (i *registryInitializer) initialize() error {
 	// This would be called by packages to register their commands
 	// For example:
 	// - Core commands package would call this to register help, version, etc.
@@ -179,9 +179,9 @@ func (i *RegistryInitializer) Initialize() error {
 	return nil
 }
 
-// MustDiscoverAndRegister discovers and registers commands, panicking on error
-func MustDiscoverAndRegister(registry *Registry, discoverers ...Discoverer) {
-	if err := DiscoverAndRegister(registry, discoverers...); err != nil {
+// mustDiscoverAndRegister discovers and registers commands, panicking on error
+func mustDiscoverAndRegister(registry *Registry, discoverers ...discoverer) {
+	if err := discoverAndRegister(registry, discoverers...); err != nil {
 		panic(err)
 	}
 }
