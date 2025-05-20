@@ -2,7 +2,7 @@
 
 This document contains all completed sections from the original TODO.md file for historical reference.
 
-Last Updated: 2025-05-19 (Phase 4.9.5 completed)
+Last Updated: 2025-05-19 (Phase 4.9.7 Test Organization and Helpers completed)
 
 ## Phase 1: Core Foundation (Week 1) ✅
 
@@ -988,7 +988,7 @@ Context Preservation Summary:
   
   - Result: Consistent error handling across all packages with proper error wrapping and testing
 
-#### 4.9.5 Missing Tests ✅
+#### 4.9.5 Missing Tests ✅ (Completed 2025-05-19)
   - [x] Add tests for files without test coverage:
     - [x] pkg/llm/adapters.go - test all conversion functions
     - [x] pkg/repl/attachment_helpers.go
@@ -1039,3 +1039,25 @@ Context Preservation Summary:
     - Updated test expectations to match actual implementation behavior
   
   - Result: All integration tests are now passing successfully with proper test organization
+
+#### 4.9.7 Test Organization and Helpers ✅ (Completed 2025-05-19) 
+  - [x] Consolidate test helpers and mocks:
+    - [x] Created shared mock implementations in internal/testutil/mocks/
+    - [x] Consolidated duplicate mock types across test files
+    - [x] Fixed provider mock implementation to match current interface
+    - [x] Fixed storage mock implementation to avoid unused variables
+    - [x] Addressed all linting issues in test helpers
+    - [x] Standardized test helper naming conventions
+  - [x] Improve I/O and context management in tests:
+    - [x] Fixed error handling in I/O test helpers
+    - [x] Added proper checking of return values for io.Copy
+    - [x] Fixed WriteString error handling in MockStdin
+    - [x] Updated context helpers to use safe key types
+    - [x] Added proper documentation to all test utilities
+    - [x] All tests passing with improved helpers
+  - [x] Standardized loop-based copying:
+    - [x] Replaced manual element-by-element copy loops with copy() function
+    - [x] Fixed storage.go implementations in multiple places
+    - [x] Improved performance and readability
+    - [x] Fixed all linting issues
+  - Result: Cleaner test organization, fixed linting issues, improved error handling

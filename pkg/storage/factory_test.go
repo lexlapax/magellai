@@ -7,6 +7,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/lexlapax/magellai/internal/testutil/storagemock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +27,7 @@ func TestFactory_RegisterBackend(t *testing.T) {
 
 	factory.RegisterBackend(testBackendType, func(config Config) (Backend, error) {
 		called = true
-		return NewMockBackend(), nil
+		return storagemock.NewMockBackend(), nil
 	})
 
 	// Verify it's registered
@@ -55,7 +56,7 @@ func TestFactory_IsBackendAvailable(t *testing.T) {
 	// Register a backend
 	testType := BackendType("available")
 	factory.RegisterBackend(testType, func(config Config) (Backend, error) {
-		return NewMockBackend(), nil
+		return storagemock.NewMockBackend(), nil
 	})
 
 	// Test availability
@@ -72,10 +73,10 @@ func TestFactory_GetAvailableBackends(t *testing.T) {
 
 	// Register some backends
 	factory.RegisterBackend("backend1", func(config Config) (Backend, error) {
-		return NewMockBackend(), nil
+		return storagemock.NewMockBackend(), nil
 	})
 	factory.RegisterBackend("backend2", func(config Config) (Backend, error) {
-		return NewMockBackend(), nil
+		return storagemock.NewMockBackend(), nil
 	})
 
 	// Check available backends
@@ -118,7 +119,7 @@ func TestDefaultFactory(t *testing.T) {
 
 	// Register through package function
 	RegisterBackend(testType, func(config Config) (Backend, error) {
-		return NewMockBackend(), nil
+		return storagemock.NewMockBackend(), nil
 	})
 
 	// Check availability through package function
@@ -140,7 +141,7 @@ func TestFactory_Concurrency(t *testing.T) {
 	// Register a backend
 	testType := BackendType("concurrent")
 	factory.RegisterBackend(testType, func(config Config) (Backend, error) {
-		return NewMockBackend(), nil
+		return storagemock.NewMockBackend(), nil
 	})
 
 	// Test concurrent access
@@ -181,13 +182,13 @@ func TestFactory_RegisterExisting(t *testing.T) {
 
 	factory.RegisterBackend(testType, func(config Config) (Backend, error) {
 		callCount++
-		return NewMockBackend(), nil
+		return storagemock.NewMockBackend(), nil
 	})
 
 	// Re-register the same type (should overwrite)
 	factory.RegisterBackend(testType, func(config Config) (Backend, error) {
 		callCount += 10
-		return NewMockBackend(), nil
+		return storagemock.NewMockBackend(), nil
 	})
 
 	// Create backend - should use the second registration

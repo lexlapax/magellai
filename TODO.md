@@ -2,7 +2,7 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-**Current Status**: Phase 4.9.6 - Code abstraction and redundancy checks (partially complete)
+**Current Status**: Phase 4.9.8 - Code abstraction and redundancy checks (Logging and Instrumentation)
 
 ## Phase 4: Advanced REPL Features (Week 4)
 
@@ -22,15 +22,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 #### 4.9.6 Fix Integration Test Failures ✅ (Completed)
 
-#### 4.9.7 Test Organization and Helpers *(REVISIT)*
-  - [ ] Consolidate test helpers and mocks:
-    - [ ] Create shared mock implementations in pkg/testutil/mocks/
-    - [ ] Remove duplicate mock types across test files
-    - [ ] Standardize test helper naming conventions
-  - [ ] Create test fixtures package:
-    - [ ] pkg/testutil/fixtures/ for common test data
-    - [ ] Reusable session, message, and attachment fixtures
-    - [ ] Configuration test fixtures
+#### 4.9.7 Test Organization and Helpers ✅ (Completed)
 
 #### 4.9.8 Logging and Instrumentation *(REVISIT)*
   - [ ] Standardize logging approach:
@@ -42,6 +34,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] LLM provider operations (already partially done)
     - [ ] Session branching/merging operations
     - [ ] Command execution lifecycle
+    - [ ] Other places where logging may be missing
 
 #### 4.9.9 Function and Method Cleanup *(REVISIT)*
   - [ ] Remove unused functions:
@@ -52,6 +45,9 @@ This document provides a detailed, phased implementation plan for the Magellai p
     - [ ] Merge similar string manipulation utilities
     - [ ] Standardize path handling functions
     - [ ] Create common validation helpers
+  - [ ] Purpose of code file
+    - [ ] ensure each code file has a //ABOUTME: section
+    - [ ] ensure the //ABOUTME: section is correctly summarizing the purpose of the file.
 
 #### 4.9.10 Interface and Contract Consistency *(REVISIT)*
   - [ ] Review and standardize interfaces:

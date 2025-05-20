@@ -1,4 +1,4 @@
-// ABOUTME: Integration tests for the ask pipeline functionality  
+// ABOUTME: Integration tests for the ask pipeline functionality
 // ABOUTME: Tests full request processing from input to model interaction
 
 //go:build integration
@@ -78,7 +78,7 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 			args:           []string{},
 			stdin:          "stdin content",
 			expectError:    true, // The new ask command requires at least one argument
-			expectedPrompt: "stdin content", 
+			expectedPrompt: "stdin content",
 		},
 		{
 			name:           "both prompt and stdin",
@@ -161,14 +161,14 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 				// Create a pipe to simulate stdin
 				r, w, err := os.Pipe()
 				require.NoError(t, err)
-				
+
 				// Write to pipe in a goroutine
 				go func() {
 					defer w.Close()
 					_, err := w.WriteString(tt.stdin)
 					assert.NoError(t, err)
 				}()
-				
+
 				// Replace stdin with our pipe
 				ctx.Stdin = r
 			} else {
@@ -188,9 +188,9 @@ func TestAskCmd_PipelineSupport(t *testing.T) {
 					errStr := err.Error()
 					if strings.Contains(errStr, "no prompt provided") {
 						t.Errorf("Unexpected usage error: %v", err)
-					} else if strings.Contains(errStr, "invalid auth") || 
-					         strings.Contains(errStr, "API key") ||
-					         strings.Contains(errStr, "authentication") {
+					} else if strings.Contains(errStr, "invalid auth") ||
+						strings.Contains(errStr, "API key") ||
+						strings.Contains(errStr, "authentication") {
 						// This is expected with a dummy key
 						t.Logf("Got expected auth error: %v", err)
 					} else {
@@ -239,7 +239,7 @@ func TestAskCmd_EdgeCases(t *testing.T) {
 		err := askCmd.Execute(context.Background(), ctx)
 		assert.Error(t, err, "Should error with invalid provider")
 		assert.Contains(t, err.Error(), "provider", "Error should mention provider")
-		
+
 		// Reset model for other tests
 		if err := cfg.SetValue("model", "openai/gpt-3.5-turbo"); err != nil {
 			t.Fatalf("Failed to reset model: %v", err)
@@ -272,8 +272,8 @@ func TestAskCmd_EdgeCases(t *testing.T) {
 		assert.Error(t, err)
 		// The error could mention "file", "read", or provide a more specific error
 		errMsg := err.Error()
-		hasExpectedError := strings.Contains(errMsg, "file") || 
-			strings.Contains(errMsg, "read") || 
+		hasExpectedError := strings.Contains(errMsg, "file") ||
+			strings.Contains(errMsg, "read") ||
 			strings.Contains(errMsg, "attach")
 		assert.True(t, hasExpectedError, "Error should mention file/attachment issue, got: %s", errMsg)
 	})
