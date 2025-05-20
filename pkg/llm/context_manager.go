@@ -71,10 +71,21 @@ func (m *ContextManager) OptimizeContext(messages []domain.Message) ([]domain.Me
 
 	currentTokens := m.tokenCounter.CountMessageTokens(messages)
 
-	m.logger.Debug("Optimizing context",
-		"messageCount", len(messages),
-		"currentTokens", currentTokens,
-		"maxTokens", m.priorityConfig.MaxTokens)
+	// Use logging directly if logger is nil (happens in tests)
+	if m.logger == nil {
+		logging.LogDebug("Optimizing context",
+			"messageCount", len(messages),
+			"currentTokens", currentTokens,
+			"maxTokens", m.priorityConfig.MaxTokens)
+	} else {
+		m.logger.Debug("Optimizing context",
+			"messageCount", len(messages),
+			"currentTokens", currentTokens,
+			"maxTokens", m.priorityConfig.MaxTokens,
+			"model", m.modelInfo.Model,
+			"provider", m.modelInfo.Provider,
+			"contextWindow", m.modelInfo.ContextWindow)
+	}
 
 	// If already within limits, return as-is
 	if currentTokens <= m.priorityConfig.MaxTokens {
@@ -85,11 +96,24 @@ func (m *ContextManager) OptimizeContext(messages []domain.Message) ([]domain.Me
 	optimized := m.applyPrioritization(messages)
 	finalTokens := m.tokenCounter.CountMessageTokens(optimized)
 
-	m.logger.Info("Context optimized",
-		"originalMessages", len(messages),
-		"optimizedMessages", len(optimized),
-		"originalTokens", currentTokens,
-		"optimizedTokens", finalTokens)
+	// Use logging directly if logger is nil (happens in tests)
+	if m.logger == nil {
+		logging.LogInfo("Context optimized",
+			"originalMessages", len(messages),
+			"optimizedMessages", len(optimized),
+			"originalTokens", currentTokens,
+			"optimizedTokens", finalTokens,
+			"tokensSaved", currentTokens-finalTokens)
+	} else {
+		m.logger.Info("Context optimized",
+			"originalMessages", len(messages),
+			"optimizedMessages", len(optimized),
+			"originalTokens", currentTokens,
+			"optimizedTokens", finalTokens,
+			"tokensSaved", currentTokens-finalTokens,
+			"model", m.modelInfo.Model,
+			"provider", m.modelInfo.Provider)
+	}
 
 	if finalTokens > m.priorityConfig.MaxTokens {
 		return optimized, fmt.Errorf("unable to fit context within limit: %d > %d tokens",
@@ -184,6 +208,23 @@ func (m *ContextManager) applyPrioritization(messages []domain.Message) []domain
 
 	// Ensure messages are in chronological order
 	result = m.sortChronologically(result)
+
+	// Use logging directly if logger is nil (happens in tests)
+	if m.logger == nil {
+		logging.LogDebug("Context prioritization completed",
+			"inputMessages", len(messages),
+			"outputMessages", len(result),
+			"systemMessageKept", systemIdx >= 0 && m.priorityConfig.KeepSystemMessage,
+			"keptFirstN", m.priorityConfig.KeepFirstN,
+			"keptLastN", m.priorityConfig.KeepLastN)
+	} else {
+		m.logger.Debug("Context prioritization completed",
+			"inputMessages", len(messages),
+			"outputMessages", len(result),
+			"systemMessageKept", systemIdx >= 0 && m.priorityConfig.KeepSystemMessage,
+			"keptFirstN", m.priorityConfig.KeepFirstN,
+			"keptLastN", m.priorityConfig.KeepLastN)
+	}
 
 	return result
 }
@@ -309,6 +350,24 @@ func (m *ContextManager) EstimateTokenReduction(messages []domain.Message) map[s
 	noAttachments := m.removeAttachments(messages)
 	estimates["remove_attachments"] = original - m.tokenCounter.CountMessageTokens(noAttachments)
 
+	// Use logging directly if logger is nil (happens in tests)
+	if m.logger == nil {
+		logging.LogDebug("Token reduction estimates calculated",
+			"original_tokens", original,
+			"message_count", len(messages),
+			"remove_oldest_savings", estimates["remove_oldest"],
+			"summarize_savings", estimates["summarize_old"],
+			"remove_attachments_savings", estimates["remove_attachments"])
+	} else {
+		m.logger.Debug("Token reduction estimates calculated",
+			"original_tokens", original,
+			"message_count", len(messages),
+			"remove_oldest_savings", estimates["remove_oldest"],
+			"summarize_savings", estimates["summarize_old"],
+			"remove_attachments_savings", estimates["remove_attachments"],
+			"model", m.modelInfo.Model)
+	}
+
 	return estimates
 }
 
@@ -399,6 +458,8 @@ func NewSlidingWindowManager(windowSize, overlapSize int) *SlidingWindowManager 
 
 // GetWindow returns a window of messages that fits within token limit
 func (s *SlidingWindowManager) GetWindow(messages []domain.Message, maxTokens int) []domain.Message {
+	logger := logging.GetLogger()
+
 	if len(messages) == 0 {
 		return messages
 	}
@@ -412,11 +473,28 @@ func (s *SlidingWindowManager) GetWindow(messages []domain.Message, maxTokens in
 		msgTokens := s.tokenCounter.CountTokens(msg.Content)
 
 		if currentTokens+msgTokens > maxTokens {
+			if logger != nil {
+				logger.Debug("Window limit reached",
+					"maxTokens", maxTokens,
+					"currentTokens", currentTokens,
+					"messageTokens", msgTokens,
+					"windowSize", len(window),
+					"totalMessages", len(messages))
+			}
 			break
 		}
 
 		window = append([]domain.Message{msg}, window...)
 		currentTokens += msgTokens
+	}
+
+	if logger != nil {
+		logger.Info("Created sliding window",
+			"windowSize", len(window),
+			"totalMessages", len(messages),
+			"windowTokens", currentTokens,
+			"maxTokens", maxTokens,
+			"messagesExcluded", len(messages)-len(window))
 	}
 
 	return window

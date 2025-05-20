@@ -6,6 +6,8 @@ package domain
 import (
 	"errors"
 	"time"
+
+	"github.com/lexlapax/magellai/internal/logging"
 )
 
 // Session represents a complete chat session with all its data.
@@ -147,6 +149,13 @@ func (s *Session) CreateBranch(branchID string, branchName string, messageIndex 
 		Metadata:     copyMap(s.Conversation.Metadata),
 	}
 
+	logging.LogDebug("Created branch conversation structure",
+		"branch_id", branchID,
+		"parent_id", s.ID,
+		"model", branch.Conversation.Model,
+		"provider", branch.Conversation.Provider,
+		"branch_point", messageIndex)
+
 	// Copy messages up to the branch point
 	for i := 0; i < messageIndex && i < len(s.Conversation.Messages); i++ {
 		msgCopy := s.Conversation.Messages[i]
@@ -157,6 +166,14 @@ func (s *Session) CreateBranch(branchID string, branchName string, messageIndex 
 	// Add this branch to the parent's child list
 	s.AddChild(branchID)
 
+	logging.LogInfo("Branch created successfully",
+		"branch_id", branchID,
+		"parent_id", s.ID,
+		"branch_name", branchName,
+		"branch_point", messageIndex,
+		"copied_messages", len(branch.Conversation.Messages),
+		"parent_children_count", len(s.ChildIDs))
+
 	return branch, nil
 }
 
@@ -165,22 +182,43 @@ func (s *Session) AddChild(childID string) {
 	// Check if child ID already exists
 	for _, id := range s.ChildIDs {
 		if id == childID {
+			logging.LogDebug("Child branch already exists in parent",
+				"parent_id", s.ID,
+				"child_id", childID)
 			return
 		}
 	}
 	s.ChildIDs = append(s.ChildIDs, childID)
 	s.UpdateTimestamp()
+
+	logging.LogDebug("Added child branch to parent",
+		"parent_id", s.ID,
+		"child_id", childID,
+		"total_children", len(s.ChildIDs))
 }
 
 // RemoveChild removes a child branch ID from this session.
 func (s *Session) RemoveChild(childID string) {
-	filtered := make([]string, 0, len(s.ChildIDs))
+	originalCount := len(s.ChildIDs)
+	filtered := make([]string, 0, originalCount)
 	for _, id := range s.ChildIDs {
 		if id != childID {
 			filtered = append(filtered, id)
 		}
 	}
 	s.ChildIDs = filtered
+
+	if len(filtered) < originalCount {
+		logging.LogInfo("Removed child branch from parent",
+			"parent_id", s.ID,
+			"child_id", childID,
+			"remaining_children", len(filtered))
+	} else {
+		logging.LogDebug("Child branch not found in parent",
+			"parent_id", s.ID,
+			"child_id", childID)
+	}
+
 	s.UpdateTimestamp()
 }
 

@@ -91,7 +91,11 @@ func (h *PartialResponseHandler) processStreamWithRecovery(
 				}
 
 				// Attempt recovery for incomplete response
-				h.logger.Warn("Stream closed with incomplete response, attempting recovery")
+				h.logger.Warn("Stream closed with incomplete response, attempting recovery",
+					"provider", h.provider.GetModelInfo().Provider,
+					"model", h.provider.GetModelInfo().Model,
+					"content_length", h.buffer.content.Len(),
+					"chunks_received", h.buffer.GetChunkCount())
 				h.attemptRecovery(ctx, output, prompt, options...)
 				return
 			}
@@ -101,8 +105,18 @@ func (h *PartialResponseHandler) processStreamWithRecovery(
 				h.logger.Warn("Error in stream chunk", "error", chunk.Error)
 				// Try to recover if we have partial content
 				if h.buffer.HasContent() {
+					h.logger.Info("Attempting recovery from error",
+						"provider", h.provider.GetModelInfo().Provider,
+						"model", h.provider.GetModelInfo().Model,
+						"error", chunk.Error,
+						"content_length", h.buffer.content.Len(),
+						"chunks_received", h.buffer.GetChunkCount())
 					h.attemptRecovery(ctx, output, prompt, options...)
 				} else {
+					h.logger.Warn("Stream error with no content to recover",
+						"provider", h.provider.GetModelInfo().Provider,
+						"model", h.provider.GetModelInfo().Model,
+						"error", chunk.Error)
 					output <- chunk // Forward error
 				}
 				return
@@ -125,7 +139,13 @@ func (h *PartialResponseHandler) processStreamWithRecovery(
 
 		case <-timeoutTimer.C:
 			// Stream timeout - attempt recovery
-			h.logger.Warn("Stream timeout, attempting recovery")
+			h.logger.Warn("Stream timeout, attempting recovery",
+				"provider", h.provider.GetModelInfo().Provider,
+				"model", h.provider.GetModelInfo().Model,
+				"timeout_duration", h.timeout.String(),
+				"content_length", h.buffer.content.Len(),
+				"chunks_received", h.buffer.GetChunkCount(),
+				"time_since_last_chunk", h.buffer.GetTimeSinceLastChunk().String())
 			h.attemptRecovery(ctx, output, prompt, options...)
 			return
 
@@ -151,7 +171,11 @@ func (h *PartialResponseHandler) attemptRecovery(
 	}
 
 	h.logger.Info("Attempting to recover partial response",
-		"contentLength", len(partialContent))
+		"provider", h.provider.GetModelInfo().Provider,
+		"model", h.provider.GetModelInfo().Model,
+		"content_length", len(partialContent),
+		"chunks_received", h.buffer.GetChunkCount(),
+		"max_retries", h.maxRetries)
 
 	// Create continuation prompt
 	continuationPrompt := fmt.Sprintf(
@@ -164,7 +188,10 @@ func (h *PartialResponseHandler) attemptRecovery(
 		response, err := h.provider.Generate(ctx, continuationPrompt, options...)
 		if err != nil {
 			h.logger.Warn("Recovery attempt failed",
+				"provider", h.provider.GetModelInfo().Provider,
+				"model", h.provider.GetModelInfo().Model,
 				"attempt", attempt+1,
+				"max_retries", h.maxRetries,
 				"error", err)
 			continue
 		}
@@ -185,7 +212,13 @@ func (h *PartialResponseHandler) attemptRecovery(
 				Index:        h.buffer.GetChunkCount() + 1,
 			}
 
-			h.logger.Info("Successfully recovered partial response")
+			h.logger.Info("Successfully recovered partial response",
+				"provider", h.provider.GetModelInfo().Provider,
+				"model", h.provider.GetModelInfo().Model,
+				"attempt", attempt+1,
+				"original_length", len(partialContent),
+				"continuation_length", len(response),
+				"total_chunks", h.buffer.GetChunkCount()+1)
 			return
 		}
 	}

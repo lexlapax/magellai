@@ -72,15 +72,19 @@ func (r *ResilientProvider) Generate(ctx context.Context, prompt string, options
 
 	// Log primary failure
 	r.logger.Warn("Primary provider failed, attempting fallbacks",
+		"operation", operation,
 		"provider", r.config.Primary.GetModelInfo().Provider,
+		"model", r.config.Primary.GetModelInfo().Model,
 		"error", lastErr)
 
 	// Try fallback providers if enabled
 	if r.config.EnableFallback && len(r.config.Fallbacks) > 0 {
 		for i, fallback := range r.config.Fallbacks {
 			r.logger.Info("Attempting fallback provider",
-				"fallback", i+1,
-				"provider", fallback.GetModelInfo().Provider)
+				"operation", operation,
+				"fallback_number", i+1,
+				"provider", fallback.GetModelInfo().Provider,
+				"model", fallback.GetModelInfo().Model)
 
 			// Try fallback with retry
 			var fallbackResult string
@@ -98,8 +102,10 @@ func (r *ResilientProvider) Generate(ctx context.Context, prompt string, options
 			}
 
 			r.logger.Warn("Fallback provider failed",
-				"fallback", i+1,
+				"operation", operation,
+				"fallback_number", i+1,
 				"provider", fallback.GetModelInfo().Provider,
+				"model", fallback.GetModelInfo().Model,
 				"error", err)
 		}
 	}
@@ -145,7 +151,11 @@ func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []doma
 	if IsContextTooLongError(lastErr) {
 		// Try to reduce context by removing older messages
 		if len(messages) > 2 {
-			r.logger.Info("Context too long, reducing message history")
+			r.logger.Info("Context too long, reducing message history",
+				"operation", operation,
+				"provider", r.config.Primary.GetModelInfo().Provider,
+				"original_messages", len(messages),
+				"reduced_messages", 2)
 			reducedMessages := messages[len(messages)-2:] // Keep only last 2 messages
 			return r.GenerateMessage(ctx, reducedMessages, options...)
 		}
@@ -155,8 +165,10 @@ func (r *ResilientProvider) GenerateMessage(ctx context.Context, messages []doma
 	if r.config.EnableFallback && len(r.config.Fallbacks) > 0 {
 		for i, fallback := range r.config.Fallbacks {
 			r.logger.Info("Attempting fallback provider",
-				"fallback", i+1,
-				"provider", fallback.GetModelInfo().Provider)
+				"operation", operation,
+				"fallback_number", i+1,
+				"provider", fallback.GetModelInfo().Provider,
+				"model", fallback.GetModelInfo().Model)
 
 			err := r.errorHandler.WithRetry(ctx, operation, func() error {
 				resp, err := fallback.GenerateMessage(ctx, messages, options...)
@@ -208,13 +220,19 @@ func (r *ResilientProvider) GenerateWithSchema(ctx context.Context, prompt strin
 			modelInfo := fallback.GetModelInfo()
 			if !modelInfo.Capabilities.StructuredOutput {
 				r.logger.Debug("Skipping fallback - no structured output support",
-					"provider", modelInfo.Provider)
+					"operation", operation,
+					"fallback_number", i+1,
+					"provider", modelInfo.Provider,
+					"model", modelInfo.Model)
 				continue
 			}
 
 			r.logger.Info("Attempting schema fallback",
-				"fallback", i+1,
-				"provider", modelInfo.Provider)
+				"operation", operation,
+				"fallback_number", i+1,
+				"provider", modelInfo.Provider,
+				"model", modelInfo.Model,
+				"schema_title", schema.Title)
 
 			err := r.errorHandler.WithRetry(ctx, operation, func() error {
 				res, err := fallback.GenerateWithSchema(ctx, prompt, schema, options...)
@@ -346,7 +364,9 @@ func CreateProviderChain(providers []ChainProviderConfig) (*ResilientProvider, e
 		fallback, err := NewProvider(providers[i].Type, providers[i].Model, providers[i].APIKey)
 		if err != nil {
 			logging.LogWarn("Failed to create fallback provider",
-				"provider", providers[i].Type,
+				"provider_type", providers[i].Type,
+				"model", providers[i].Model,
+				"fallback_number", i,
 				"error", err)
 			continue
 		}

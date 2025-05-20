@@ -2,7 +2,7 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-**Current Status**: Phase 4.9.8 - Code abstraction and redundancy checks (Logging and Instrumentation)
+**Current Status**: Phase 4.9.9 - Code abstraction and redundancy checks (Function and Method Cleanup)
 
 ## Phase 4: Advanced REPL Features (Week 4)
 
@@ -24,17 +24,7 @@ This document provides a detailed, phased implementation plan for the Magellai p
 
 #### 4.9.7 Test Organization and Helpers ✅ (Completed)
 
-#### 4.9.8 Logging and Instrumentation *(REVISIT)*
-  - [ ] Standardize logging approach:
-    - [ ] Use internal/logging consistently (no direct slog/log usage)
-    - [ ] Remove fmt.Print statements from non-test code
-    - [ ] Add structured logging fields consistently
-  - [ ] Add missing logging in critical paths:
-    - [ ] Storage operations (already partially done)
-    - [ ] LLM provider operations (already partially done)
-    - [ ] Session branching/merging operations
-    - [ ] Command execution lifecycle
-    - [ ] Other places where logging may be missing
+#### 4.9.8 Logging and Instrumentation ✅ (Completed)
 
 #### 4.9.9 Function and Method Cleanup *(REVISIT)*
   - [ ] Remove unused functions:

@@ -739,7 +739,14 @@ func main() {
 	// Check for version flag early
 	for _, arg := range os.Args[1:] {
 		if arg == "--version" {
-			fmt.Printf("magellai version %s\n", version)
+			// Initialize logger early for version output
+			if err := logging.Initialize(logging.DefaultConfig()); err == nil {
+				logger := logging.GetLogger()
+				logger.Info("Version information", "version", version)
+			} else {
+				// Fall back to fmt if logging init fails
+				fmt.Printf("magellai version %s\n", version)
+			}
 			os.Exit(0)
 		}
 	}

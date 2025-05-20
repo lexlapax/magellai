@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/domain"
@@ -55,7 +56,13 @@ func (r *REPL) cmdBranch(args []string) error {
 		return fmt.Errorf("failed to save new branch: %v", err)
 	}
 
-	logging.LogInfo("Created branch", "id", branchID, "name", branchName, "at", messageIndex)
+	logging.LogInfo("Created branch",
+		"branch_id", branchID,
+		"branch_name", branchName,
+		"parent_id", currentSession.ID,
+		"parent_name", currentSession.Name,
+		"branch_point", messageIndex,
+		"message_count", len(branch.Conversation.Messages))
 
 	// Optionally switch to the new branch
 	fmt.Fprintf(r.writer, "Created branch '%s' (ID: %s) at message %d\n", branchName, branchID, messageIndex)
@@ -209,7 +216,13 @@ func (r *REPL) cmdSwitch(args []string) error {
 	// Switch to the new branch
 	r.session = branch
 
-	logging.LogInfo("Switched to branch", "id", branchID, "name", branch.Name)
+	logging.LogInfo("Switched to branch",
+		"branch_id", branchID,
+		"branch_name", branch.Name,
+		"is_branch", branch.IsBranch(),
+		"parent_id", branch.ParentID,
+		"message_count", len(branch.Conversation.Messages),
+		"created", branch.Created.Format(time.RFC3339))
 	fmt.Fprintf(r.writer, "Switched to branch '%s' (ID: %s)\n", branch.Name, branchID)
 
 	// Show branch info
@@ -281,10 +294,29 @@ func (r *REPL) cmdMerge(args []string) error {
 	}
 
 	// Perform the merge
+	logging.LogInfo("Starting session merge operation",
+		"source_id", sourceID,
+		"target_id", targetID,
+		"merge_type", fmt.Sprintf("%d", options.Type),
+		"create_branch", options.CreateBranch,
+		"branch_name", options.BranchName,
+		"merge_point", options.MergePoint)
+
 	result, err := r.manager.StorageManager.MergeSessions(targetID, sourceID, options)
 	if err != nil {
+		logging.LogWarn("Session merge failed",
+			"source_id", sourceID,
+			"target_id", targetID,
+			"error", err)
 		return fmt.Errorf("failed to merge sessions: %w", err)
 	}
+
+	logging.LogInfo("Session merge completed successfully",
+		"source_id", sourceID,
+		"target_id", targetID,
+		"merged_count", result.MergedCount,
+		"new_branch_id", result.NewBranchID,
+		"merge_type", fmt.Sprintf("%d", options.Type))
 
 	// Display results
 	fmt.Fprintf(r.writer, "Successfully merged %d messages from %s into %s\n", result.MergedCount, sourceID, targetID)
