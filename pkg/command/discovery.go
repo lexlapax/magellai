@@ -21,6 +21,9 @@ type packageDiscoverer struct {
 	prefix      string
 }
 
+// Ensure packageDiscoverer implements discoverer
+var _ discoverer = (*packageDiscoverer)(nil)
+
 // newPackageDiscoverer creates a new package discoverer
 func newPackageDiscoverer(packagePath, prefix string) *packageDiscoverer {
 	return &packageDiscoverer{
@@ -73,6 +76,9 @@ type builderDiscoverer struct {
 	builders []commandBuilder
 }
 
+// Ensure builderDiscoverer implements discoverer
+var _ discoverer = (*builderDiscoverer)(nil)
+
 // commandBuilder is a function that builds a command
 type commandBuilder func() (Interface, error)
 
@@ -103,6 +109,9 @@ type reflectionDiscoverer struct {
 	target interface{}
 	prefix string
 }
+
+// Ensure reflectionDiscoverer implements discoverer
+var _ discoverer = (*reflectionDiscoverer)(nil)
 
 // newReflectionDiscoverer creates a new reflection-based discoverer
 func newReflectionDiscoverer(target interface{}, prefix string) *reflectionDiscoverer {

@@ -71,7 +71,7 @@ func TestBackend_SaveAndLoadSession(t *testing.T) {
 	session.Config["temperature"] = 0.7
 
 	// Save session
-	err := backend.SaveSession(session)
+	err := backend.Create(session)
 	require.NoError(t, err)
 
 	// Verify file exists
@@ -79,7 +79,7 @@ func TestBackend_SaveAndLoadSession(t *testing.T) {
 	assert.FileExists(t, sessionFile)
 
 	// Load session
-	loaded, err := backend.LoadSession(session.ID)
+	loaded, err := backend.Get(session.ID)
 	require.NoError(t, err)
 	assert.NotNil(t, loaded)
 	assert.Equal(t, session.ID, loaded.ID)
@@ -94,7 +94,7 @@ func TestBackend_SaveAndLoadSession(t *testing.T) {
 func TestBackend_LoadNonExistentSession(t *testing.T) {
 	backend := setupTestBackend(t)
 
-	session, err := backend.LoadSession("non-existent-id")
+	session, err := backend.Get("non-existent-id")
 	assert.Error(t, err)
 	assert.Nil(t, session)
 	assert.Contains(t, err.Error(), "session not found")
@@ -116,12 +116,12 @@ func TestBackend_ListSessions(t *testing.T) {
 	for _, s := range sessions {
 		session := domain.NewSession(s.id)
 		session.Name = s.name
-		err := backend.SaveSession(session)
+		err := backend.Create(session)
 		require.NoError(t, err)
 	}
 
 	// List sessions
-	infos, err := backend.ListSessions()
+	infos, err := backend.List()
 	require.NoError(t, err)
 	assert.Len(t, infos, 3)
 
@@ -144,7 +144,7 @@ func TestBackend_DeleteSession(t *testing.T) {
 
 	// Create and save a session
 	session := backend.NewSession("Delete Test")
-	err := backend.SaveSession(session)
+	err := backend.Create(session)
 	require.NoError(t, err)
 
 	// Verify it exists
@@ -152,14 +152,14 @@ func TestBackend_DeleteSession(t *testing.T) {
 	assert.FileExists(t, sessionFile)
 
 	// Delete session
-	err = backend.DeleteSession(session.ID)
+	err = backend.Delete(session.ID)
 	require.NoError(t, err)
 
 	// Verify file is gone
 	assert.NoFileExists(t, sessionFile)
 
 	// Try to delete non-existent session
-	err = backend.DeleteSession("non-existent")
+	err = backend.Delete("non-existent")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "session not found")
 }
@@ -191,7 +191,7 @@ func TestBackend_SearchSessions(t *testing.T) {
 
 	// Save all sessions
 	for _, session := range sessions {
-		err := backend.SaveSession(session)
+		err := backend.Create(session)
 		require.NoError(t, err)
 	}
 
@@ -230,7 +230,7 @@ func TestBackend_SearchSessions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results, err := backend.SearchSessions(tt.query)
+			results, err := backend.Search(tt.query)
 			require.NoError(t, err)
 
 			foundIDs := make(map[string]bool)
@@ -255,7 +255,7 @@ func TestBackend_ExportSession(t *testing.T) {
 	session.Conversation.AddMessage(*domain.NewMessage("msg-1", domain.MessageRoleUser, "Hello"))
 	session.Conversation.AddMessage(*domain.NewMessage("msg-2", domain.MessageRoleAssistant, "Hi there!"))
 
-	err := backend.SaveSession(session)
+	err := backend.Create(session)
 	require.NoError(t, err)
 
 	// Test JSON export

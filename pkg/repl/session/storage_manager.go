@@ -37,27 +37,35 @@ func (sm *StorageManager) NewSession(name string) *domain.Session {
 
 // SaveSession saves a session
 func (sm *StorageManager) SaveSession(session *domain.Session) error {
-	return sm.backend.SaveSession(session)
+	// Check if session exists to determine if this is a create or update
+	existing, err := sm.backend.Get(session.ID)
+	if err != nil || existing == nil {
+		// Session doesn't exist, create it
+		return sm.backend.Create(session)
+	}
+
+	// Session exists, update it
+	return sm.backend.Update(session)
 }
 
 // LoadSession loads a session by ID
 func (sm *StorageManager) LoadSession(id string) (*domain.Session, error) {
-	return sm.backend.LoadSession(id)
+	return sm.backend.Get(id)
 }
 
 // ListSessions lists all available sessions
 func (sm *StorageManager) ListSessions() ([]*domain.SessionInfo, error) {
-	return sm.backend.ListSessions()
+	return sm.backend.List()
 }
 
 // DeleteSession removes a session
 func (sm *StorageManager) DeleteSession(id string) error {
-	return sm.backend.DeleteSession(id)
+	return sm.backend.Delete(id)
 }
 
 // SearchSessions searches for sessions by query
 func (sm *StorageManager) SearchSessions(query string) ([]*domain.SearchResult, error) {
-	return sm.backend.SearchSessions(query)
+	return sm.backend.Search(query)
 }
 
 // ExportSession exports a session in the specified format

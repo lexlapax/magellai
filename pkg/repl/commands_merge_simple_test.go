@@ -45,7 +45,7 @@ func TestSimpleMerge(t *testing.T) {
 	assert.Equal(t, 1, result.MergedCount)
 
 	// Load target session to verify merge
-	updatedTarget, err := backend.LoadSession(targetSession.ID)
+	updatedTarget, err := backend.Get(targetSession.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(updatedTarget.Conversation.Messages))
 	assert.Equal(t, "Target message", updatedTarget.Conversation.Messages[0].Content)

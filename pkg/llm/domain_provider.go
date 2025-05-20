@@ -28,6 +28,9 @@ type domainProviderAdapter struct {
 	Provider
 }
 
+// Ensure domainProviderAdapter implements DomainProvider
+var _ DomainProvider = (*domainProviderAdapter)(nil)
+
 // NewDomainProvider wraps a Provider with domain type support
 func NewDomainProvider(provider Provider) DomainProvider {
 	return &domainProviderAdapter{Provider: provider}

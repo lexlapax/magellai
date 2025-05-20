@@ -146,6 +146,9 @@ type SimpleCommand struct {
 	executor Executor
 }
 
+// Ensure SimpleCommand implements Interface
+var _ Interface = (*SimpleCommand)(nil)
+
 // NewSimpleCommand creates a new simple command
 func NewSimpleCommand(meta *Metadata, executor Executor) *SimpleCommand {
 	return &SimpleCommand{

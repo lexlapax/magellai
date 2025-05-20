@@ -15,17 +15,23 @@ import (
 
 // Backend interface defines the basic operations for a mock storage backend
 type Backend interface {
-	NewSession(name string) *domain.Session
-	SaveSession(session *domain.Session) error
-	LoadSession(id string) (*domain.Session, error)
-	ListSessions() ([]*domain.SessionInfo, error)
-	DeleteSession(id string) error
-	SearchSessions(query string) ([]*domain.SearchResult, error)
-	ExportSession(id string, format domain.ExportFormat, w io.Writer) error
+	// Core Session Repository operations
+	Create(session *domain.Session) error
+	Get(id string) (*domain.Session, error)
+	Update(session *domain.Session) error
+	Delete(id string) error
+	List() ([]*domain.SessionInfo, error)
+	Search(query string) ([]*domain.SearchResult, error)
 	GetChildren(sessionID string) ([]*domain.SessionInfo, error)
 	GetBranchTree(sessionID string) (*domain.BranchTree, error)
+
+	// Storage-specific extensions
+	NewSession(name string) *domain.Session
+	ExportSession(id string, format domain.ExportFormat, w io.Writer) error
 	MergeSessions(targetID, sourceID string, options domain.MergeOptions) (*domain.MergeResult, error)
 	Close() error
+
+	// Mock-specific methods
 	GetSessionCount() int
 	HasSession(id string) bool
 
@@ -41,6 +47,13 @@ type Backend interface {
 	WithGetBranchTreeError(err error) *MockBackend
 	WithSearchResults(results []*domain.Session) *MockBackend
 	WithUserID(userID string) *MockBackend
+
+	// Legacy methods for backward compatibility
+	SaveSession(session *domain.Session) error
+	LoadSession(id string) (*domain.Session, error)
+	ListSessions() ([]*domain.SessionInfo, error)
+	DeleteSession(id string) error
+	SearchSessions(query string) ([]*domain.SearchResult, error)
 }
 
 // MockBackend implements the Backend interface for testing
@@ -157,7 +170,63 @@ func (m *MockBackend) NewSession(name string) *domain.Session {
 	return session
 }
 
-// SaveSession saves a session to the mock backend
+// Create creates a new session in the mock backend
+func (m *MockBackend) Create(session *domain.Session) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.closed {
+		return io.ErrClosedPipe
+	}
+
+	if m.errOnSave != nil {
+		return m.errOnSave
+	}
+
+	if session == nil {
+		return fmt.Errorf("session is nil")
+	}
+
+	// Check if session already exists
+	if _, exists := m.sessions[session.ID]; exists {
+		return fmt.Errorf("session already exists: %s", session.ID)
+	}
+
+	// Clone the session to avoid reference issues
+	cloned := cloneSession(session)
+	m.sessions[session.ID] = cloned
+	return nil
+}
+
+// Update updates an existing session in the mock backend
+func (m *MockBackend) Update(session *domain.Session) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.closed {
+		return io.ErrClosedPipe
+	}
+
+	if m.errOnSave != nil {
+		return m.errOnSave
+	}
+
+	if session == nil {
+		return fmt.Errorf("session is nil")
+	}
+
+	// Check if session exists
+	if _, exists := m.sessions[session.ID]; !exists {
+		return fmt.Errorf("session not found: %s", session.ID)
+	}
+
+	// Clone the session to avoid reference issues
+	cloned := cloneSession(session)
+	m.sessions[session.ID] = cloned
+	return nil
+}
+
+// SaveSession saves a session to the mock backend (legacy method)
 func (m *MockBackend) SaveSession(session *domain.Session) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -180,7 +249,12 @@ func (m *MockBackend) SaveSession(session *domain.Session) error {
 	return nil
 }
 
-// LoadSession loads a session from the mock backend
+// Get loads a session from the mock backend
+func (m *MockBackend) Get(id string) (*domain.Session, error) {
+	return m.LoadSession(id)
+}
+
+// LoadSession loads a session from the mock backend (legacy method)
 func (m *MockBackend) LoadSession(id string) (*domain.Session, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -202,7 +276,12 @@ func (m *MockBackend) LoadSession(id string) (*domain.Session, error) {
 	return cloneSession(session), nil
 }
 
-// ListSessions lists all sessions from the mock backend
+// List lists all sessions from the mock backend
+func (m *MockBackend) List() ([]*domain.SessionInfo, error) {
+	return m.ListSessions()
+}
+
+// ListSessions lists all sessions from the mock backend (legacy method)
 func (m *MockBackend) ListSessions() ([]*domain.SessionInfo, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -228,7 +307,12 @@ func (m *MockBackend) ListSessions() ([]*domain.SessionInfo, error) {
 	return sessions, nil
 }
 
-// DeleteSession deletes a session from the mock backend
+// Delete deletes a session from the mock backend
+func (m *MockBackend) Delete(id string) error {
+	return m.DeleteSession(id)
+}
+
+// DeleteSession deletes a session from the mock backend (legacy method)
 func (m *MockBackend) DeleteSession(id string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -262,7 +346,12 @@ func (m *MockBackend) Close() error {
 	return nil
 }
 
-// SearchSessions searches for sessions
+// Search searches for sessions
+func (m *MockBackend) Search(query string) ([]*domain.SearchResult, error) {
+	return m.SearchSessions(query)
+}
+
+// SearchSessions searches for sessions (legacy method)
 func (m *MockBackend) SearchSessions(query string) ([]*domain.SearchResult, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

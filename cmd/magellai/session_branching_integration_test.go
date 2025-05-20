@@ -67,7 +67,7 @@ provider:
 			Role:    domain.MessageRoleAssistant,
 			Content: "Hello! I'm ready to assist.",
 		})
-		err = backend.SaveSession(session)
+		err = backend.Update(session)
 		assert.NoError(t, err)
 
 		// Step 2: Create a branch from the parent session
@@ -76,9 +76,9 @@ provider:
 		assert.NotNil(t, branch1)
 		assert.Equal(t, session.ID, branch1.ParentID)
 		assert.Equal(t, 1, branch1.BranchPoint)
-		err = backend.SaveSession(branch1)
+		err = backend.Update(branch1)
 		assert.NoError(t, err)
-		err = backend.SaveSession(session) // Save parent to update child list
+		err = backend.Update(session) // Save parent to update child list
 		assert.NoError(t, err)
 
 		// Step 3: Add messages to the branch
@@ -90,15 +90,15 @@ provider:
 			Role:    domain.MessageRoleAssistant,
 			Content: "Response from branch",
 		})
-		err = backend.SaveSession(branch1)
+		err = backend.Update(branch1)
 		assert.NoError(t, err)
 
 		// Step 4: Create another branch
 		branch2, err := session.CreateBranch("branch2-id", "branch2", 1)
 		assert.NoError(t, err)
-		err = backend.SaveSession(branch2)
+		err = backend.Update(branch2)
 		assert.NoError(t, err)
-		err = backend.SaveSession(session) // Save parent to update child list
+		err = backend.Update(session) // Save parent to update child list
 		assert.NoError(t, err)
 
 		// Step 5: Merge branches
@@ -113,7 +113,7 @@ provider:
 		assert.NotNil(t, result)
 
 		// Step 6: Verify the merge result
-		merged, err := backend.LoadSession(branch1.ID)
+		merged, err := backend.Get(branch1.ID)
 		assert.NoError(t, err)
 		assert.NotNil(t, merged)
 		assert.Greater(t, len(merged.Conversation.Messages), 2)
@@ -128,7 +128,7 @@ provider:
 			Role:    domain.MessageRoleUser,
 			Content: "Root message",
 		})
-		err = backend.SaveSession(parent)
+		err = backend.Update(parent)
 		assert.NoError(t, err)
 
 		// Create multiple branches
@@ -137,10 +137,10 @@ provider:
 			branchName := fmt.Sprintf("tree-branch%d", i)
 			branch, err := parent.CreateBranch(branchID, branchName, 0)
 			assert.NoError(t, err)
-			err = backend.SaveSession(branch)
+			err = backend.Update(branch)
 			assert.NoError(t, err)
 		}
-		err = backend.SaveSession(parent) // Update parent with children
+		err = backend.Update(parent) // Update parent with children
 		assert.NoError(t, err)
 
 		// Get children
@@ -165,7 +165,7 @@ provider:
 			Role:    domain.MessageRoleUser,
 			Content: "Initial message",
 		})
-		err = backend.SaveSession(parent)
+		err = backend.Update(parent)
 		assert.NoError(t, err)
 
 		// Create branches with different content
@@ -175,7 +175,7 @@ provider:
 			Role:    domain.MessageRoleUser,
 			Content: "Branch 1 message",
 		})
-		err = backend.SaveSession(branch1)
+		err = backend.Update(branch1)
 		assert.NoError(t, err)
 
 		branch2, err := parent.CreateBranch("conflict-branch2-id", "conflict-branch2", 0)
@@ -184,7 +184,7 @@ provider:
 			Role:    domain.MessageRoleUser,
 			Content: "Branch 2 message",
 		})
-		err = backend.SaveSession(branch2)
+		err = backend.Update(branch2)
 		assert.NoError(t, err)
 
 		// Attempt merge with different strategies
@@ -219,18 +219,18 @@ provider:
 			Role:    domain.MessageRoleUser,
 			Content: "Parent message",
 		})
-		err = backend.SaveSession(parent)
+		err = backend.Update(parent)
 		assert.NoError(t, err)
 
 		branch, err := parent.CreateBranch("recovery-branch-id", "recovery-branch", 0)
 		assert.NoError(t, err)
-		err = backend.SaveSession(branch)
+		err = backend.Update(branch)
 		assert.NoError(t, err)
-		err = backend.SaveSession(parent) // Update parent's child list
+		err = backend.Update(parent) // Update parent's child list
 		assert.NoError(t, err)
 
 		// Simulate recovery by loading the session
-		recovered, err := backend.LoadSession(parent.ID)
+		recovered, err := backend.Get(parent.ID)
 		assert.NoError(t, err)
 		assert.NotNil(t, recovered)
 		assert.Len(t, recovered.ChildIDs, 1)
@@ -242,7 +242,7 @@ provider:
 		assert.False(t, info.IsBranch)
 
 		// Load the branch
-		recoveredBranch, err := backend.LoadSession(branch.ID)
+		recoveredBranch, err := backend.Get(branch.ID)
 		assert.NoError(t, err)
 		assert.NotNil(t, recoveredBranch)
 		assert.Equal(t, parent.ID, recoveredBranch.ParentID)

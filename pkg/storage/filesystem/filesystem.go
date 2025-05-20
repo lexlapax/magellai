@@ -26,6 +26,9 @@ type Backend struct {
 	baseDir string
 }
 
+// Ensure Backend implements storage.Backend
+var _ storage.Backend = (*Backend)(nil)
+
 // New creates a new filesystem storage backend
 func New(config storage.Config) (storage.Backend, error) {
 	baseDir, ok := config["base_dir"].(string)
@@ -62,7 +65,18 @@ func (b *Backend) NewSession(name string) *domain.Session {
 }
 
 // SaveSession persists a session to disk
-func (b *Backend) SaveSession(session *domain.Session) error {
+// Update implements storage.Backend.Update
+func (b *Backend) Update(session *domain.Session) error {
+	return b.saveSession(session)
+}
+
+// Create implements storage.Backend.Create
+func (b *Backend) Create(session *domain.Session) error {
+	return b.saveSession(session)
+}
+
+// saveSession is the internal implementation for both Create and Update
+func (b *Backend) saveSession(session *domain.Session) error {
 	start := time.Now()
 	session.UpdateTimestamp()
 
@@ -88,7 +102,8 @@ func (b *Backend) SaveSession(session *domain.Session) error {
 }
 
 // LoadSession loads a session from disk by ID
-func (b *Backend) LoadSession(id string) (*domain.Session, error) {
+// Get implements storage.Backend.Get
+func (b *Backend) Get(id string) (*domain.Session, error) {
 	start := time.Now()
 	logging.LogInfo("Loading session", "id", id)
 
@@ -115,7 +130,8 @@ func (b *Backend) LoadSession(id string) (*domain.Session, error) {
 }
 
 // ListSessions returns a list of all available sessions
-func (b *Backend) ListSessions() ([]*domain.SessionInfo, error) {
+// List implements storage.Backend.List
+func (b *Backend) List() ([]*domain.SessionInfo, error) {
 	logging.LogDebug("Listing sessions", "baseDir", b.baseDir)
 
 	entries, err := os.ReadDir(b.baseDir)
@@ -151,7 +167,8 @@ func (b *Backend) ListSessions() ([]*domain.SessionInfo, error) {
 }
 
 // DeleteSession removes a session from disk
-func (b *Backend) DeleteSession(id string) error {
+// Delete implements storage.Backend.Delete
+func (b *Backend) Delete(id string) error {
 	logging.LogInfo("Deleting session", "id", id)
 
 	filename := fmt.Sprintf("%s.json", id)
@@ -171,7 +188,8 @@ func (b *Backend) DeleteSession(id string) error {
 }
 
 // SearchSessions searches for sessions containing the given query
-func (b *Backend) SearchSessions(query string) ([]*domain.SearchResult, error) {
+// Search implements storage.Backend.Search
+func (b *Backend) Search(query string) ([]*domain.SearchResult, error) {
 	logging.LogInfo("Searching sessions", "query", query)
 	lowerQuery := strings.ToLower(query)
 
@@ -267,7 +285,7 @@ func (b *Backend) SearchSessions(query string) ([]*domain.SearchResult, error) {
 func (b *Backend) ExportSession(id string, format domain.ExportFormat, w io.Writer) error {
 	logging.LogInfo("Exporting session", "id", id, "format", format)
 
-	session, err := b.LoadSession(id)
+	session, err := b.Get(id)
 	if err != nil {
 		return err
 	}
@@ -414,7 +432,7 @@ func (b *Backend) GetChildren(sessionID string) ([]*domain.SessionInfo, error) {
 	logging.LogDebug("Getting children for session", "sessionID", sessionID)
 
 	// Load the parent session to get child IDs
-	parent, err := b.LoadSession(sessionID)
+	parent, err := b.Get(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load parent session: %w", err)
 	}
@@ -423,7 +441,7 @@ func (b *Backend) GetChildren(sessionID string) ([]*domain.SessionInfo, error) {
 
 	// Load each child session info
 	for _, childID := range parent.ChildIDs {
-		child, err := b.LoadSession(childID)
+		child, err := b.Get(childID)
 		if err != nil {
 			logging.LogDebug("Failed to load child session", "childID", childID, "error", err)
 			continue // Skip missing children
@@ -439,7 +457,7 @@ func (b *Backend) GetBranchTree(sessionID string) (*domain.BranchTree, error) {
 	logging.LogDebug("Getting branch tree for session", "sessionID", sessionID)
 
 	// Load the root session
-	session, err := b.LoadSession(sessionID)
+	session, err := b.Get(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load session: %w", err)
 	}
@@ -470,12 +488,12 @@ func (b *Backend) MergeSessions(targetID, sourceID string, options domain.MergeO
 	logging.LogInfo("Merging sessions", "target", targetID, "source", sourceID, "type", options.Type)
 
 	// Load both sessions
-	targetSession, err := b.LoadSession(targetID)
+	targetSession, err := b.Get(targetID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load target session: %w", err)
 	}
 
-	sourceSession, err := b.LoadSession(sourceID)
+	sourceSession, err := b.Get(sourceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load source session: %w", err)
 	}
@@ -491,14 +509,14 @@ func (b *Backend) MergeSessions(targetID, sourceID string, options domain.MergeO
 	}
 
 	// Save the merged session
-	if err := b.SaveSession(mergedSession); err != nil {
+	if err := b.Update(mergedSession); err != nil {
 		return nil, fmt.Errorf("failed to save merged session: %w", err)
 	}
 
 	// If the merge created a new branch, update the parent
 	if result.NewBranchID != "" && options.CreateBranch {
 		// Save the updated parent that now has the new child
-		if err := b.SaveSession(targetSession); err != nil {
+		if err := b.Update(targetSession); err != nil {
 			logging.LogWarn("Failed to update parent session with new child", "parentID", targetID, "error", err)
 		}
 	}

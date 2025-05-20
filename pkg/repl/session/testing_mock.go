@@ -51,6 +51,37 @@ func (m *MockStorageBackend) NewSession(name string) *domain.Session {
 	return session
 }
 
+// Create implements storage.Backend.Create
+func (m *MockStorageBackend) Create(session *domain.Session) error {
+	m.calls["Create"]++
+	m.calls["SaveSession"]++ // For backward compatibility with tests
+	if m.err != nil {
+		return m.err
+	}
+	// Check if already exists
+	if _, exists := m.sessions[session.ID]; exists {
+		return fmt.Errorf("session already exists: %s", session.ID)
+	}
+	m.sessions[session.ID] = session
+	return nil
+}
+
+// Update implements storage.Backend.Update
+func (m *MockStorageBackend) Update(session *domain.Session) error {
+	m.calls["Update"]++
+	m.calls["SaveSession"]++ // For backward compatibility with tests
+	if m.err != nil {
+		return m.err
+	}
+	// Check if exists
+	if _, exists := m.sessions[session.ID]; !exists {
+		return fmt.Errorf("session not found: %s", session.ID)
+	}
+	m.sessions[session.ID] = session
+	return nil
+}
+
+// SaveSession is maintained for backward compatibility
 func (m *MockStorageBackend) SaveSession(session *domain.Session) error {
 	m.calls["SaveSession"]++
 	if m.err != nil {
@@ -60,7 +91,7 @@ func (m *MockStorageBackend) SaveSession(session *domain.Session) error {
 	return nil
 }
 
-func (m *MockStorageBackend) LoadSession(id string) (*domain.Session, error) {
+func (m *MockStorageBackend) Get(id string) (*domain.Session, error) {
 	m.calls["LoadSession"]++
 	if m.err != nil {
 		return nil, m.err
@@ -72,7 +103,7 @@ func (m *MockStorageBackend) LoadSession(id string) (*domain.Session, error) {
 	return session, nil
 }
 
-func (m *MockStorageBackend) ListSessions() ([]*domain.SessionInfo, error) {
+func (m *MockStorageBackend) List() ([]*domain.SessionInfo, error) {
 	m.calls["ListSessions"]++
 	if m.err != nil {
 		return nil, m.err
@@ -84,7 +115,7 @@ func (m *MockStorageBackend) ListSessions() ([]*domain.SessionInfo, error) {
 	return infos, nil
 }
 
-func (m *MockStorageBackend) DeleteSession(id string) error {
+func (m *MockStorageBackend) Delete(id string) error {
 	m.calls["DeleteSession"]++
 	if m.err != nil {
 		return m.err
@@ -97,7 +128,7 @@ func (m *MockStorageBackend) DeleteSession(id string) error {
 	return nil
 }
 
-func (m *MockStorageBackend) SearchSessions(query string) ([]*domain.SearchResult, error) {
+func (m *MockStorageBackend) Search(query string) ([]*domain.SearchResult, error) {
 	m.calls["SearchSessions"]++
 	if m.err != nil {
 		return nil, m.err

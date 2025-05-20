@@ -145,11 +145,11 @@ func TestBackend_SaveAndLoadSession(t *testing.T) {
 	}
 
 	// Save session
-	err := backend.SaveSession(session)
+	err := backend.Create(session)
 	require.NoError(t, err)
 
 	// Load session
-	loaded, err := backend.LoadSession(session.ID)
+	loaded, err := backend.Get(session.ID)
 	require.NoError(t, err)
 	assert.NotNil(t, loaded)
 	assert.Equal(t, session.ID, loaded.ID)
@@ -175,7 +175,7 @@ func TestBackend_UpdateSession(t *testing.T) {
 	// Create and save initial session
 	session := backend.NewSession("Original Name")
 	session.Tags = []string{"original"}
-	require.NoError(t, backend.SaveSession(session))
+	require.NoError(t, backend.Create(session))
 
 	// Update session
 	session.Name = "Updated Name"
@@ -187,11 +187,11 @@ func TestBackend_UpdateSession(t *testing.T) {
 		Timestamp: time.Now(),
 	})
 
-	// Save updated session
-	require.NoError(t, backend.SaveSession(session))
+	// Update session
+	require.NoError(t, backend.Update(session))
 
 	// Load and verify
-	loaded, err := backend.LoadSession(session.ID)
+	loaded, err := backend.Get(session.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "Updated Name", loaded.Name)
 	assert.ElementsMatch(t, []string{"updated", "modified"}, loaded.Tags)
@@ -204,17 +204,17 @@ func TestBackend_DeleteSession(t *testing.T) {
 
 	// Create and save session
 	session := backend.NewSession("To Delete")
-	require.NoError(t, backend.SaveSession(session))
+	require.NoError(t, backend.Create(session))
 
 	// Verify it exists
-	_, err := backend.LoadSession(session.ID)
+	_, err := backend.Get(session.ID)
 	require.NoError(t, err)
 
 	// Delete session
-	require.NoError(t, backend.DeleteSession(session.ID))
+	require.NoError(t, backend.Delete(session.ID))
 
 	// Verify it's gone
-	_, err = backend.LoadSession(session.ID)
+	_, err = backend.Get(session.ID)
 	assert.Error(t, err)
 }
 
@@ -225,16 +225,16 @@ func TestBackend_ListSessions(t *testing.T) {
 	// Create multiple sessions
 	session1 := backend.NewSession("Session 1")
 	session1.Tags = []string{"work", "important"}
-	require.NoError(t, backend.SaveSession(session1))
+	require.NoError(t, backend.Create(session1))
 
 	time.Sleep(10 * time.Millisecond) // Ensure different timestamps
 
 	session2 := backend.NewSession("Session 2")
 	session2.Tags = []string{"personal"}
-	require.NoError(t, backend.SaveSession(session2))
+	require.NoError(t, backend.Create(session2))
 
 	// List sessions
-	sessions, err := backend.ListSessions()
+	sessions, err := backend.List()
 	require.NoError(t, err)
 	assert.Len(t, sessions, 2)
 
@@ -263,7 +263,7 @@ func TestBackend_SearchSessions(t *testing.T) {
 		Timestamp: time.Now(),
 	})
 	session1.Tags = []string{"python", "programming"}
-	require.NoError(t, backend.SaveSession(session1))
+	require.NoError(t, backend.Create(session1))
 
 	session2 := backend.NewSession("JavaScript Guide")
 	session2.Conversation.AddMessage(domain.Message{
@@ -273,28 +273,28 @@ func TestBackend_SearchSessions(t *testing.T) {
 		Timestamp: time.Now(),
 	})
 	session2.Tags = []string{"javascript", "web"}
-	require.NoError(t, backend.SaveSession(session2))
+	require.NoError(t, backend.Create(session2))
 
 	// Search for Python
-	results, err := backend.SearchSessions("python")
+	results, err := backend.Search("python")
 	require.NoError(t, err)
 	assert.Len(t, results, 1)
 	assert.Equal(t, session1.ID, results[0].Session.ID)
 	assert.True(t, len(results[0].Matches) > 0)
 
 	// Search for programming
-	results, err = backend.SearchSessions("programming")
+	results, err = backend.Search("programming")
 	require.NoError(t, err)
 	assert.Len(t, results, 1)
 
 	// Search for something in messages
-	results, err = backend.SearchSessions("comprehensions")
+	results, err = backend.Search("comprehensions")
 	require.NoError(t, err)
 	assert.Len(t, results, 1)
 	assert.Equal(t, session1.ID, results[0].Session.ID)
 
 	// Search for non-existent term
-	results, err = backend.SearchSessions("nonexistent")
+	results, err = backend.Search("nonexistent")
 	require.NoError(t, err)
 	assert.Len(t, results, 0)
 }
@@ -311,7 +311,7 @@ func TestBackend_ExportSession(t *testing.T) {
 		Content:   "Test message",
 		Timestamp: time.Now(),
 	})
-	require.NoError(t, backend.SaveSession(session))
+	require.NoError(t, backend.Create(session))
 
 	// Test JSON export
 	var jsonBuf bytes.Buffer
@@ -337,7 +337,7 @@ func TestBackend_ConcurrentAccess(t *testing.T) {
 
 	// Create a session
 	session := backend.NewSession("Concurrent Test")
-	require.NoError(t, backend.SaveSession(session))
+	require.NoError(t, backend.Create(session))
 
 	// Simulate concurrent access
 	done := make(chan bool, 3)
@@ -345,7 +345,7 @@ func TestBackend_ConcurrentAccess(t *testing.T) {
 	// Reader 1
 	go func() {
 		for i := 0; i < 5; i++ {
-			_, err := backend.LoadSession(session.ID)
+			_, err := backend.Get(session.ID)
 			assert.NoError(t, err)
 			time.Sleep(5 * time.Millisecond)
 		}
@@ -355,7 +355,7 @@ func TestBackend_ConcurrentAccess(t *testing.T) {
 	// Reader 2
 	go func() {
 		for i := 0; i < 5; i++ {
-			_, err := backend.ListSessions()
+			_, err := backend.List()
 			assert.NoError(t, err)
 			time.Sleep(5 * time.Millisecond)
 		}
@@ -371,7 +371,7 @@ func TestBackend_ConcurrentAccess(t *testing.T) {
 				Content:   fmt.Sprintf("Message %d", i),
 				Timestamp: time.Now(),
 			})
-			assert.NoError(t, backend.SaveSession(session))
+			assert.NoError(t, backend.Update(session))
 			time.Sleep(5 * time.Millisecond)
 		}
 		done <- true
