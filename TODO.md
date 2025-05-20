@@ -2,47 +2,19 @@
 
 This document provides a detailed, phased implementation plan for the Magellai project following the library-first design approach.
 
-**Current Status**: Phase 4.9.11 - Code abstraction and redundancy checks (Import and Dependency Cleanup)
+**Current Status**: Phase 4.10 - Manual test suite for cmd line (cli and repl both)
 
 ## Phase 4: Advanced REPL Features (Week 4)
 
 ### 4.8 Configuration - defaults, sample etc. ✅ (Completed)
 
-### 4.9 Code abstraction and redundancy checks 🚧 (In Progress)
+### 4.9 Code abstraction and redundancy checks ✅ (Completed)
 
-#### 4.9.1 Type Consolidation and Abstraction Issues ✅ (Completed)
-
-#### 4.9.2 Duplicate Conversion Functions ✅ (Completed)
-
-#### 4.9.3 Package Organization and Structure ✅ (Completed)
-
-#### 4.9.4 Error Handling Consistency ✅ (Completed)
-
-#### 4.9.5 Missing Tests ✅ (Completed) 
-
-#### 4.9.6 Fix Integration Test Failures ✅ (Completed)
-
-#### 4.9.7 Test Organization and Helpers ✅ (Completed)
-
-#### 4.9.8 Logging and Instrumentation ✅ (Completed)
-
-#### 4.9.9 Function and Method Cleanup ✅ (Completed)
-
-#### 4.9.10 Interface and Contract Consistency ✅ (Completed)
-
-#### 4.9.11 Import and Dependency Cleanup *(REVISIT)*
-  - [ ] Remove circular dependencies:
-    - [ ] Audit import graphs for circular references
-    - [ ] Refactor to eliminate circular imports
-  - [ ] Minimize cross-package dependencies:
-    - [ ] Review imports between packages
-    - [ ] Consider dependency injection patterns
-    - [ ] Document intentional coupling points
-
-### 4.10 Manual test suite for cmd line (cli and repl both)
-  - [ ] Create a set of integration tests using command line directly for cli and repl
+### 4.10 Manual test suite for cmd line (cli and repl both)🚧 (In Progress)
+  - [ ] Create a set of integration tests using command line directly for cli and repl 
     - [ ] assume environment variables and configs - use a test.config.yaml file
   - [ ] Clarify usage scenarios in case of ambiguity
+  - [ ] run those tests (both filesystem based and sqlite based)
   - [ ] Identify error cases and add to todo
   - [ ] Fix these cases - remember no need for backward compatibility
 

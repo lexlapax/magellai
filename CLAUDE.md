@@ -10,7 +10,7 @@ Magellai is a command-line interface (CLI) tool and REPL that interacts with Lar
 
 The project follows a library-first design where the core intelligence (LLM providers, prompt orchestration, tools, agents, workflows) is implemented as a reusable Go module.
 
-## Current Status (Phase 4.9.11 - Import and Dependency Cleanup in Progress)
+## Current Status (Phase 4.10 - Manual test suite for cmd line)
 
 ✅ Phase 1: Core Foundation - Complete
 ✅ Phase 2: Configuration and Command Foundation - Complete  
@@ -62,7 +62,7 @@ The project follows a library-first design where the core intelligence (LLM prov
     ✅ with no configuration file, use a default configuration
     ✅ add a flag or command to create an example configuration  
     ✅ show config should show all current runtime configurations
-  🚧 Phase 4.9: Code abstraction and redundancy checks - In Progress
+  ✅ Phase 4.9: Code abstraction and redundancy checks - Complete
     ✅ Phase 4.9.1: Type Consolidation - Complete
       • Resolved duplicate Message type definitions across packages
       • Updated pkg/llm to use domain.Message throughout
@@ -78,7 +78,6 @@ The project follows a library-first design where the core intelligence (LLM prov
       • Updated filesystem backend to use domain types directly
       • Removed unnecessary conversion layers
       • Improved JSON serialization efficiency
-      • All tests passing after cleanup
     ✅ Phase 4.9.3: Package Organization and Structure - Complete
       • Created test package for integration tests
       • Added build tags to all integration test files
@@ -135,9 +134,16 @@ The project follows a library-first design where the core intelligence (LLM prov
       • Fixed inconsistencies between storage.Backend and domain.SessionRepository
       • Updated implementations to match standardized interfaces
       • All tests passing with improved interface consistency
-    🚧 Phase 4.9.11: Import and Dependency Cleanup - In Progress (REVISIT)
-  🔲 Phase 4.10: Documentation and architecture updates - Pending (REVISIT)
-  🔲 Phase 4.11: Final validation and rollout - Pending (REVISIT)
+    ✅ Phase 4.9.11: Import and Dependency Cleanup - Complete
+      • Created pkg/replapi package to break circular dependencies
+      • Implemented dependency injection pattern for REPL instantiation
+      • Refactored pkg/command/core and pkg/repl to eliminate import cycle
+      • Created documentation for dependency management strategies
+      • Documented intentional coupling points in the codebase
+      • Improved package boundary definition
+  🚧 Phase 4.10: Manual test suite for cmd line - In Progress
+  🔲 Phase 4.11: Documentation and architecture updates - Pending (REVISIT)
+  🔲 Phase 4.12: Final validation and rollout - Pending (REVISIT)
 
 ## Development Conventions
 
@@ -147,5 +153,3 @@ The project follows a library-first design where the core intelligence (LLM prov
 ### Development Memories
 
 - I'll do git actions myself
-
-### Rest of the file remains the same... (previous content continues)

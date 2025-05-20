@@ -10,7 +10,7 @@ import (
 
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
-	"github.com/lexlapax/magellai/pkg/repl"
+	"github.com/lexlapax/magellai/pkg/replapi"
 )
 
 // ChatCommand represents the chat command
@@ -72,7 +72,7 @@ func (c *ChatCommand) Execute(ctx context.Context, exec *command.ExecutionContex
 	attachments := exec.Flags.GetStringSlice("attach")
 
 	// Create REPL options
-	opts := &repl.REPLOptions{
+	opts := &replapi.REPLOptions{
 		Config:    &replConfigAdapter{cfg},
 		SessionID: sessionID,
 		Model:     model,
@@ -80,8 +80,8 @@ func (c *ChatCommand) Execute(ctx context.Context, exec *command.ExecutionContex
 		Reader:    os.Stdin,
 	}
 
-	// Create and run REPL
-	replInstance, err := repl.NewREPL(opts)
+	// Create and run REPL using factory
+	replInstance, err := replapi.NewREPL(opts)
 	if err != nil {
 		return fmt.Errorf("failed to create REPL: %w", err)
 	}
@@ -99,10 +99,13 @@ func (c *ChatCommand) Validate() error {
 	return nil
 }
 
-// replConfigAdapter adapts our config to the REPL's ConfigInterface
+// replConfigAdapter adapts our config to the replapi.ConfigInterface
 type replConfigAdapter struct {
 	cfg *config.Config
 }
+
+// Ensure replConfigAdapter implements replapi.ConfigInterface
+var _ replapi.ConfigInterface = (*replConfigAdapter)(nil)
 
 func (a *replConfigAdapter) GetString(key string) string {
 	return a.cfg.GetString(key)
