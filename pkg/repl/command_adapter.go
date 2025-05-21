@@ -9,6 +9,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
 )
 
@@ -482,7 +483,8 @@ func RegisterREPLCommands(repl *REPL, registry *command.Registry) error {
 	for _, cmd := range commands {
 		adapter := NewREPLCommandAdapter(repl, cmd.meta, cmd.handler)
 		if err := registry.Register(adapter); err != nil {
-			return fmt.Errorf("failed to register command %s: %w", cmd.meta.Name, err)
+			// Log the error but continue with other commands
+			logging.LogError(err, "Command already registered", "name", cmd.meta.Name)
 		}
 	}
 

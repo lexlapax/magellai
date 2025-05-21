@@ -187,7 +187,7 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	}
 
 	// Override model if specified
-	modelStr := cfg.GetString("model")
+	modelStr := cfg.GetString("model.default")
 	if opts.Model != "" {
 		logging.LogDebug("Overriding model from options", "model", opts.Model)
 		modelStr = opts.Model
@@ -204,9 +204,14 @@ func NewREPL(opts *REPLOptions) (*REPL, error) {
 	modelName := parts[1]
 	logging.LogDebug("Parsed model configuration", "provider", providerType, "model", modelName)
 
+	// Get API key from config for the provider
+	apiKeyPath := fmt.Sprintf("provider.%s.api_key", providerType)
+	apiKey := cfg.GetString(apiKeyPath)
+	logging.LogDebug("Getting API key from config", "provider", providerType, "keyPath", apiKeyPath)
+
 	// Create provider
 	logging.LogInfo("Creating LLM provider", "provider", providerType, "model", modelName)
-	provider, err := llm.NewProvider(providerType, modelName)
+	provider, err := llm.NewProvider(providerType, modelName, apiKey)
 	if err != nil {
 		logging.LogError(err, "Failed to create provider", "provider", providerType, "model", modelName)
 		return nil, fmt.Errorf("failed to create provider: %w", err)

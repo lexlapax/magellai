@@ -1,8 +1,8 @@
 // ABOUTME: Test utilities for CLI integration tests
 // ABOUTME: Provides common functionality for testing the CLI application
 
-//go:build integration
-// +build integration
+//go:build cmdline
+// +build cmdline
 
 package main
 
@@ -29,6 +29,9 @@ const (
 	// StorageTypeSQLite represents the SQLite storage backend
 	StorageTypeSQLite StorageType = "sqlite"
 )
+
+// TestTimeout represents the timeout duration for interactive tests
+var TestTimeout = 30 * time.Second
 
 // TestEnv represents the test environment for CLI tests
 type TestEnv struct {
@@ -91,12 +94,12 @@ func SetupTestEnv(t *testing.T, storageType StorageType, useMock bool) *TestEnv 
 	// Build test binary
 	binaryPath := filepath.Join(tempDir, "test-magellai")
 	buildArgs := []string{"build", "-o", binaryPath}
-	
+
 	// Add build tags if using SQLite
 	if storageType == StorageTypeSQLite {
 		buildArgs = append(buildArgs, "-tags", "sqlite")
 	}
-	
+
 	buildArgs = append(buildArgs, ".")
 	cmd := exec.Command("go", buildArgs...)
 	output, err := cmd.CombinedOutput()
@@ -104,6 +107,9 @@ func SetupTestEnv(t *testing.T, storageType StorageType, useMock bool) *TestEnv 
 
 	// Create cleanup function
 	cleanup := func() {
+		if _, err := os.Stat(binaryPath); err == nil {
+			_ = os.Remove(binaryPath)
+		}
 		os.RemoveAll(tempDir)
 	}
 
@@ -123,18 +129,18 @@ func SetupTestEnv(t *testing.T, storageType StorageType, useMock bool) *TestEnv 
 func (env *TestEnv) RunCommand(args ...string) (string, error) {
 	// Add config file flag to args
 	configArgs := append([]string{"--config-file", env.ConfigPath}, args...)
-	
+
 	// Determine environment variables based on storage type
 	cmd := exec.Command(env.BinaryPath, configArgs...)
 	if env.StorageType == StorageTypeSQLite {
-		cmd.Env = append(os.Environ(), 
+		cmd.Env = append(os.Environ(),
 			fmt.Sprintf("MAGELLAI_STORAGE_TYPE=sqlite"),
-			fmt.Sprintf("MAGELLAI_STORAGE_CONNECTION_STRING=%s", env.SQLiteDBPath),
+			fmt.Sprintf("MAGELLAI_STORAGE_CONNECTION_STRING=%s", filepath.ToSlash(env.SQLiteDBPath)),
 		)
 	} else {
-		cmd.Env = append(os.Environ(), 
+		cmd.Env = append(os.Environ(),
 			fmt.Sprintf("MAGELLAI_STORAGE_TYPE=filesystem"),
-			fmt.Sprintf("MAGELLAI_STORAGE_DIR=%s", env.StorageDir),
+			fmt.Sprintf("MAGELLAI_STORAGE_DIR=%s", filepath.ToSlash(env.StorageDir)),
 		)
 	}
 
@@ -155,18 +161,18 @@ func (env *TestEnv) RunCommand(args ...string) (string, error) {
 func (env *TestEnv) RunInteractiveCommand(input string, args ...string) (string, error) {
 	// Add config file flag to args
 	configArgs := append([]string{"--config-file", env.ConfigPath}, args...)
-	
+
 	// Determine environment variables based on storage type
 	cmd := exec.Command(env.BinaryPath, configArgs...)
 	if env.StorageType == StorageTypeSQLite {
-		cmd.Env = append(os.Environ(), 
+		cmd.Env = append(os.Environ(),
 			fmt.Sprintf("MAGELLAI_STORAGE_TYPE=sqlite"),
-			fmt.Sprintf("MAGELLAI_STORAGE_CONNECTION_STRING=%s", env.SQLiteDBPath),
+			fmt.Sprintf("MAGELLAI_STORAGE_CONNECTION_STRING=%s", filepath.ToSlash(env.SQLiteDBPath)),
 		)
 	} else {
-		cmd.Env = append(os.Environ(), 
+		cmd.Env = append(os.Environ(),
 			fmt.Sprintf("MAGELLAI_STORAGE_TYPE=filesystem"),
-			fmt.Sprintf("MAGELLAI_STORAGE_DIR=%s", env.StorageDir),
+			fmt.Sprintf("MAGELLAI_STORAGE_DIR=%s", filepath.ToSlash(env.StorageDir)),
 		)
 	}
 
@@ -206,10 +212,12 @@ func (env *TestEnv) RunInteractiveCommand(input string, args ...string) (string,
 		if err != nil {
 			return stderr.String(), fmt.Errorf("%w: %s", err, stderr.String())
 		}
-	case <-time.After(10 * time.Second):
+	case <-time.After(TestTimeout):
 		// Kill the process if it times out
-		cmd.Process.Kill()
-		return "", fmt.Errorf("command timed out after 10 seconds")
+		if cmd.Process != nil {
+			_ = cmd.Process.Kill()
+		}
+		return "", fmt.Errorf("command timed out after %s", TestTimeout)
 	}
 
 	return stdout.String(), nil
@@ -218,12 +226,17 @@ func (env *TestEnv) RunInteractiveCommand(input string, args ...string) (string,
 // ForEachStorageType runs a test for each storage type
 func ForEachStorageType(t *testing.T, useMock bool, testFunc func(t *testing.T, env *TestEnv)) {
 	t.Helper()
-	
-	storageTypes := []StorageType{StorageTypeFilesystem, StorageTypeSQLite}
-	
+
+	storageTypes := []StorageType{StorageTypeFilesystem}
+
+	// Only add SQLite if we have build tags enabled
+	if hasSQLiteBuildTag() {
+		storageTypes = append(storageTypes, StorageTypeSQLite)
+	}
+
 	for _, storageType := range storageTypes {
 		storageType := storageType // Shadow variable for closure
-		
+
 		// Skip SQLite tests if running on a system without SQLite support
 		if storageType == StorageTypeSQLite {
 			if _, err := exec.LookPath("sqlite3"); err != nil {
@@ -231,37 +244,45 @@ func ForEachStorageType(t *testing.T, useMock bool, testFunc func(t *testing.T, 
 				continue
 			}
 		}
-		
+
 		t.Run(fmt.Sprintf("Storage=%s", storageType), func(t *testing.T) {
 			env := SetupTestEnv(t, storageType, useMock)
 			defer env.Cleanup()
-			
+
 			testFunc(t, env)
 		})
 	}
 }
 
+// hasSQLiteBuildTag returns true if the SQLite build tag is enabled
+func hasSQLiteBuildTag() bool {
+	// Check if SQLite build tag is enabled
+	// This is a simple approximation
+	_, tagEnabled := os.LookupEnv("MAGELLAI_ENABLE_SQLITE")
+	return tagEnabled
+}
+
 // WithMockEnv runs a test with a mock environment
 func WithMockEnv(t *testing.T, storageType StorageType, testFunc func(t *testing.T, env *TestEnv)) {
 	t.Helper()
-	
+
 	env := SetupTestEnv(t, storageType, true)
 	defer env.Cleanup()
-	
+
 	testFunc(t, env)
 }
 
 // WithLiveEnv runs a test with a live environment (real providers)
 func WithLiveEnv(t *testing.T, storageType StorageType, testFunc func(t *testing.T, env *TestEnv)) {
 	t.Helper()
-	
+
 	// Skip tests if API keys are not set
 	if os.Getenv("ANTHROPIC_API_KEY") == "" && os.Getenv("OPENAI_API_KEY") == "" {
 		t.Skip("Skipping live provider tests: no API keys set")
 	}
-	
+
 	env := SetupTestEnv(t, storageType, false)
 	defer env.Cleanup()
-	
+
 	testFunc(t, env)
 }

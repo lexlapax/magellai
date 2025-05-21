@@ -110,12 +110,21 @@ func NewProvider(providerType, model string, apiKey ...string) (Provider, error)
 	key := ""
 	if len(apiKey) > 0 {
 		key = apiKey[0]
-	} else {
-		key = getAPIKeyFromEnv(providerType)
 	}
 
+	// If key is empty, try to get it from environment variables
+	if key == "" {
+		key = getAPIKeyFromEnv(providerType)
+		if key != "" {
+			logging.LogInfo("Using API key from environment variable", "provider", providerType)
+		}
+	}
+
+	// For non-mock providers, verify that we have an API key
 	if key == "" && providerType != ProviderMock {
-		return nil, fmt.Errorf("API key required for provider %s", providerType)
+		envVarName := getEnvVarNameForProvider(providerType)
+		return nil, fmt.Errorf("API key required for provider %s. Set %s environment variable or provide it in configuration",
+			providerType, envVarName)
 	}
 
 	// Create underlying go-llms provider
@@ -279,6 +288,20 @@ func getAPIKeyFromEnv(provider string) string {
 		return os.Getenv("GEMINI_API_KEY")
 	default:
 		return ""
+	}
+}
+
+// getEnvVarNameForProvider returns the environment variable name for a provider
+func getEnvVarNameForProvider(provider string) string {
+	switch provider {
+	case ProviderOpenAI:
+		return "OPENAI_API_KEY"
+	case ProviderAnthropic:
+		return "ANTHROPIC_API_KEY"
+	case ProviderGemini:
+		return "GEMINI_API_KEY"
+	default:
+		return "API_KEY"
 	}
 }
 

@@ -1,8 +1,8 @@
 // ABOUTME: Integration test for config show command
 // ABOUTME: Verifies CLI displays all runtime configurations
 
-//go:build integration
-// +build integration
+//go:build cmdline
+// +build cmdline
 
 package main
 

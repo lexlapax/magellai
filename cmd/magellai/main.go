@@ -16,6 +16,8 @@ import (
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/command/core"
 	"github.com/lexlapax/magellai/pkg/config"
+	// Import package with side effects to ensure REPL factory registration
+	_ "github.com/lexlapax/magellai/pkg/repl"
 )
 
 // Version information (set during build)

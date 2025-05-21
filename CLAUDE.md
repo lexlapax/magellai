@@ -151,6 +151,9 @@ The project follows a library-first design where the core intelligence (LLM prov
     ✅ Documented potential issues and improvements in test_issues.md
   ✅ Phase 4.11: Documentation and architecture updates - Complete
   🚧 Phase 4.12: Final validation and rollout - In Progress
+    ✅ API_KEYS - Read API keys from environment variables when no config file is present
+    ✅ Automatically select default provider based on available API keys
+    ✅ Improved error handling for missing API keys
 
 ## Development Conventions
 

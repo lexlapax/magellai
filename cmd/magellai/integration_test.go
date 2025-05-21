@@ -1,8 +1,8 @@
 // ABOUTME: Integration tests for the main CLI application
 // ABOUTME: Tests actual command execution and behavior
 
-//go:build integration
-// +build integration
+//go:build cmdline
+// +build cmdline
 
 package main
 

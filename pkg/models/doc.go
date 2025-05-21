@@ -24,20 +24,21 @@ The models inventory contains information such as:
   - Deprecation status
 
 Usage:
-    // Load models from the default location
-    modelRegistry, err := models.LoadModels("")
-    if err != nil {
-        // Handle error
-    }
 
-    // Find models by provider
-    anthropicModels := modelRegistry.GetModelsByProvider("anthropic")
+	// Load models from the default location
+	modelRegistry, err := models.LoadModels("")
+	if err != nil {
+	    // Handle error
+	}
 
-    // Find models by capability
-    streamingModels := modelRegistry.GetModelsByCapability("streaming")
+	// Find models by provider
+	anthropicModels := modelRegistry.GetModelsByProvider("anthropic")
 
-    // Get a specific model
-    model, found := modelRegistry.GetModel("claude-3-opus-20240229")
+	// Find models by capability
+	streamingModels := modelRegistry.GetModelsByCapability("streaming")
+
+	// Get a specific model
+	model, found := modelRegistry.GetModel("claude-3-opus-20240229")
 
 The package ensures that the application has current information about available
 models and their capabilities for making informed provider and model selections.

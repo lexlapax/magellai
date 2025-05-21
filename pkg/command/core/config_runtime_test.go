@@ -38,7 +38,7 @@ func TestConfigShowRuntimeValues(t *testing.T) {
 			},
 			expectedValues: []string{
 				"log.",
-				"logging.",
+				// "logging.", // The config now uses "log" instead of "logging" as the prefix
 				"provider.",
 				"default",
 				"openai",

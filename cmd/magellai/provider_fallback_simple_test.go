@@ -1,6 +1,9 @@
 // ABOUTME: Simple test to verify provider fallback mechanism works
 // ABOUTME: Basic demonstration that the system can handle provider failures
 
+//go:build integration
+// +build integration
+
 package main
 
 import (

@@ -1,6 +1,9 @@
 // ABOUTME: Integration tests for end-to-end session branching and merging
 // ABOUTME: Tests the complete flow of session branching and merging operations
 
+//go:build integration
+// +build integration
+
 package main
 
 import (
@@ -25,7 +28,7 @@ func TestSessionBranchingAndMerging_Integration(t *testing.T) {
 	// Create a temporary directory for test data
 	tempDir, err := os.MkdirTemp("", "magellai-test-*")
 	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Configure the test environment
 	configPath := filepath.Join(tempDir, "config.yaml")

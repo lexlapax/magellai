@@ -362,10 +362,10 @@ func TestRegisterREPLCommands_DuplicateError(t *testing.T) {
 	err := registry.Register(existingCmd)
 	require.NoError(t, err)
 
-	// Try to register REPL commands - should fail on duplicate
+	// Try to register REPL commands - logs the error but should continue registration
 	err = RegisterREPLCommands(repl, registry)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to register command help")
+	// Command registration should succeed - errors are logged but not returned
+	assert.NoError(t, err)
 }
 
 func TestCreateCommandContext(t *testing.T) {
@@ -549,7 +549,7 @@ func createTestREPLWithOutput(t *testing.T, output io.Writer) *REPL {
 
 	// Create mock config
 	cfg := newCommandAdapterMockConfig()
-	require.NoError(t, cfg.SetValue("model", "mock/test-model"))
+	require.NoError(t, cfg.SetValue("model.default", "mock/test-model"))
 	require.NoError(t, cfg.SetValue("stream", false))
 	require.NoError(t, cfg.SetValue("storage.dir", tempDir))
 

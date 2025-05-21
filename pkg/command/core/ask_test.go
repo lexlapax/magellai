@@ -23,8 +23,13 @@ func TestAskCommand(t *testing.T) {
 	}
 
 	cfg := config.Manager
-	if err := cfg.SetValue("model", "mock/test-model"); err != nil {
-		t.Fatalf("Failed to set model: %v", err)
+	if err := cfg.SetValue("model.default", "mock/test-model"); err != nil {
+		t.Fatalf("Failed to set model.default: %v", err)
+	}
+
+	// Set a mock API key for the mock provider
+	if err := cfg.SetValue("provider.mock.api_key", "mock-api-key"); err != nil {
+		t.Fatalf("Failed to set provider.mock.api_key: %v", err)
 	}
 	if err := cfg.SetValue("defaults.system_prompt", "You are a helpful assistant"); err != nil {
 		t.Fatalf("Failed to set system prompt: %v", err)
@@ -202,8 +207,13 @@ func TestAskCommandStreaming(t *testing.T) {
 	}
 
 	cfg := config.Manager
-	if err := cfg.SetValue("model", "mock/test-model"); err != nil {
-		t.Fatalf("Failed to set model: %v", err)
+	if err := cfg.SetValue("model.default", "mock/test-model"); err != nil {
+		t.Fatalf("Failed to set model.default: %v", err)
+	}
+
+	// Set a mock API key for the mock provider
+	if err := cfg.SetValue("provider.mock.api_key", "mock-api-key"); err != nil {
+		t.Fatalf("Failed to set provider.mock.api_key: %v", err)
 	}
 
 	cmd := NewAskCommand(cfg)
@@ -260,6 +270,75 @@ func TestAskCommandStreaming(t *testing.T) {
 	})
 }
 
+func TestAskCommandAPIKeyResolution(t *testing.T) {
+	// Initialize config
+	if err := config.Init(); err != nil {
+		t.Fatalf("Failed to initialize config: %v", err)
+	}
+
+	cfg := config.Manager
+
+	// Test with different providers
+	providers := []string{"openai", "anthropic", "gemini"}
+
+	for _, providerName := range providers {
+		t.Run(providerName+" provider", func(t *testing.T) {
+			// Setup config for this provider
+			modelName := "test-model"
+			if providerName == "openai" {
+				modelName = "gpt-4"
+			} else if providerName == "anthropic" {
+				modelName = "claude-3"
+			} else if providerName == "gemini" {
+				modelName = "gemini-pro"
+			}
+
+			// Configure the model and API key
+			fullModelName := providerName + "/" + modelName
+			apiKey := "test-api-key-for-" + providerName
+
+			if err := cfg.SetValue("model.default", fullModelName); err != nil {
+				t.Fatalf("Failed to set model.default: %v", err)
+			}
+
+			apiKeyPath := "provider." + providerName + ".api_key"
+			if err := cfg.SetValue(apiKeyPath, apiKey); err != nil {
+				t.Fatalf("Failed to set %s: %v", apiKeyPath, err)
+			}
+
+			// Create command instance that will use our config
+			cmd := NewAskCommand(cfg)
+
+			// Create a context that will trap all calls to NewProvider
+			ctx := context.Background()
+			var stdout, stderr bytes.Buffer
+
+			exec := &command.ExecutionContext{
+				Context: ctx,
+				Args:    []string{"Test with " + providerName},
+				Flags:   command.NewFlags(nil),
+				Stdout:  &stdout,
+				Stderr:  &stderr,
+				Config:  cfg,
+			}
+
+			// Execute should fail with an error about provider not being found
+			// (since we're providing a fake API key), but we should be able to
+			// verify it's trying to use the right provider and API key
+			err := cmd.Execute(ctx, exec)
+
+			// Should fail since we're using fake API keys and models
+			require.Error(t, err)
+
+			// Error should mention the right provider
+			require.Contains(t, err.Error(), providerName)
+
+			// API key should be visible in the error or test environment
+			// but we can't easily assert this without mocking the llm.NewProvider function
+		})
+	}
+}
+
 func TestAskCommandAttachments(t *testing.T) {
 	// Initialize config
 	if err := config.Init(); err != nil {
@@ -267,8 +346,13 @@ func TestAskCommandAttachments(t *testing.T) {
 	}
 
 	cfg := config.Manager
-	if err := cfg.SetValue("model", "mock/test-model"); err != nil {
-		t.Fatalf("Failed to set model: %v", err)
+	if err := cfg.SetValue("model.default", "mock/test-model"); err != nil {
+		t.Fatalf("Failed to set model.default: %v", err)
+	}
+
+	// Set a mock API key for the mock provider
+	if err := cfg.SetValue("provider.mock.api_key", "mock-api-key"); err != nil {
+		t.Fatalf("Failed to set provider.mock.api_key: %v", err)
 	}
 
 	cmd := NewAskCommand(cfg)

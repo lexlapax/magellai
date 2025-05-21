@@ -17,21 +17,22 @@ Key Components:
   - Error Handling: Standardized error types for all storage operations
 
 Usage:
-    // Create a storage backend from configuration
-    backend, err := storage.NewBackend(config)
-    if err != nil {
-        // Handle error
-    }
-    defer backend.Close()
 
-    // Store a session
-    err = backend.SaveSession(session)
+	// Create a storage backend from configuration
+	backend, err := storage.NewBackend(config)
+	if err != nil {
+	    // Handle error
+	}
+	defer backend.Close()
 
-    // Retrieve a session
-    session, err := backend.GetSession(sessionID)
+	// Store a session
+	err = backend.SaveSession(session)
 
-    // Search across sessions
-    results, err := backend.SearchSessions(query)
+	// Retrieve a session
+	session, err := backend.GetSession(sessionID)
+
+	// Search across sessions
+	results, err := backend.SearchSessions(query)
 
 The Backend interface is aligned with domain.SessionRepository to ensure
 proper domain separation while providing storage-specific functionality.

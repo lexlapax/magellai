@@ -1,8 +1,8 @@
 // ABOUTME: CLI integration tests for session management features
 // ABOUTME: Tests session storage, branching, and merging across storage backends
 
-//go:build integration
-// +build integration
+//go:build cmdline
+// +build cmdline
 
 package main
 
@@ -28,7 +28,7 @@ This is a test message
 		output, err := env.RunInteractiveCommand(input, "chat")
 		require.NoError(t, err)
 		assert.Contains(t, output, "Saved session")
-		
+
 		// Now load the session and verify messages are present
 		loadInput := `/session load basic-test-session
 /history
@@ -50,7 +50,7 @@ Message two
 /exit`
 		_, err := env.RunInteractiveCommand(input, "chat")
 		require.NoError(t, err)
-		
+
 		// Export to JSON
 		jsonPath := filepath.Join(env.TempDir, "export.json")
 		exportJsonInput := fmt.Sprintf(`/session load export-test-session
@@ -59,11 +59,11 @@ Message two
 		exportOutput, err := env.RunInteractiveCommand(exportJsonInput, "chat")
 		require.NoError(t, err)
 		assert.Contains(t, exportOutput, "Exported session")
-		
+
 		// Verify JSON file exists
 		_, err = os.Stat(jsonPath)
 		assert.NoError(t, err)
-		
+
 		// Export to Markdown
 		mdPath := filepath.Join(env.TempDir, "export.md")
 		exportMdInput := fmt.Sprintf(`/session load export-test-session
@@ -72,7 +72,7 @@ Message two
 		exportOutput, err = env.RunInteractiveCommand(exportMdInput, "chat")
 		require.NoError(t, err)
 		assert.Contains(t, exportOutput, "Exported session")
-		
+
 		// Verify Markdown file exists
 		_, err = os.Stat(mdPath)
 		assert.NoError(t, err)
@@ -89,7 +89,7 @@ Parent message two
 /exit`
 		_, err := env.RunInteractiveCommand(parentInput, "chat")
 		require.NoError(t, err)
-		
+
 		// Create a branch
 		branchInput := `/session load branching-parent
 /branch create branch1
@@ -99,7 +99,7 @@ Branch specific message
 		branchOutput, err := env.RunInteractiveCommand(branchInput, "chat")
 		require.NoError(t, err)
 		assert.Contains(t, branchOutput, "Created branch")
-		
+
 		// Create another branch
 		branch2Input := `/session load branching-parent
 /branch create branch2
@@ -109,7 +109,7 @@ Another branch message
 		branch2Output, err := env.RunInteractiveCommand(branch2Input, "chat")
 		require.NoError(t, err)
 		assert.Contains(t, branch2Output, "Created branch")
-		
+
 		// List branches from parent
 		listInput := `/session load branching-parent
 /branch list
@@ -118,7 +118,7 @@ Another branch message
 		require.NoError(t, err)
 		assert.Contains(t, listOutput, "branch1")
 		assert.Contains(t, listOutput, "branch2")
-		
+
 		// Verify branch tree
 		treeInput := `/session load branching-parent
 /branch tree
@@ -139,14 +139,14 @@ Another message for first session
 /exit`
 		_, err := env.RunInteractiveCommand(session1Input, "chat")
 		require.NoError(t, err)
-		
+
 		session2Input := `Second session message
 Another message for second session
 /session save merge-target
 /exit`
 		_, err = env.RunInteractiveCommand(session2Input, "chat")
 		require.NoError(t, err)
-		
+
 		// Test continuation merge
 		contMergeInput := `/session load merge-target
 /merge merge-source --type continuation
@@ -158,7 +158,7 @@ Another message for second session
 		// Both session contents should be visible in history
 		assert.Contains(t, contMergeOutput, "First session message")
 		assert.Contains(t, contMergeOutput, "Second session message")
-		
+
 		// Test merge with new branch
 		branchMergeInput := `/session load merge-target
 /merge merge-source --type rebase --create-branch merge-branch
@@ -182,7 +182,7 @@ This contains the %s for testing
 /exit`, uniquePhrase)
 		_, err := env.RunInteractiveCommand(searchInput, "chat")
 		require.NoError(t, err)
-		
+
 		// Search for the unique phrase
 		findInput := fmt.Sprintf(`/search "%s"
 /exit`, uniquePhrase)
@@ -198,14 +198,14 @@ func TestCLI_SessionAutoRecovery(t *testing.T) {
 	WithMockEnv(t, StorageTypeFilesystem, func(t *testing.T, env *TestEnv) {
 		// Start a session and force abnormal termination
 		// This is hard to test directly, so we'll verify the auto-save feature
-		
+
 		// Create a session with auto-save enabled
 		input := `This is a test message for auto-recovery
 /session info
 /exit`
 		output, err := env.RunInteractiveCommand(input, "chat")
 		require.NoError(t, err)
-		
+
 		// Get the session ID from the output
 		sessionID := ""
 		lines := strings.Split(output, "\n")
@@ -219,18 +219,18 @@ func TestCLI_SessionAutoRecovery(t *testing.T) {
 			}
 		}
 		require.NotEmpty(t, sessionID, "Should have found session ID in output")
-		
+
 		// Now start a new chat without explicitly loading a session
 		// It should recover the previous session if auto-recovery is enabled
 		recoveryInput := `/session info
 /exit`
 		recoveryOutput, err := env.RunInteractiveCommand(recoveryInput, "chat")
 		require.NoError(t, err)
-		
+
 		// May or may not recover based on auto-recovery settings
 		// Just check that it either shows a session ID or starts a new session
-		assert.True(t, strings.Contains(recoveryOutput, "ID:") || 
-			strings.Contains(recoveryOutput, "Starting new chat"), 
+		assert.True(t, strings.Contains(recoveryOutput, "ID:") ||
+			strings.Contains(recoveryOutput, "Starting new chat"),
 			"Should either recover or start new session")
 	})
 }
@@ -245,7 +245,7 @@ func TestCLI_SessionStorageEdgeCases(t *testing.T) {
 		// Should fail gracefully
 		assert.NoError(t, err)
 		assert.Contains(t, loadOutput, "not found") // Error message for session not found
-		
+
 		// Test saving with empty name
 		saveEmptyInput := `/session save ""
 /exit`
@@ -253,7 +253,7 @@ func TestCLI_SessionStorageEdgeCases(t *testing.T) {
 		// Should fail gracefully
 		assert.NoError(t, err)
 		assert.Contains(t, saveEmptyOutput, "error") // Some error about empty name
-		
+
 		// Test saving with invalid characters
 		saveInvalidInput := `/session save "invalid/chars"
 /exit`

@@ -25,18 +25,19 @@ The REPL implements several advanced features:
   - Output colorization
 
 Usage:
-    // Create a new REPL instance
-    repl, err := replapi.NewREPL(&replapi.REPLOptions{
-        Config: config,
-        Writer: os.Stdout,
-        Reader: os.Stdin,
-    })
-    if err != nil {
-        // Handle error
-    }
 
-    // Start the interactive loop
-    err = repl.Run()
+	// Create a new REPL instance
+	repl, err := replapi.NewREPL(&replapi.REPLOptions{
+	    Config: config,
+	    Writer: os.Stdout,
+	    Reader: os.Stdin,
+	})
+	if err != nil {
+	    // Handle error
+	}
+
+	// Start the interactive loop
+	err = repl.Run()
 
 The REPL is designed to be extensible through the command system while
 maintaining a clean separation from the core domain logic.

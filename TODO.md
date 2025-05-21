@@ -15,7 +15,10 @@ This document provides a detailed, phased implementation plan for the Magellai p
 ### 4.11 Documentation and architecture updates ✅ (Completed)
 
 ### 4.12 Cmd line and repl improvements (UI and others)
-- [ ]
+- [x] API_KEYS - if no config file, use environment variables to read API Keys and use default provider and model after coming up with running configuration
+- [ ] change `magellai config generate` to print out to stdout instead of writing to a file, 
+  - [ ] change help and documentation accordingly
+
 
 ### 4.13 Final validation and rollout 🚧 (In Progress)
 - [ ] Run full test suite

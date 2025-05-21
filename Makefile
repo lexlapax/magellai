@@ -1,6 +1,6 @@
 # ABOUTME: Makefile for building, testing, and managing the Magellai project
 # ABOUTME: Provides commands for building, testing, linting, and documentation
-.PHONY: all build test test-integration test-all test-race test-coverage test-sqlite clean clean-cache clean-testcache clean-modcache clean-all install fmt lint vet help docker-build docker-test release-build release docs
+.PHONY: all build test test-integration test-all test-race test-coverage test-sqlite clean clean-cache clean-testcache clean-modcache clean-all install fmt lint vet help docker-build docker-test release-build release docs test-cmdline
 
 # Build variables
 BINARY_NAME=magellai
@@ -52,15 +52,20 @@ test:
 	@echo "Running unit tests..."
 	$(GO_TEST) -short ./...
 
-## test-integration: Run integration tests only
+## test-integration: Run integration tests only (excluding command-line interface tests)
 test-integration:
-	@echo "Running integration tests..."
-	$(GO_TEST) -tags="integration sqlite" ./...
+	@echo "Running integration tests (excluding CLI tests)..."
+	$(GO_TEST) -tags="integration sqlite" ./... -count=1
 
-## test-all: Run all tests (unit and integration)
+## test-cmdline: Run command-line interface tests only
+test-cmdline:
+	@echo "Running command-line interface tests..."
+	$(GO_TEST) -tags="cmdline sqlite" ./cmd/magellai -count=1
+
+## test-all: Run all tests (unit, integration, and command-line)
 test-all:
 	@echo "Running all tests..."
-	$(GO_TEST) -tags="integration sqlite" ./...
+	$(GO_TEST) -tags="integration cmdline sqlite" ./... -count=1
 
 ## test-race: Run tests with race detection
 test-race:

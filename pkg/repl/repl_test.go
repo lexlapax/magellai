@@ -95,8 +95,8 @@ func (m *mockProvider) GetModelInfo() llm.ModelInfo {
 func setupTestConfig() *testConfig {
 	return &testConfig{
 		values: map[string]interface{}{
-			"model":  "mock/test-model",
-			"stream": false,
+			"model.default": "mock/test-model", // Use model.default to match the key expected in NewREPL
+			"stream":        false,
 		},
 	}
 }

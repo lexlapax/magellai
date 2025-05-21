@@ -1,5 +1,5 @@
 // ABOUTME: LLM provider management and adaptation layer
-// ABOUTME: Connects to LLM services and handles message processing 
+// ABOUTME: Connects to LLM services and handles message processing
 
 /*
 Package llm provides provider management and adaptation for large language models.
@@ -24,17 +24,18 @@ The package implements several reliability features:
   - Context window management to prevent token limit errors
 
 Usage:
-    // Create a provider from configuration
-    provider, err := llm.NewProvider(config)
-    if err != nil {
-        // Handle error
-    }
 
-    // Process a complete conversation
-    response, err := provider.ProcessMessages(ctx, messages)
+	// Create a provider from configuration
+	provider, err := llm.NewProvider(config)
+	if err != nil {
+	    // Handle error
+	}
 
-    // Stream a response
-    channel, err := provider.StreamResponse(ctx, messages)
+	// Process a complete conversation
+	response, err := provider.ProcessMessages(ctx, messages)
+
+	// Stream a response
+	channel, err := provider.StreamResponse(ctx, messages)
 
 The package is designed to be resilient to common LLM API issues while
 providing a clean interface aligned with the domain layer architecture.

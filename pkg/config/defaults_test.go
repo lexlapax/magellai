@@ -281,7 +281,7 @@ func TestGenerateExampleConfig(t *testing.T) {
 
 	// Test that comments are helpful
 	assert.Contains(t, example, "# Options:")
-	assert.Contains(t, example, "# Set via environment variable:")
+	assert.Contains(t, example, "API key can be left empty here if")
 }
 
 func TestGetConfigTemplate(t *testing.T) {

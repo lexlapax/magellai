@@ -1,6 +1,9 @@
 // ABOUTME: Integration tests for provider fallback scenarios
 // ABOUTME: Tests the behavior of the system when providers fail and fallback to alternates
 
+//go:build integration
+// +build integration
+
 package main
 
 import (

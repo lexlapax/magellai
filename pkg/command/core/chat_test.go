@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/lexlapax/magellai/pkg/command"
+	"github.com/lexlapax/magellai/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,6 +44,39 @@ func TestChatCommand(t *testing.T) {
 
 	// We can't easily test Execute since it creates a REPL and runs interactively
 	// This would require mocking the REPL or creating special test modes
+}
+
+// TestChatCommandAPIKeys verifies that the chat command correctly uses API keys from config
+func TestChatCommandAPIKeys(t *testing.T) {
+	// Initialize config
+	if err := config.Init(); err != nil {
+		t.Fatalf("Failed to initialize config: %v", err)
+	}
+
+	cfg := config.Manager
+
+	// Configure the model and API key
+	if err := cfg.SetValue("model.default", "mock/test-model"); err != nil {
+		t.Fatalf("Failed to set model.default: %v", err)
+	}
+
+	if err := cfg.SetValue("provider.mock.api_key", "mock-api-key"); err != nil {
+		t.Fatalf("Failed to set provider.mock.api_key: %v", err)
+	}
+
+	_ = NewChatCommand(cfg)
+
+	// We can't fully test the chat REPL execution, but we can verify
+	// the command implementation passes config properly to the REPL
+
+	// Check that the config adapter will return expected values
+	adapter := &replConfigAdapter{cfg}
+
+	modelName := adapter.GetString("model.default")
+	assert.Equal(t, "mock/test-model", modelName)
+
+	apiKey := adapter.GetString("provider.mock.api_key")
+	assert.Equal(t, "mock-api-key", apiKey)
 }
 
 // TestChatCommandIntegration would require a more sophisticated test setup

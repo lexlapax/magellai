@@ -8,7 +8,7 @@ log:
 
 # Provider configuration
 provider:
-  default: openai  # Default provider to use
+  default: gemini # Default provider to use
   
   # OpenAI configuration
   openai:

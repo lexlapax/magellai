@@ -25,20 +25,21 @@ The command system supports several advanced features:
   - Integration with both CLI and REPL environments
 
 Usage:
-    // Register a command
-    registry := command.NewRegistry()
-    registry.Register(myCommand)
 
-    // Execute a command
-    ctx := context.Background()
-    execCtx := &command.ExecutionContext{
-        Args:   []string{"--option", "value"},
-        Config: config,
-        Stdin:  os.Stdin,
-        Stdout: os.Stdout,
-        Stderr: os.Stderr,
-    }
-    err := registry.Execute(ctx, "command-name", execCtx)
+	// Register a command
+	registry := command.NewRegistry()
+	registry.Register(myCommand)
+
+	// Execute a command
+	ctx := context.Background()
+	execCtx := &command.ExecutionContext{
+	    Args:   []string{"--option", "value"},
+	    Config: config,
+	    Stdin:  os.Stdin,
+	    Stdout: os.Stdout,
+	    Stderr: os.Stderr,
+	}
+	err := registry.Execute(ctx, "command-name", execCtx)
 
 The package is designed to be extensible while providing a consistent
 interface for all command-driven interactions with the application.

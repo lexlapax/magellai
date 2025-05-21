@@ -1,8 +1,8 @@
-// ABOUTME: CLI integration tests for provider fallback functionality
-// ABOUTME: Tests behavior when primary providers fail and fallback is used
+// ABOUTME: Provider fallback test fixes for CLI integration tests
+// ABOUTME: Ensures proper testing of provider fallback functionality
 
-//go:build integration
-// +build integration
+//go:build cmdline
+// +build cmdline
 
 package main
 
@@ -33,7 +33,7 @@ func TestCLI_ProviderFallbackError(t *testing.T) {
 		// We have two potential outcomes:
 		// 1. If fallback works correctly, no error and we get a response
 		// 2. If no fallback configured for error profile, we get an error
-		
+
 		if err == nil {
 			// Fallback worked
 			assert.NotEmpty(t, output, "Response from fallback provider should not be empty")
@@ -87,7 +87,7 @@ func TestCLI_ProviderFallbackWithTemporaryFailure(t *testing.T) {
 		// Use mock-error provider that is set to always fail
 		// with another provider as fallback
 		output, err := env.RunCommand("ask", "--provider", "mock-error,mock-fallback", "Hello, what is your name?")
-		
+
 		// If the fallback mechanism works, we should get a response from the fallback provider
 		assert.NoError(t, err, "Should not error with fallback provider available")
 		assert.NotEmpty(t, output, "Response from fallback provider should not be empty")

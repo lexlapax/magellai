@@ -1,8 +1,8 @@
 // ABOUTME: CLI integration tests for the chat command and REPL functionality
 // ABOUTME: Tests interactive chat features, commands, and session management
 
-//go:build integration
-// +build integration
+//go:build cmdline
+// +build cmdline
 
 package main
 
@@ -63,7 +63,7 @@ func TestCLI_ChatWithSessionManagement(t *testing.T) {
 		assert.Contains(t, output, "Sessions:")
 		assert.Contains(t, output, "Saved session")
 		assert.Contains(t, output, "Session info")
-		
+
 		// Now try to load the saved session
 		loadInput := `/session load test-session
 Hello again
@@ -128,7 +128,7 @@ This is in the branch
 		assert.Contains(t, output, "Saved session")
 		assert.Contains(t, output, "Created branch")
 		assert.Contains(t, output, "Branch list")
-		
+
 		// Now switch back to main and verify
 		switchInput := `/session load main-session
 /session info
@@ -149,14 +149,14 @@ func TestCLI_ChatSessionMerging(t *testing.T) {
 /exit`
 		_, err := env.RunInteractiveCommand(setupInput, "chat")
 		require.NoError(t, err)
-		
+
 		// Create target session
 		targetInput := `Target session first message
 /session save target-session
 /exit`
 		_, err = env.RunInteractiveCommand(targetInput, "chat")
 		require.NoError(t, err)
-		
+
 		// Now merge source into target
 		mergeInput := `/session load target-session
 /merge source-session
@@ -181,9 +181,9 @@ func TestCLI_ChatNonInteractiveMode(t *testing.T) {
 /exit`
 		err := os.WriteFile(scriptPath, []byte(scriptContent), 0644)
 		require.NoError(t, err)
-		
+
 		// Run chat with input from script file
-		cmd := fmt.Sprintf("cat %s | %s --config-file %s chat", 
+		cmd := fmt.Sprintf("cat %s | %s --config-file %s chat",
 			scriptPath, env.BinaryPath, env.ConfigPath)
 		output, err := runChatBashCommand(cmd)
 		assert.NoError(t, err)
@@ -219,7 +219,7 @@ Another message with different content
 /exit`
 		_, err := env.RunInteractiveCommand(setupInput, "chat")
 		require.NoError(t, err)
-		
+
 		// Now search for the content
 		searchInput := `/search "unique phrase"
 /exit`

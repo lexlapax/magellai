@@ -97,7 +97,7 @@ func (c *AskCommand) Execute(ctx context.Context, exec *command.ExecutionContext
 	// Get model from flags or config
 	model := exec.Flags.GetString("model")
 	if model == "" {
-		model = c.config.GetString("model")
+		model = c.config.GetString("model.default")
 		if model == "" {
 			model = "openai/gpt-4o" // fallback default
 		}
@@ -106,8 +106,11 @@ func (c *AskCommand) Execute(ctx context.Context, exec *command.ExecutionContext
 	// Parse provider and model
 	providerName, modelName := llm.ParseModelString(model)
 
-	// Create the provider
-	provider, err := llm.NewProvider(providerName, modelName)
+	// Get API key from config for the provider
+	apiKey := c.config.GetString(fmt.Sprintf("provider.%s.api_key", providerName))
+
+	// Create the provider, passing the API key from config
+	provider, err := llm.NewProvider(providerName, modelName, apiKey)
 	if err != nil {
 		return fmt.Errorf("failed to create provider: %w", err)
 	}

@@ -21,15 +21,16 @@ The package handles the following platform conventions:
   - Windows: %APPDATA%\Magellai
 
 Usage:
-    // Get the configuration directory
-    configDir, err := configdir.GetConfigDir()
-    if err != nil {
-        // Handle error
-    }
 
-    // Ensure a directory exists
-    dataDir, err := configdir.GetDataDir()
-    err = configdir.EnsureDir(dataDir)
+	// Get the configuration directory
+	configDir, err := configdir.GetConfigDir()
+	if err != nil {
+	    // Handle error
+	}
+
+	// Ensure a directory exists
+	dataDir, err := configdir.GetDataDir()
+	err = configdir.EnsureDir(dataDir)
 
 This package is internal to the application and should not be imported by
 external code. Configuration paths should be accessed through the config package.

@@ -28,6 +28,11 @@ const (
 	UserConfigDir     = "~/.config/magellai"
 	UserConfigFile    = "config.yaml"
 	ProjectConfigFile = ".magellai.yaml"
+
+	// Provider-specific API key environment variables
+	EnvOpenAIKey    = "OPENAI_API_KEY"
+	EnvAnthropicKey = "ANTHROPIC_API_KEY"
+	EnvGeminiKey    = "GEMINI_API_KEY"
 )
 
 // Config represents the global configuration
@@ -126,6 +131,13 @@ func (c *Config) Load(cmdlineOverrides map[string]interface{}) error {
 	}), nil); err != nil {
 		logging.LogError(err, "Failed to load environment variables")
 		return fmt.Errorf("failed to load environment variables: %w", err)
+	}
+
+	// 5.1 Check and load direct provider API keys from environment variables
+	logging.LogDebug("Checking for direct provider API keys in environment variables")
+	if err := c.loadProviderAPIKeys(); err != nil {
+		logging.LogError(err, "Failed to load provider API keys from environment variables")
+		// Don't fail the overall configuration load if this fails
 	}
 
 	// 6. Load command-line overrides (if provided)
@@ -258,6 +270,74 @@ func expandPath(path string) string {
 		}
 	}
 	return path
+}
+
+// loadProviderAPIKeys checks for provider-specific API keys in environment variables
+// and loads them into the configuration if the corresponding keys in config are empty
+func (c *Config) loadProviderAPIKeys() error {
+	logging.LogDebug("Loading provider API keys from environment variables")
+
+	// Check for OpenAI API key
+	if openAIKey := os.Getenv(EnvOpenAIKey); openAIKey != "" {
+		logging.LogDebug("Found OpenAI API key in environment variables")
+		// Only set if not already configured
+		if !c.koanf.Exists("provider.openai.api_key") || c.koanf.String("provider.openai.api_key") == "" {
+			logging.LogInfo("Using OpenAI API key from environment variable")
+			if err := c.koanf.Set("provider.openai.api_key", openAIKey); err != nil {
+				return fmt.Errorf("failed to set OpenAI API key: %w", err)
+			}
+
+			// If no default provider is set, use OpenAI
+			if !c.koanf.Exists("provider.default") || c.koanf.String("provider.default") == "" {
+				logging.LogInfo("Setting default provider to OpenAI based on available API key")
+				if err := c.koanf.Set("provider.default", "openai"); err != nil {
+					return fmt.Errorf("failed to set default provider: %w", err)
+				}
+			}
+		}
+	}
+
+	// Check for Anthropic API key
+	if anthropicKey := os.Getenv(EnvAnthropicKey); anthropicKey != "" {
+		logging.LogDebug("Found Anthropic API key in environment variables")
+		// Only set if not already configured
+		if !c.koanf.Exists("provider.anthropic.api_key") || c.koanf.String("provider.anthropic.api_key") == "" {
+			logging.LogInfo("Using Anthropic API key from environment variable")
+			if err := c.koanf.Set("provider.anthropic.api_key", anthropicKey); err != nil {
+				return fmt.Errorf("failed to set Anthropic API key: %w", err)
+			}
+
+			// If no default provider is set, use Anthropic
+			if !c.koanf.Exists("provider.default") || c.koanf.String("provider.default") == "" {
+				logging.LogInfo("Setting default provider to Anthropic based on available API key")
+				if err := c.koanf.Set("provider.default", "anthropic"); err != nil {
+					return fmt.Errorf("failed to set default provider: %w", err)
+				}
+			}
+		}
+	}
+
+	// Check for Gemini API key
+	if geminiKey := os.Getenv(EnvGeminiKey); geminiKey != "" {
+		logging.LogDebug("Found Gemini API key in environment variables")
+		// Only set if not already configured
+		if !c.koanf.Exists("provider.gemini.api_key") || c.koanf.String("provider.gemini.api_key") == "" {
+			logging.LogInfo("Using Gemini API key from environment variable")
+			if err := c.koanf.Set("provider.gemini.api_key", geminiKey); err != nil {
+				return fmt.Errorf("failed to set Gemini API key: %w", err)
+			}
+
+			// If no default provider is set, use Gemini
+			if !c.koanf.Exists("provider.default") || c.koanf.String("provider.default") == "" {
+				logging.LogInfo("Setting default provider to Gemini based on available API key")
+				if err := c.koanf.Set("provider.default", "gemini"); err != nil {
+					return fmt.Errorf("failed to set default provider: %w", err)
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // Watch registers a callback function to be called when configuration changes

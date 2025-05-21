@@ -20,17 +20,18 @@ directly importing the repl package, establishing a clean dependency direction:
 command -> replapi <- repl
 
 Usage:
-    // Register a REPL factory
-    replapi.RegisterREPLFactory(func(opts *replapi.REPLOptions) (replapi.REPL, error) {
-        return myreplimplementation.NewREPL(opts)
-    })
 
-    // Create a new REPL using the registered factory
-    repl, err := replapi.NewREPL(&replapi.REPLOptions{
-        Config: config,
-        Writer: os.Stdout,
-        Reader: os.Stdin,
-    })
+	// Register a REPL factory
+	replapi.RegisterREPLFactory(func(opts *replapi.REPLOptions) (replapi.REPL, error) {
+	    return myreplimplementation.NewREPL(opts)
+	})
+
+	// Create a new REPL using the registered factory
+	repl, err := replapi.NewREPL(&replapi.REPLOptions{
+	    Config: config,
+	    Writer: os.Stdout,
+	    Reader: os.Stdin,
+	})
 
 This package is part of the domain-driven design pattern used in Magellai,
 facilitating proper separation of concerns and dependency management.

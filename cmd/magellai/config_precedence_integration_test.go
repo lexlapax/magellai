@@ -30,7 +30,7 @@ func TestConfigurationPrecedence_Integration(t *testing.T) {
 	// Create a temporary directory for test data
 	tempDir, err := os.MkdirTemp("", "magellai-test-*")
 	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	t.Run("EnvironmentOverridesFile", func(t *testing.T) {
 		// Test that environment variables override file configuration

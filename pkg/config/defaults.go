@@ -23,9 +23,12 @@ func GetCompleteDefaultConfig() map[string]interface{} {
 
 		// Provider configuration
 		"provider": map[string]interface{}{
+			// If no default is specified and API keys are found in environment variables,
+			// a default provider will be automatically selected based on available API keys
 			"default": "openai",
 			"openai": map[string]interface{}{
-				"api_key":       "", // User should set via env var OPENAI_API_KEY
+				// Will be automatically populated from OPENAI_API_KEY environment variable if not set here
+				"api_key":       "",
 				"base_url":      "https://api.openai.com/v1",
 				"organization":  "",
 				"api_version":   "",
@@ -34,7 +37,8 @@ func GetCompleteDefaultConfig() map[string]interface{} {
 				"max_retries":   3,
 			},
 			"anthropic": map[string]interface{}{
-				"api_key":       "", // User should set via env var ANTHROPIC_API_KEY
+				// Will be automatically populated from ANTHROPIC_API_KEY environment variable if not set here
+				"api_key":       "",
 				"base_url":      "https://api.anthropic.com",
 				"api_version":   "2023-06-01",
 				"default_model": "claude-3-5-haiku-latest",
@@ -42,7 +46,8 @@ func GetCompleteDefaultConfig() map[string]interface{} {
 				"max_retries":   3,
 			},
 			"gemini": map[string]interface{}{
-				"api_key":       "", // User should set via env var GEMINI_API_KEY
+				// Will be automatically populated from GEMINI_API_KEY environment variable if not set here
+				"api_key":       "",
 				"base_url":      "https://generativelanguage.googleapis.com/v1beta",
 				"project_id":    "",
 				"location":      "us-central1",
@@ -190,11 +195,15 @@ log:
 
 # Provider configuration
 provider:
-  default: openai  # Default provider to use
+  # Default provider to use
+  # If not specified and API keys are found in environment variables,
+  # a default provider will be automatically selected based on available keys
+  default: openai
   
   # OpenAI configuration
   openai:
-    api_key: ""    # Set via environment variable: OPENAI_API_KEY
+    # API key can be left empty here if OPENAI_API_KEY environment variable is set
+    api_key: ""
     base_url: "https://api.openai.com/v1"
     organization: ""
     api_version: ""
@@ -204,7 +213,8 @@ provider:
   
   # Anthropic (Claude) configuration
   anthropic:
-    api_key: ""    # Set via environment variable: ANTHROPIC_API_KEY
+    # API key can be left empty here if ANTHROPIC_API_KEY environment variable is set
+    api_key: ""
     base_url: "https://api.anthropic.com"
     api_version: "2023-06-01"
     default_model: "claude-3-5-haiku-latest"
@@ -213,7 +223,8 @@ provider:
   
   # Google Gemini configuration
   gemini:
-    api_key: ""    # Set via environment variable: GEMINI_API_KEY
+    # API key can be left empty here if GEMINI_API_KEY environment variable is set
+    api_key: ""
     base_url: "https://generativelanguage.googleapis.com/v1beta"
     project_id: ""
     location: "us-central1"

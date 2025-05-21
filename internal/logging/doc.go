@@ -21,17 +21,18 @@ The package supports several log levels:
   - Error: Error conditions that should be addressed
 
 Usage:
-    // Initialize logger with default settings
-    logger := logging.NewLogger()
 
-    // Set log level
-    logger.SetLevel(logging.LevelDebug)
+	// Initialize logger with default settings
+	logger := logging.NewLogger()
 
-    // Log with structured fields
-    logger.Info("User logged in", "user_id", userId, "source", "web")
+	// Set log level
+	logger.SetLevel(logging.LevelDebug)
 
-    // Log errors with context
-    logger.Error("Failed to connect to database", "error", err, "retry", true)
+	// Log with structured fields
+	logger.Info("User logged in", "user_id", userId, "source", "web")
+
+	// Log errors with context
+	logger.Error("Failed to connect to database", "error", err, "retry", true)
 
 This package is internal to the application and should not be imported by
 external code. Public packages should use their own logging abstraction.

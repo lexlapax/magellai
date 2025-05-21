@@ -18,9 +18,11 @@
     - [x] Included usage examples in package documentation
   - [x] Consolidated documentation structure
     - [x] Created user-guide/README.md with comprehensive user docs
-    - [x] Created technical/README.md with indexed technical docs
-    - [x] Created api/README.md with API documentation
-    - [x] Created examples/README.md with usage examples
-    - [x] Ensured cross-links between documentation sections
-  - [x] Updated README.md with architecture overview and doc links
-  - [x] Created documentation-update-summary.md with phase summary
+
+### 4.12 Cmd line and repl improvements (UI and others) 🚧 (In Progress)
+  - [x] API_KEYS - if no config file, use environment variables to read API Keys
+    - [x] Enhanced config.go to check provider-specific environment variables
+    - [x] Added automatic default provider selection based on available API keys
+    - [x] Updated defaults.go with documentation for environment variable usage
+    - [x] Improved error handling in provider.go for missing API keys
+    - [x] Added tests for API key resolution from different sources
