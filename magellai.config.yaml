@@ -105,8 +105,8 @@ plugin:
 profiles:
   fast:
     description: "Fast responses with lower quality"
-    provider: openai
-    model: gpt-4o
+    provider: gemini
+    model: gemini-2.0-flash-lite
     settings:
       temperature: 0.3
       max_tokens: 1024

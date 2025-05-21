@@ -803,6 +803,13 @@ func main() {
 		}
 	}
 	if cli.ProfileName != "" {
+		logger.Info("Setting profile from command-line flag", "profile", cli.ProfileName)
+		// Set current profile directly first
+		if err := cfg.SetValue("profile.current", cli.ProfileName); err != nil {
+			logger.Error("Failed to save current profile", "profile", cli.ProfileName, "error", err)
+			os.Exit(1)
+		}
+		// Then apply the profile settings
 		if err := cfg.SetProfile(cli.ProfileName); err != nil {
 			logger.Error("Failed to set profile", "profile", cli.ProfileName, "error", err)
 			os.Exit(1)

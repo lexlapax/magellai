@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/lexlapax/magellai/internal/logging"
 	"github.com/lexlapax/magellai/pkg/command"
 	"github.com/lexlapax/magellai/pkg/config"
 	"github.com/lexlapax/magellai/pkg/domain"
@@ -94,13 +95,49 @@ func (c *AskCommand) Execute(ctx context.Context, exec *command.ExecutionContext
 	// Combine args into the prompt
 	prompt := strings.Join(exec.Args, " ")
 
-	// Get model from flags or config
+	// Get model from flags, profile, or config
 	model := exec.Flags.GetString("model")
 	if model == "" {
-		model = c.config.GetString("model.default")
-		if model == "" {
-			model = "openai/gpt-4o" // fallback default
+		// Check current profile for model setting
+		profileName := c.config.GetString("profile.current")
+		logging.LogDebug("Current profile from config", "profile", profileName)
+		
+		if profileName != "" {
+			// Check if profile specifies a model
+			profileConfig, err := c.config.GetProfile(profileName)
+			if err != nil {
+				logging.LogWarn("Failed to get profile config", "profile", profileName, "error", err)
+			} else {
+				logging.LogDebug("Profile config", "profile", profileName, "provider", profileConfig.Provider, "model", profileConfig.Model)
+				
+				if profileConfig.Provider != "" {
+					// Construct model string from profile settings
+					if profileConfig.Model != "" {
+						model = fmt.Sprintf("%s/%s", profileConfig.Provider, profileConfig.Model)
+						logging.LogDebug("Using model from profile", "profile", profileName, "model", model)
+					} else {
+						// Only provider specified in profile, use default model for that provider
+						providerDefaultModel := c.config.GetString(fmt.Sprintf("provider.%s.default_model", profileConfig.Provider))
+						if providerDefaultModel != "" {
+							model = fmt.Sprintf("%s/%s", profileConfig.Provider, providerDefaultModel)
+							logging.LogDebug("Using provider from profile with default model", "profile", profileName, "model", model)
+						}
+					}
+				}
+			}
 		}
+		
+		// If still no model, fall back to global default
+		if model == "" {
+			model = c.config.GetString("model.default")
+			logging.LogDebug("Using global default model", "model", model)
+			if model == "" {
+				model = "openai/gpt-4o" // fallback default
+				logging.LogDebug("Using hardcoded fallback model", "model", model)
+			}
+		}
+	} else {
+		logging.LogDebug("Using model from command line flag", "model", model)
 	}
 
 	// Parse provider and model

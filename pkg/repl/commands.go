@@ -282,20 +282,58 @@ func (r *REPL) switchProfile(args []string) error {
 	}
 
 	profileName := args[0]
-	// Get the profile configuration
+	
+	// Set the profile in the config manager
+	if err := r.config.SetValue("profile.current", profileName); err != nil {
+		return fmt.Errorf("failed to set current profile: %w", err)
+	}
+	
+	// Try to get the profile configuration
 	profileKey := fmt.Sprintf("profiles.%s", profileName)
 	if !r.config.Exists(profileKey) {
 		return fmt.Errorf("profile not found: %s", profileName)
 	}
 
-	// Since we don't have Sub method, we'll need to handle profile differently
-	// This is a simplified version - in a real implementation you'd need to
-	// iterate through the profile's configuration
-	// For now, just log that we're switching profiles
-	fmt.Fprintf(r.writer, "Profile switching not fully implemented yet.\n")
+	// Get profile configuration
+	profile := struct {
+		Provider string
+		Model    string
+	}{}
+	
+	// Get provider from profile
+	provider := r.config.GetString(fmt.Sprintf("profiles.%s.provider", profileName))
+	if provider != "" {
+		profile.Provider = provider
+		
+		// Get model from profile
+		model := r.config.GetString(fmt.Sprintf("profiles.%s.model", profileName))
+		if model != "" {
+			profile.Model = model
+		} else {
+			// If model not specified in profile, try to get provider's default model
+			defaultModel := r.config.GetString(fmt.Sprintf("provider.%s.default_model", provider))
+			if defaultModel != "" {
+				profile.Model = defaultModel
+			}
+		}
+		
+		// Create a new provider with the profile's settings
+		if profile.Model != "" {
+			fullModel := fmt.Sprintf("%s/%s", profile.Provider, profile.Model)
+			logging.LogInfo("Switching model based on profile", "profile", profileName, "model", fullModel)
+			
+			// Use the switchModel function to create the provider
+			if err := r.switchModel([]string{fullModel}); err != nil {
+				logging.LogWarn("Failed to switch model when changing profile", "error", err)
+				fmt.Fprintf(r.writer, "Warning: Failed to switch model to %s: %v\n", fullModel, err)
+			} else {
+				fmt.Fprintf(r.writer, "Model switched to: %s\n", fullModel)
+			}
+		}
+	}
 
-	// For now, we'll skip the model switching from profile
-	// In a real implementation, you'd need to access the profile's model configuration
+	// Apply other profile settings if needed
+	// ...
 
 	fmt.Fprintf(r.writer, "Switched to profile: %s\n", profileName)
 	return nil

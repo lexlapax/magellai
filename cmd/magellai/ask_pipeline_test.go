@@ -1,8 +1,8 @@
 // ABOUTME: Integration tests for the ask pipeline functionality
 // ABOUTME: Tests full request processing from input to model interaction
 
-//go:build cmdline
-// +build cmdline
+//go:build integration
+// +build integration
 
 package main
 
